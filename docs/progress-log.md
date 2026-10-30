@@ -32,3 +32,4 @@
 | 4 | 采用上游 Design IR + Gate-1 校验器（MIT），新增 `design-ir` 阶段 | design-ir 正例 PASS / 反例 FAIL；selftest 19/19；全量 6 PASS 0 FAIL | 本轮 |
 | 5 | 开源板成为正式验收用例（含哈希/许可/下载命令）+ 上游知识按引用映射 | kit-integrity 11/11、用例可识别 | 本轮 |
 | 5 | `export-delivery.ps1`：一条命令完成三类导出并生成证据；用例与上游映射落盘 | delivery PASS（74,869/13,358/8,379 B）；selftest 19/19；全量 7 PASS 0 FAIL | 本轮 |
+| 6 | 修 `sch drc` 未传 `--json` 的判据缺陷；用运行日志解掉 2 个 BLOCKED | **12 PASS / 1 FAIL / 0 BLOCKED**；仅剩 pcb-connectivity 37 条 | 本轮 |

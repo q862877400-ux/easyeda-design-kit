@@ -206,3 +206,16 @@
 - **alternative**：所有导出动作都固定 `--doc`：Gerber/坐标用 PCB uuid，BOM 用原理图 uuid。
   `acceptance/export-delivery.ps1` 已把 `-Doc`/`-SchDoc` 设为必填。
 - **status**：`resolved`
+
+---
+
+## GAP-017 `route-short` 对长跳与电源网无效，Connection 不降
+
+- **capability**：用 `pcb route-short` 一次性把剩余未连网络降到 0。
+- **evidence**：`pcb route-short --corner 45 --max-len 3000` 在 Connection=37 的板上跑完后，
+  `pcb drc` 仍报 **Connection Error (37)**，Clearance 18 未变；说明它既没连上这些跳，也没制造新问题。
+  原因：这些跳多为电源/地（GND 9、3V3 4、5V_IN 4、VIN 2、5V 2）或长距离信号，超出其阈值。
+- **triedTools**：`pcb route-short`、`PCB自动化工具`、`PCB Auto Router`
+- **alternative**：逐跳用 `pcb route solve`（`layers:[1,2]`）+ `pcb route fill` 落线；
+  电源/地优先靠 `pcb power-planes` 与铺铜承担，而不是走线。
+- **status**：`open`

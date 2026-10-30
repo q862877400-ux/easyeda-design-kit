@@ -168,11 +168,11 @@ function Test-DesignIR {
 function Test-SchematicGates {
     if ([string]::IsNullOrWhiteSpace($Project)) { Add-Result "schematic-gates" "BLOCKED" "未指定 -Project"; return }
     if ([string]::IsNullOrWhiteSpace($SchDoc)) { Add-Result "schematic-gates" "BLOCKED" "未指定 -SchDoc（原理图文档 uuid）；无活动原理图页时 sch drc/check 均无法验证"; return }
-    $args1 = @("sch", "drc", "--project", $Project, "--doc", $SchDoc)
+    $args1 = @("sch", "drc", "--project", $Project, "--doc", $SchDoc, "--json")
     $raw = & $Cli $args1 2>&1 | Out-String
     # 实测：部分文档类型 sch drc 返回 "doctype(3) not support check sch drc"（GAP-014）
     if ($raw -match "not support") {
-        $raw2 = & $Cli @("sch", "check", "--project", $Project, "--doc", $SchDoc) 2>&1 | Out-String
+        $raw2 = & $Cli @("sch", "check", "--project", $Project, "--doc", $SchDoc, "--json") 2>&1 | Out-String
         if ($raw2 -match "(?i)failed|Cannot verify") {
             $msg = ($raw2 -split "`n" | Select-Object -First 1)
             Add-Result "schematic-gates" "BLOCKED" "sch drc 不支持该文档类型，sch check 亦无法验证： $msg"
