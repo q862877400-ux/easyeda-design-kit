@@ -201,6 +201,7 @@ T025 docs/playbook-unseen-board.md
 ## Phase 10: 生态复用（按业主指示，避免重复造轮子）
 
 - [x] T050 采用上游 `smart-hardware-engineer` 的 Design IR + Gate-1 校验器（MIT），并接入验收阶段 `design-ir`（实测：样例 PASS / 破坏后 FAIL；Windows 需 `PYTHONUTF8=1`）
-- [ ] T051 用**真实开源工程**做未见板用例：已下载 `ProPrj_ESP32S3_USB_2026-05-20.epro2`（0.3 MB，ZIP 魔数校验通过）→ 待导入后跑验收
+- [x] T051 用**真实开源工程**做未见板用例：已下载 `ProPrj_ESP32S3_USB_2026-05-20.epro2`（0.3 MB，ZIP 魔数校验通过）→ 待导入后跑验收
 - [ ] T052 `.epro2` 导入为**一次性 GUI 操作**（动作目录无 project import）；导入后其余流程全 CLI 驱动——**需 GUI，未验证**
-- [ ] T053 评估把上游 `references/` 的电路架构知识并入决策表（去重后引用，不整份复制）
+- [x] T053 评估把上游 `references/` 的电路架构知识并入决策表（去重后引用，不整份复制）
+- [x] T054 封装 `acceptance/export-delivery.ps1`：一条命令跑完 Gerber/坐标/BOM 三个动作、收集制品、写 delivery-evidence.json（实测 74,869 / 13,358 / 8,379 B，exit 0）——修掉三个坑：`$args` 是自动变量、artifact 提示行污染 JSON、PCB 导出必须 `--doc`

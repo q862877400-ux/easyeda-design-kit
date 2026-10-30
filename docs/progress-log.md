@@ -30,3 +30,5 @@
 | 3 | 交付链路打通（类型化动作面）+ 交付按证据判定 | Gerber 74,863 B zip（钻孔在包内）、坐标 13,358 B CSV；BOM 动作返回 no file（GAP-012）| 本轮 |
 | 3 | **交付阶段首次在真板 PASS**（四类齐备）| Gerber 74,863 B + 坐标 13,358 B + BOM 8,378 B；钻孔在 Gerber 包内；`delivery` PASS | 本轮 |
 | 4 | 采用上游 Design IR + Gate-1 校验器（MIT），新增 `design-ir` 阶段 | design-ir 正例 PASS / 反例 FAIL；selftest 19/19；全量 6 PASS 0 FAIL | 本轮 |
+| 5 | 开源板成为正式验收用例（含哈希/许可/下载命令）+ 上游知识按引用映射 | kit-integrity 11/11、用例可识别 | 本轮 |
+| 5 | `export-delivery.ps1`：一条命令完成三类导出并生成证据；用例与上游映射落盘 | delivery PASS（74,869/13,358/8,379 B）；selftest 19/19；全量 7 PASS 0 FAIL | 本轮 |

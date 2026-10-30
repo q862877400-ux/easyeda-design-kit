@@ -1,10 +1,10 @@
 {
   "case": "esp32-4layer",
   "executor": "unspecified",
-  "finishedAt": "2026-10-31T01:23:21",
-  "exitCode": 2,
-  "pass": 6,
-  "fail": 0,
+  "finishedAt": "2026-10-31T01:31:33",
+  "exitCode": 1,
+  "pass": 5,
+  "fail": 1,
   "blocked": 7,
   "stages": [
     {
@@ -21,7 +21,7 @@
     },
     {
       "stage": "environment",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "stage": "schematic-gates",
@@ -29,7 +29,7 @@
     },
     {
       "stage": "design-ir",
-      "status": "BLOCKED"
+      "status": "FAIL"
     },
     {
       "stage": "pcb-layout",
@@ -49,7 +49,7 @@
     },
     {
       "stage": "no-oneoff-scripts",
-      "status": "PASS"
+      "status": "BLOCKED"
     },
     {
       "stage": "positive-goal",
@@ -57,7 +57,7 @@
     },
     {
       "stage": "negative-drift",
-      "status": "PASS"
+      "status": "BLOCKED"
     }
   ]
 }

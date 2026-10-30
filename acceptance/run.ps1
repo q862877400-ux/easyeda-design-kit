@@ -49,6 +49,7 @@ function Add-Result {
 function Invoke-Json {
     param([string[]]$CliArgs)
     $raw = & $Cli $CliArgs 2>$null | Out-String
+    $raw = (($raw -split "`n") | Where-Object { $_ -notmatch 'artifact saved:' }) -join "`n"
     if ([string]::IsNullOrWhiteSpace($raw)) { return $null }
     $idx = $raw.IndexOf("{"); $last = $raw.LastIndexOf("}")
     if ($idx -lt 0 -or $last -le $idx) { return $null }
@@ -77,6 +78,7 @@ function Test-KitIntegrity {
         "playbooks\README.md"
         "docs\playbook-unseen-board.md"
         "docs\publish-extension.md"
+        "docs\prior-art-map.md"
     )
     $missing = @()
     foreach ($rel in $required) {
@@ -232,6 +234,9 @@ function Test-Delivery {
     if (Test-Path $evPath) {
         $ev = Get-Content $evPath -Raw | ConvertFrom-Json
         $problems = @(); $parts = @()
+        foreach ($k in @("gerber", "pickPlace", "bom")) {
+            if (-not $ev.PSObject.Properties.Name.Contains($k)) { $problems += "证据缺 $k 条目（不得跳过）" }
+        }
         if ($ev.gerber) {
             if ((Test-Path $ev.gerber.path) -and (Get-Item $ev.gerber.path).Length -gt 0) {
                 $parts += ("Gerber=" + [System.IO.Path]::GetFileName($ev.gerber.path) + " (" + (Get-Item $ev.gerber.path).Length + " B)")

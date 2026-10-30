@@ -167,3 +167,42 @@
   `delivery-evidence.json`（记录 artifactPath/size/drilling），不靠文件名猜。
 - **status**：`accepted`
 
+
+---
+
+## GAP-014 `sch drc` 不支持部分文档类型（doctype 3）
+
+- **capability**：用 `sch drc` 做原理图门禁。
+- **evidence**：`easyeda sch drc --project agent-e2e-esp32s3-board31 --doc b49d862ac5104b22` 返回
+  `SCH_DrcUtil: doctype(3) not support check sch drc`（无 JSON）。改用 `sch check` 可给出
+  `0 reported violation(s) — 0 fatal, 0 error, 0 warn, 0 info`。
+- **triedTools**：`sch drc`、`sch check`、`schematic.runDrc`
+- **alternative**：验收的 `schematic-gates` 阶段在检测到 `not support` 时回退 `sch check`；
+  两者都不可用时报 `BLOCKED`（不报 PASS）。
+- **status**：`accepted`
+
+---
+
+## GAP-015 CLI 会把「artifact saved」提示异步打进 stdout，污染 JSON
+
+- **capability**：直接解析 CLI 的 JSON 输出。
+- **evidence**：`easyeda call pcb.export.gerber ...` 的输出里，`📎 artifact saved: <path>` 一行
+  会**夹在 JSON 的 `{` 与 `"id"` 之间**，导致 `ConvertFrom-Json` 报
+  `Invalid property identifier character`。同一命令有时正常（提示走 stderr），呈竞态。
+- **triedTools**：`pcb.export.gerber`、`pcb.export.pick_place`、`schematic.export.bom`
+- **alternative**：解析前过滤含 `artifact saved:` 的行（`acceptance/run.ps1` 与
+  `acceptance/export-delivery.ps1` 均已实现），并设 `[Console]::OutputEncoding = UTF8`。
+- **status**：`accepted`
+
+---
+
+## GAP-016 导出动作按「当前活动文档」判定，PCB 导出也必须 `--doc`
+
+- **capability**：不指定文档就导出 Gerber/坐标。
+- **evidence**：先切到原理图导 BOM，再调 `pcb.export.gerber`（不带 `--doc`）→
+  `Gerber export returned no file — the PCB may be empty or have no copper`；
+  补 `--doc <pcb uuid>` 后正常（74,869 B）。
+- **triedTools**：`pcb.export.gerber`、`pcb.export.pick_place`
+- **alternative**：所有导出动作都固定 `--doc`：Gerber/坐标用 PCB uuid，BOM 用原理图 uuid。
+  `acceptance/export-delivery.ps1` 已把 `-Doc`/`-SchDoc` 设为必填。
+- **status**：`resolved`
