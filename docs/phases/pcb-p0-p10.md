@@ -4,7 +4,7 @@
 
 **通用纪律**
 
-- 布线与铺铜**优先用扩展中心**：`PCB Auto Router`、`内电层自动分划`、`自动生成铜皮`、`嘉立创下单检查`。
+- 布线与铺铜**优先用已装工具**：`JsPCB自动布线`、`嘉立创下单检查`、命令层 `pcb route fill` / `pcb pour-fit`。**注意：`PCB Auto Router`、`内电层自动分划`、`自动生成铜皮`、`生成丝印` 本机未装**（见 `docs/extensions-index.md` 的已核实装机清单）。
 - 顺序不可乱：**先结构 → 再规则 → 再布局 → 再布线 → 再铺铜 → 最后校验**。
   乱序的代价是重布线（历史实测：先铺铜后改布线，Clearance 假性恶化 18→26）。
 - 任何落铜之后必须 `pcb pour-rebuild` 再读 DRC（`GAP-009`）。
@@ -82,7 +82,7 @@
 | 项 | 内容 |
 |---|---|
 | **进入条件** | P5 PASS |
-| **动作** | **首选** `PCB Auto Router`（AI+GPU，写回画布）/ 备选 `FreeRouting`、`JsPCB自动布线`；局部难线用 `pcb route solve`（单层或 `layers:[1,2]`）+ playbook 落线；短线用 `PCB自动化工具`（短线自动布线） |
+| **动作** | 已装可用：`JsPCB自动布线`（全板）；命令行 `pcb route fill`（逐跳，实测主力）/ `pcb route-short`（短线）/ `pcb route solve` + playbook（难线）。**未装**：`PCB Auto Router`、`FreeRouting`、`PCB自动化工具`（需现装） |
 | **退出判据** | ① `pcb drc` 的 Connection Error = 0；② Clearance Error 不高于布局阶段基线；③ 无 `dangling` 悬空端 |
 | **失败处置** | 有未连 → 先查是否 `GAP-001`（需换层）；再查 `GAP-008`（缝合位不足）；**禁止**用 `rip-up --net` 撤销（`GAP-003`） |
 
@@ -150,7 +150,7 @@ P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8 → P9 → P10
 |---|---|
 | P3 布局 | `PCB自动化工具` |
 | P5 扇出 | `PCB自动化工具` / `焊盘扇出` |
-| P6 布线 | `PCB Auto Router` |
+| P6 布线 | `JsPCB自动布线`（已装）/ `pcb route fill` |
 | P7 等长 | `一键等长` |
 | P8 内层 | `内电层自动分划` |
 | P10 DFM | `嘉立创下单检查` |
@@ -199,3 +199,4 @@ pwsh -NoProfile -File acceptance/compare-runs.ps1 -A runs\a.json -B runs\b.json
 
 **无法切换模型时**：用"全新会话 + 零上下文"代替，并在报告里显式标注
 `弱化验证：未换模型`——不得把它写成已满足 SC-004。
+
