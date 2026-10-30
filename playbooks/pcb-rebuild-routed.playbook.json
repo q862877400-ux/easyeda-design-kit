@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "pcb-rebuild-routed",
+    "description": "四层板的「重布重铺」固定链：rip-up -> route-short(45°, max-len 3000) -> power-planes -> 两条 pour-fit --replace 去重 -> save。\n\n为什么是这一串、顺序为什么不能换（都是踩出来的，别再试别的顺序）：\n1. `pcb rip-up` 只删走线和过孔，**不删铺铜**；所以后面 power-planes 会在旧铺铜上再铺一层，必须靠 pour-fit --replace 收敛回每层一块。\n2. `route-short` 默认 `--max-len 1000`，超过的跳线丢给迷宫层（本机没有可用迷宫路由器）；实测提到 3000 后 Connection 42->39，再往上（10 万）无收益，所以这里固定 3000。\n3. `route-short` 跳过电源网（skipPower），电源由 power-planes 铺内层 + 缝合过孔承担，顺序必须 route-short 先、power-planes 后：反过来的话缝合过孔会被 route-short 当成已有障碍。\n4. 改完必须 save 再 doc reload 再读，否则读到的是中间态（曾把 DRC 读成 Connection 104，重载后真实值 41）。\n5. 铺铜重建（pour-rebuild）在 save 之前不必单独跑：pour-fit --replace 自带重铺。\n\n丝印（属性文本/位号）不要在链中间清——任何重布重铺都会把 Device/Footprint 属性丝印重新生成，必须等本 playbook 跑完、save+reload 之后再清。",
+    "project": "agent-e2e-esp32s3-board31",
+    "doc": "PCB1"
+  },
+  "defaults": { "timeoutSec": 300, "retry": 0, "continueOnError": false },
+  "steps": [
+    { "id": "rip-up", "run": "pcb rip-up", "name": "清掉全部走线与过孔（保留铺铜与器件）", "confirm": true },
+    { "id": "route-short", "run": "pcb route-short", "name": "短跳线布线：45° 倒角、允许 3000mil 的多层绕行", "flags": { "corner": "45", "max-len": "3000" } },
+    { "id": "power-planes", "run": "pcb power-planes", "name": "内层铺 GND/3V3 电源面 + 缝合过孔", "flags": {} },
+    { "id": "pour-gnd", "run": "pcb pour-fit", "name": "GND 内层收敛为一块（replace 去重）", "flags": { "net": "GND", "layer": "15", "replace": true } },
+    { "id": "pour-3v3", "run": "pcb pour-fit", "name": "3V3 内层收敛为一块（replace 去重）", "flags": { "net": "3V3", "layer": "16", "replace": true } },
+    { "id": "save", "run": "pcb save", "name": "落盘；之后必须 doc reload 再读才算数" }
+  ]
+}

@@ -1,0 +1,88 @@
+# EasyEDA AI Design Kit
+
+> **装上它，任何模型都能把一块电路板从需求画到可打样。**
+
+本仓库是产品的**唯一来源（canonical）**。它不是又一个 EDA 工具，而是把「画出板子」这件事
+从**执行者的临场发挥**，变成**按文档执行 + 脚本验收**。
+
+- 产品定义：[PRODUCT.md](PRODUCT.md)
+- 需求规格：[specs/004-ai-pcb-design-kit/spec.md](specs/004-ai-pcb-design-kit/spec.md)
+- 当前状态：**验收未通过**（见下）
+
+---
+
+## 1. 产品由三件套组成
+
+| 件 | 内容 | 目录 |
+|---|---|---|
+| 能力知识包 | 情境→工具决策表、分阶段流程、设计规则、能力边界 | `docs/` |
+| 可回放链路 | 多步操作固化为 playbook，禁止临时脚本 | `playbooks/` |
+| 验收 | 一条命令判定「这块板画完没有」 | `acceptance/` |
+
+**复用优先是硬规则**：默认零自有代码。先查扩展中心（`docs/extensions-index.md`），
+再查命令层与类型化动作，都覆盖不了才补工具，并在 `docs/capability-boundary.md` 记录缺口证据。
+
+---
+
+## 2. 前置条件（安装一次）
+
+1. **EasyEDA Pro**（含扩展中心可访问）。
+2. **能力基础设施**：`easyeda` CLI 与 EDA Agent Connector 扩展（由既有项目提供，独立安装升级）。
+3. 需要时在扩展中心安装流程文档点名的扩展（安装步骤写在文档里，不在每次执行时做）。
+
+本仓库**不重新实现**上述基础设施。
+
+---
+
+## 3. 一条命令验收
+
+```powershell
+pwsh -NoProfile -File acceptance/run.ps1 -Case esp32-4layer
+```
+
+有工程时再加：
+
+```powershell
+pwsh -NoProfile -File acceptance/run.ps1 -Case esp32-4layer `
+  -Project agent-e2e-esp32s3-board31 -Doc e8c8b7cb5507b5e2 `
+  -DeliveryDir <制造文件目录> -RunLog <本次执行日志>
+```
+
+三态语义：**PASS / FAIL / BLOCKED**。退出码 `0`=全通过，`1`=有 FAIL，`2`=有 BLOCKED，`3`=用法错误。
+BLOCKED 表示缺前置条件（没有工程、没有窗口、未提供审计日志），**不是通过**。
+
+---
+
+## 4. 当前状态（诚实记录）
+
+`acceptance/run.ps1` 现在的结果是 **0 PASS / 1 FAIL / 8 BLOCKED**，失败点已由脚本点名：
+
+```
+[FAIL] kit-integrity      缺 5/7 份：
+       docs/tool-decision-table.md, docs/capability-boundary.md,
+       docs/phases/schematic-s0-s6.md, docs/phases/pcb-p0-p10.md,
+       playbooks/README.md
+```
+
+这就是本项目的**任务清单**：把这 5 份补出来，再把 8 个 BLOCKED 逐个变成 PASS。
+未通过之前，任何「板子画好了」的说法都不算数。
+
+---
+
+## 5. 目录约定
+
+```
+docs/                能力知识包（决策表、阶段流程、规则、边界）
+  extensions-index.md    扩展中心 75 项索引（已装/未装边界）
+  design-rules.md        设计规范手册（线宽/间距/过孔/铺铜/DRC 清单）
+playbooks/           可回放链路（具名、带说明、被索引）
+acceptance/          验收脚本与用例
+specs/               需求规格与质量清单
+```
+
+## 6. 验收立不住的情况（视为产品不成立）
+
+- 只有某一个模型能通过；
+- 通过依赖任何一次性脚本；
+- 交付文件缺失却报 PASS；
+- 把「数字变好」当成通过。
