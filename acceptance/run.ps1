@@ -191,7 +191,8 @@ function Test-PcbLayout {
     if ([string]::IsNullOrWhiteSpace($Project)) { Add-Result "pcb-layout" "BLOCKED" "未指定 -Project"; return }
     $args = @("pcb", "layout-lint", "--project", $Project)
     if ($Doc) { $args += @("--doc", $Doc) }
-    $out = & $Cli $args 2>$null | Out-String
+    $out = & $Cli $args 2>&1 | Out-String
+    if ($out -match "no connected window|daemon health") { Add-Result "pcb-layout" "BLOCKED" "没有在线窗口，无法读 layout-lint"; return }
     if ($out -match "0 short" -and $out -match "0 overlap" -and $out -match "0 off-board") {
         Add-Result "pcb-layout" "PASS" "0 短路/0 重叠/0 出框"
     } else {
@@ -227,7 +228,8 @@ function Test-PcbDfm {
     if ([string]::IsNullOrWhiteSpace($Project)) { Add-Result "pcb-dfm" "BLOCKED" "未指定 -Project"; return }
     $args = @("pcb", "check", "--project", $Project)
     if ($Doc) { $args += @("--doc", $Doc) }
-    $out = & $Cli $args 2>$null | Out-String
+    $out = & $Cli $args 2>&1 | Out-String
+    if ($out -match "no connected window|daemon health") { Add-Result "pcb-dfm" "BLOCKED" "没有在线窗口，无法读 DFM"; return }
     $m = [regex]::Match($out, 'ERROR=(\d+)')
     if (-not $m.Success) { Add-Result "pcb-dfm" "FAIL" "pcb check 未给出 ERROR 计数"; return }
     $err = [int]$m.Groups[1].Value
