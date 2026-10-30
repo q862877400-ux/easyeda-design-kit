@@ -59,6 +59,27 @@ function Test-PositiveGoal {
         $note += "三态语义由 run.ps1 保障（BLOCKED≠PASS，交付物查非空）"
     }
 
+    # P6 每轮必须"学会用现有工具"：playbook 每一步的 run 必须是 CLI 里真实存在的命令。
+    # 编一条不存在的命令 = 自己造工具 = 直接失败。
+    $pbDir2 = Join-Path $script:RepoRoot 'playbooks'
+    $helpCache = @{}
+    $stepChecked = 0
+    if (Test-Path $pbDir2) {
+        foreach ($pf in Get-ChildItem $pbDir2 -File -Filter '*.playbook.json') {
+            try { $pj = Get-Content $pf.FullName -Raw | ConvertFrom-Json } catch { continue }
+            foreach ($st in @($pj.steps)) {
+                $run = [string]$st.run
+                if ([string]::IsNullOrWhiteSpace($run)) { $fail += "$($pf.Name) 有步骤没有 run（无法证明用的是现有工具）"; continue }
+                $parts = $run.Trim() -split '\s+'
+                $group = $parts[0]
+                if (-not $helpCache.ContainsKey($group)) { $helpCache[$group] = (& $Cli @($group, '--help') 2>$null | Out-String) }
+                $sub = if ($parts.Count -ge 2) { $parts[1] } else { $group }
+                if ($helpCache[$group] -notmatch "(?m)^\s+$([regex]::Escape($sub))\s") { $fail += "$($pf.Name): 步骤 run='$run' 在 CLI 里不存在（疑似自编工具）" }
+                $stepChecked++
+            }
+        }
+        if ($fail.Count -eq 0) { $note += "playbook $stepChecked 步全部命中现有命令" }
+    }
     if ($fail.Count -gt 0) { Add-Result "positive-goal" "FAIL" ($fail -join '；') }
     else { Add-Result "positive-goal" "PASS" ($note -join '；') }
 }
@@ -135,6 +156,25 @@ function Test-NegativeDrift {
         $note += "日志审计：dump $dumps / solve $solves"
     }
 
+    # N7 新增实现代码必须同提交带边界证据（证明试过现有工具）
+    # N8 决策表行数只增不减（"学会的工具"账本）
+    Push-Location $script:RepoRoot
+    try {
+        $files = & git show --pretty=format: --name-only HEAD 2>$null
+        $code = @($files | Where-Object { $_ -match '\.(go|py|ts|js)$' -and $_ -notmatch '^acceptance/' })
+        $bt = @($files | Where-Object { $_ -match 'capability-boundary\.md$' }).Count -gt 0
+        if ($code.Count -gt 0 -and -not $bt) {
+            $fail += "N7 新增实现代码但同提交未更新 capability-boundary.md（无法证明试过现有工具）： $(($code | Select-Object -First 3) -join ', ')"
+        }
+        $dt = Join-Path $script:RepoRoot 'docs\tool-decision-table.md'
+        $rows = if (Test-Path $dt) { @(Get-Content $dt | Where-Object { $_ -match '^\|' -and $_ -notmatch '^\|\s*-+' -and $_ -notmatch '情境' }).Count } else { 0 }
+        $bp = Join-Path $script:AcceptDir 'baseline.json'
+        if (Test-Path $bp) {
+            $b2 = Get-Content $bp -Raw | ConvertFrom-Json
+            if ($null -ne $b2.decision_rows -and $rows -lt [int]$b2.decision_rows) { $fail += "N8 决策表行数从 $($b2.decision_rows) 降到 $rows（工具经验在减少）" }
+        }
+        $note += "决策表 $rows 行"
+    } finally { Pop-Location }
     if ($fail.Count -gt 0) { Add-Result "negative-drift" "FAIL" ($fail -join '；') }
     elseif ($blocked.Count -gt 0) { Add-Result "negative-drift" "BLOCKED" (($blocked + $note) -join '；') }
     else { Add-Result "negative-drift" "PASS" ($note -join '；') }
