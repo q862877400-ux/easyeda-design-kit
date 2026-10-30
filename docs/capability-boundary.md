@@ -231,6 +231,9 @@
 - **capability**：把 DRC 列为 Connection Error 的过孔当垃圾清掉。
 - **evidence**：对 4 个该类过孔执行 `pcb via-delete --ids`（GND/3V3/5V_IN×2）后，
   Connection **33 → 38**（+5），Clearance 不变。按原坐标用 `pcb via` 重建后，**恢复为 33**。
+  **第二次独立验证（第 14 轮）**：删掉 (1040,1530) 与 (1470,1394.4) 两个被判「未连」的过孔后，
+  Connection **14 → 16**；按原坐标 `pcb via` 重建（16/8 与 24/12 孔径）后恢复到 **14**。
+  规律稳定：**DRC 的「未连」过孔一律不要删**。
   结论：DRC 的「未连」表示"未接入全网"，这些过孔仍在承载层间连接。
 - **triedTools**：`pcb via-delete`、`pcb via`、`pcb drc`
 - **alternative**：清理前必须先确认该图元是否真的孤立（看 `pcb via-list` 两端是否无铜）；
