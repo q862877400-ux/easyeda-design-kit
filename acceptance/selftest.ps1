@@ -177,6 +177,32 @@ Assert-Case "check-extension-package → 缺 license 判 FAIL" {
     $LASTEXITCODE -eq 1
 }
 
+
+# 断言 16–17：交付按证据判定（钻孔在 Gerber 包内 / BOM 报错）
+Assert-Case "delivery 证据：钻孔在 Gerber 包内 → PASS" {
+    $d = Join-Path $probe "ev-ok"
+    New-Item -ItemType Directory -Force -Path $d | Out-Null
+    [System.IO.File]::WriteAllBytes((Join-Path $d "g.zip"), (New-Object byte[] 100))
+    [System.IO.File]::WriteAllBytes((Join-Path $d "c.csv"), (New-Object byte[] 80))
+    $ev = [ordered]@{ gerber = [ordered]@{ path = (Join-Path $d "g.zip"); size = 100; drilling = [ordered]@{ metallic = $true; nonMetallic = $true } };
+                      pickPlace = [ordered]@{ path = (Join-Path $d "c.csv"); size = 80 } }
+    $ev | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $d "delivery-evidence.json") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery').Status -eq 'PASS'
+}
+
+Assert-Case "delivery 证据：BOM 返回 no file → FAIL" {
+    $d = Join-Path $probe "ev-bom"
+    New-Item -ItemType Directory -Force -Path $d | Out-Null
+    [System.IO.File]::WriteAllBytes((Join-Path $d "g.zip"), (New-Object byte[] 100))
+    [System.IO.File]::WriteAllBytes((Join-Path $d "c.csv"), (New-Object byte[] 80))
+    $ev = [ordered]@{ gerber = [ordered]@{ path = (Join-Path $d "g.zip"); size = 100; drilling = [ordered]@{ metallic = $true; nonMetallic = $true } };
+                      pickPlace = [ordered]@{ path = (Join-Path $d "c.csv"); size = 80 };
+                      bom = [ordered]@{ path = $null; size = 0; error = "BOM export returned no file." } }
+    $ev | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $d "delivery-evidence.json") -Encoding UTF8
+    $r = Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery'
+    ($r.Status -eq 'FAIL') -and ($r.Detail -match 'BOM export returned no file')
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

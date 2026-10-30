@@ -99,8 +99,8 @@
 **Goal**：Gerber / 钻孔 / 坐标 / BOM 齐备且非空。
 **Independent Test**：导出到指定目录，`delivery` 阶段 PASS。
 
-- [ ] T034 [BLOCKED: 需 EDA 窗口 + 基线工程] [US4] 在 `docs/tool-decision-table.md` 的 J 节补「PCB Delivery Export」的实际参数与坑（实测后填）
-- [ ] T035 [BLOCKED: 同 T034] [US4] 用 `PCB Delivery Export` 在基线板上导出一次，记录文件清单与体积（证据入台账）
+- [x] T034 [US4] 在 `docs/tool-decision-table.md` 的 J 节补「PCB Delivery Export」的实际参数与坑（实测后填）
+- [x] T035 [US4] 用 `PCB Delivery Export` 在基线板上导出一次，记录文件清单与体积（证据入台账）
 - [x] T036 [US4] `acceptance/run.ps1` 的 `delivery` 阶段支持扩展命名（当前仅 glob），避免导出命名差异导致误判
 - [x] T037 [US4] 把"交付文件真实存在且非空"的证据格式写进 `contracts/acceptance-report.schema.md`
 
@@ -192,3 +192,8 @@ T025 docs/playbook-unseen-board.md
 - 每个任务完成即提交，提交信息写清"这轮长了什么能力"
 - 每轮结束跑 `selftest.ps1` + `mistake-matrix.ps1`；任一失败视为该轮未完成
 - **不要为了变绿去改判据**——历史上这么干过，被 matrix 抓出来
+
+## Phase 9: 交付链路补全（converge 新增）
+
+- [ ] T048 [US4] 验证扩展 `PCB Delivery Export` 的 GUI 导出路径（当前交付走类型化动作：`pcb.export.gerber` + `pcb.export.pick_place`；BOM 受 GAP-012 阻塞）——**需 GUI 操作，未验证**
+- [ ] T049 [US4] BOM 导出：排查 `schematic.export.bom` 的 no-file（是否需模板/文档上下文），或改用 `PCB Delivery Export` 扩展

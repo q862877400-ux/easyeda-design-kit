@@ -102,7 +102,7 @@ $tablePath = Join-Path $script:RepoRoot "docs\tool-decision-table.md"
     }
     # 点名的工具必须能在动作目录或扩展索引里找到
     $actions = Invoke-Json @("actions")
-    $actionText = if ($actions) { $actions | ConvertTo-Json -Depth 8 -Compress } else { "" }
+    $actionText = (& $Cli actions 2>$null | Out-String)
     $extIndex = Join-Path $script:RepoRoot "docs\extensions-index.md"
     $extText = if (Test-Path $extIndex) { Get-Content $extIndex -Raw } else { "" }
 
@@ -112,7 +112,7 @@ $tablePath = Join-Path $script:RepoRoot "docs\tool-decision-table.md"
         if ($cells.Count -lt 4) { continue }
         $tool = $cells[2].Trim().Trim('`', '*')
         if ([string]::IsNullOrWhiteSpace($tool) -or $tool -match '^\.\.\.$') { continue }
-        $hit = ($actionText -like "*$tool*") -or ($extText -like "*$tool*")
+        $hit = ($actionText -match [regex]::Escape($tool)) -or ($extText -match [regex]::Escape($tool))
         if (-not $hit) { $unresolved += $tool }
     }
     if ($unresolved.Count -eq 0) {
@@ -190,6 +190,40 @@ function Test-PcbDfm {
 
 function Test-Delivery {
     if ([string]::IsNullOrWhiteSpace($DeliveryDir)) { Add-Result "delivery" "BLOCKED" "未指定 -DeliveryDir"; return }
+    # 优先用「导出证据」判定（delivery-evidence.json），因为真实导出有三个事实：
+    #  1) 制品固定落盘到 .easyeda\artifacts，fileName 不控制路径（GAP-013）；
+    #  2) Gerber 是一个 zip，钻孔数据在包内（drilling.metallic/nonMetallic 默认 true）；
+    #  3) BOM 动作可能返回 no file（GAP-012）——必须如实报失败，不能当缺项蒙混。
+    $evPath = Join-Path $DeliveryDir "delivery-evidence.json"
+    if (Test-Path $evPath) {
+        $ev = Get-Content $evPath -Raw | ConvertFrom-Json
+        $problems = @(); $parts = @()
+        if ($ev.gerber) {
+            if ((Test-Path $ev.gerber.path) -and (Get-Item $ev.gerber.path).Length -gt 0) {
+                $parts += ("Gerber=" + [System.IO.Path]::GetFileName($ev.gerber.path) + " (" + (Get-Item $ev.gerber.path).Length + " B)")
+            } else { $problems += "Gerber 文件不存在或为空" }
+            $drillOk = $false
+            if ($ev.gerber.drilling -and $ev.gerber.drilling.metallic -and $ev.gerber.drilling.nonMetallic) { $drillOk = $true }
+            $drl = Get-ChildItem $DeliveryDir -Filter "*.drl" -File -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 0 } | Select-Object -First 1
+            if ($drl) { $parts += ("钻孔=" + $drl.Name + " (" + $drl.Length + " B)") }
+            elseif ($drillOk) { $parts += "钻孔=在 Gerber 包内（drilling.metallic/nonMetallic=true）" }
+            else { $problems += "无钻孔证据（既无 .drl，也不在 Gerber 包内）" }
+        }
+        if ($ev.pickPlace) {
+            if ((Test-Path $ev.pickPlace.path) -and (Get-Item $ev.pickPlace.path).Length -gt 0) {
+                $parts += ("坐标=" + [System.IO.Path]::GetFileName($ev.pickPlace.path) + " (" + (Get-Item $ev.pickPlace.path).Length + " B)")
+            } else { $problems += "坐标文件不存在或为空" }
+        }
+        if ($ev.bom) {
+            if ($ev.bom.error) { $problems += ("BOM=" + $ev.bom.error) }
+            elseif ((Test-Path $ev.bom.path) -and (Get-Item $ev.bom.path).Length -gt 0) { $parts += ("BOM=" + (Get-Item $ev.bom.path).Length + " B)") }
+            else { $problems += "BOM 不存在或为空" }
+        }
+        if ($problems.Count -eq 0) { Add-Result "delivery" "PASS" ($parts -join "；") }
+        else { Add-Result "delivery" "FAIL" (($problems -join "；") + "  [" + ($parts -join "；") + "]") }
+        return
+    }
+
     if (-not (Test-Path $DeliveryDir)) { Add-Result "delivery" "FAIL" "交付目录不存在： $DeliveryDir"; return }
     $need = [ordered]@{
         "Gerber" = @("*.g*", "*.zip")
@@ -279,7 +313,6 @@ $meta | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $script:AcceptDir "last
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0
-
 
 
 

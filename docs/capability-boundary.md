@@ -140,3 +140,30 @@
 - **alternative**：扩展形态定位为「入门 + 随身手册」（内置决策表与阶段文档、调用 `eda.*` 做单点动作）；
   完整能力走 CLI 形态安装。两种形态共用同一套文档（`docs/harness-install.md` 已写清）。
 - **status**：`accepted`
+
+---
+
+## GAP-012 类型化动作 `schematic.export.bom` 返回 no file
+
+- **capability**：通过动作导出 BOM（xlsx/csv）。
+- **evidence**：`easyeda call schematic.export.bom --payload '{"fileType":"xlsx"}'` 返回
+  `ok:false`，`code=EDA_CALL_FAILED`，`message="BOM export returned no file."`；
+  同时 `schematic.export.netlist` 等动作存在。切到原理图窗口后仍如此。
+- **triedTools**：`schematic.export.bom`、`PCB Delivery Export`、`多板生产文件一键导出`
+- **alternative**：BOM 走扩展 `PCB Delivery Export`（一键含 BOM），或 `project.export` 导出工程源；
+  动作面暂不可用。**未验证**：BOM 是否需特定模板参数。
+- **status**：`open`
+
+---
+
+## GAP-013 导出制品固定落盘到 `.easyeda\artifacts`，`fileName` 不控制路径
+
+- **capability**：让导出直接写到指定交付目录。
+- **evidence**：`pcb.export.gerber --payload '{"fileName":"D:/…/board-gerber.zip"}'` 返回
+  `result.fileName` 为传入值，但实际 `artifactPath` 为
+  `<repo>\.easyeda\artifacts\20261031-010915-pcb_gerber-7af89560.zip`（74,863 B）；
+  `pcb.export.pick_place` 同理（13,358 B csv）。
+- **triedTools**：`pcb.export.gerber`、`pcb.export.pick_place`、`pcb.export.bom`
+- **alternative**：以 `artifactPath` 为准收集文件，再复制到交付目录；验收读
+  `delivery-evidence.json`（记录 artifactPath/size/drilling），不靠文件名猜。
+- **status**：`accepted`
