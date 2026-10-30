@@ -17,12 +17,16 @@ param(
     [Parameter(Mandatory = $false)][string]$Cli = "$env:USERPROFILE\.local\bin\easyeda.exe",
     [Parameter(Mandatory = $false)][string]$DeliveryDir = "",
     [Parameter(Mandatory = $false)][string]$RunLog = "",
+    [Parameter(Mandatory = $false)][string]$AuditRoot = "",
+    [Parameter(Mandatory = $false)][string]$CodeScope = "",
     [Parameter(Mandatory = $false)][switch]$Quiet
 )
 
 $ErrorActionPreference = "Stop"
 $script:AcceptDir = Split-Path -Parent $PSCommandPath
 $script:RepoRoot = Split-Path -Parent $script:AcceptDir
+if ([string]::IsNullOrWhiteSpace($AuditRoot)) { $script:AuditRoot = $script:RepoRoot } else { $script:AuditRoot = (Resolve-Path $AuditRoot).Path }
+if ([string]::IsNullOrWhiteSpace($CodeScope)) { $script:CodeScope = "" } else { $script:CodeScope = $CodeScope }
 . (Join-Path $script:AcceptDir "stages-gates.ps1")
 $script:Results = @()
 
@@ -244,6 +248,9 @@ $script:Results | ConvertTo-Json -Depth 5 | Set-Content $report -Encoding UTF8
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0
+
+
+
 
 
 

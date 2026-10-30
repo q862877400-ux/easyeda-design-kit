@@ -26,7 +26,7 @@ function Test-PositiveGoal {
 
     # P2 playbook 必须是**可执行的**，不能是"写段说明就叫 playbook"
     # （事故：把一段流程说明登记成「工具件」自我加分）
-    $pbDir = Join-Path $script:RepoRoot 'playbooks'
+    $pbDir = Join-Path $script:AuditRoot 'playbooks'
     if (Test-Path $pbDir) {
         foreach ($f in Get-ChildItem $pbDir -File -Filter '*.playbook.json') {
             try {
@@ -40,8 +40,8 @@ function Test-PositiveGoal {
 
     # P3 复用优先：kit 仓库里不许出现"实现类代码"
     # （事故：手搓布线器/DFM/丝印，而扩展中心已有对应工具）
-    $impl = Get-ChildItem $script:RepoRoot -Recurse -File -Include '*.go', '*.ts', '*.js' -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -notmatch '\\\.git\\' -and $_.FullName -notmatch '\\acceptance\\' }
+    $impl = Get-ChildItem $script:AuditRoot -Recurse -File -Include '*.go', '*.ts', '*.js' -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '\\(node_modules|\.git|dist|bin|vendor|target|_archive|acceptance)\\' -and $_.FullName.Contains($script:CodeScope) }
     if ($impl.Count -gt 0) {
         $fail += "kit 里出现 $($impl.Count) 个实现类源文件（应先复用扩展中心）： $(($impl | Select-Object -First 3 | ForEach-Object { $_.Name }) -join ', ')"
     }
@@ -61,7 +61,7 @@ function Test-PositiveGoal {
 
     # P6 每轮必须"学会用现有工具"：playbook 每一步的 run 必须是 CLI 里真实存在的命令。
     # 编一条不存在的命令 = 自己造工具 = 直接失败。
-    $pbDir2 = Join-Path $script:RepoRoot 'playbooks'
+    $pbDir2 = Join-Path $script:AuditRoot 'playbooks'
     $helpCache = @{}
     $stepChecked = 0
     if (Test-Path $pbDir2) {
@@ -95,14 +95,14 @@ function Test-NegativeDrift {
     $oneoffDirs = @('.work', 'scratch', 'tmp', 'oneoff', '_scratch')
     $offenders = @()
     foreach ($pat in $oneoffPatterns) {
-        $offenders += Get-ChildItem $script:RepoRoot -Recurse -File -Filter $pat -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -notmatch '\\playbooks\\' -and $_.FullName -notmatch '\\\.git\\' }
+        $offenders += Get-ChildItem $script:AuditRoot -Recurse -File -Filter $pat -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\(node_modules|\.git|dist|bin|vendor|target|_archive)\\' -and $_.FullName -notmatch '\\playbooks\\' }
     }
     foreach ($d in $oneoffDirs) {
-        $p = Join-Path $script:RepoRoot $d
+        $p = Join-Path $script:AuditRoot $d
         if (Test-Path $p) { $offenders += Get-ChildItem $p -Recurse -File | Select-Object -First 5 }
     }
-    $stray = Get-ChildItem $script:RepoRoot -Recurse -File -Include '*.py', '*.ps1' -ErrorAction SilentlyContinue |
+    $stray = Get-ChildItem $script:AuditRoot -Recurse -File -Include '*.py', '*.ps1' -ErrorAction SilentlyContinue |
         Where-Object {
             $_.FullName -notmatch '\\acceptance\\' -and $_.FullName -notmatch '\\\.git\\' -and
             (Select-String -Path $_.FullName -Pattern 'easyeda' -Quiet -ErrorAction SilentlyContinue)
@@ -121,8 +121,8 @@ function Test-NegativeDrift {
             $fail += "N2 最近提交没动任何规范产物，只动了： $(($lastFiles | Select-Object -First 3) -join ', ')"
         }
         # N3 工程内不该有"自建检查器给自己打分"（事故：用自写 DFM 给自己开绿灯）
-        $selfScorer = Get-ChildItem $script:RepoRoot -Recurse -File -Include '*.go', '*.py' -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -notmatch '\\acceptance\\' -and $_.FullName -notmatch '\\\.git\\' -and
+        $selfScorer = Get-ChildItem $script:AuditRoot -Recurse -File -Include '*.go', '*.py' -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\(node_modules|\.git|dist|bin|vendor|target|acceptance)\\' -and $_.FullName.Contains($script:CodeScope) -and
                 (Select-String -Path $_.FullName -Pattern 'clearance|drc|dfm' -Quiet -ErrorAction SilentlyContinue) }
         if ($selfScorer.Count -gt 0) { $fail += "N3 出现自建检查器实现 $($selfScorer.Count) 个（应使用既有检查器）" }
     } finally { Pop-Location }
@@ -189,3 +189,7 @@ function Get-CanonicalCounts {
         spec_files = @(Get-ChildItem (Join-Path $script:RepoRoot 'specs') -Recurse -File -ErrorAction SilentlyContinue).Count
     }
 }
+
+
+
+

@@ -1,0 +1,53 @@
+# 历史运行日志：由台账内联代码块机械抽取（不是手写、不是重跑）
+# 来源：easyeda-auto/台账-画板与工具打磨.md。
+# 用途：用新门禁回测我过去的真实行为。
+# 局限：台账为自述记录；行序=文本顺序，不等于 shell 精确时序。
+doc reload
+doc reload
+pcb drc
+pcb check
+pcb route-short --corner 45
+doc reload
+pcb check
+pcb drc
+pcb rip-up
+pcb check
+pcb drc-rules
+pcb drc
+pcb drc
+doc reload
+<code>pcb drc
+pcb check
+pour-delete → rip-up → route-short（69 段）→ power-planes（GND 24 / 3V3 8 过孔，slotsSeen 4）
+→ save → doc reload → 等可读 → DRC
+pcb check
+pcb check
+doc reload
+pcb check --json
+pcb route solve
+pcb route solve
+pcb route solve --from
+pcb dump --include-copper
+pcb route solve
+pcb dump --include-copper
+pcb route solve
+pcb pour-rebuild
+pcb drc
+pcb route solve
+pcb route solve
+pcb route fill --net --from --to --apply
+pcb route fill
+easyeda pcb route fill --net X --from A.1 --to B.2 [--layers 1,2] [--dry-run]
+pcb route fill
+pcb check
+pcb drc
+pcb route solve
+pcb route fill
+pcb route fill
+pcb route-short
+pcb drc
+pcb rip-up
+pcb drc-rules
+pcb drc
+doc reload
+doc reload
