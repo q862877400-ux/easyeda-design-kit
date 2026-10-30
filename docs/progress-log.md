@@ -36,3 +36,4 @@
 | 7 | 逐跳 `route fill` 打通电源三网（VIN/5V/5V_IN）；修 N5 误报判据 | Connection **37→33**，Clearance 18、DFM ERROR 0；selftest 20/20 | 本轮 |
 | 8 | 5 个信号网 + USB_DP 两跳落板；记录「删未连过孔会更糟」的教训 | Connection **33→21**（累计 −16），Clearance 18、DFM ERROR 0 | 本轮 |
 | 9 | 探明 U0TXD 六种参数组合均不可解；查明 via-stitch 无间距校验 | Connection 21 保持；Clearance 18 保持；结论入边界 GAP-019/020 | 本轮 |
+| 10 | 连通性 FAIL 输出改为按网分诊（焊盘/过孔分开）+ 防假绿保险；补 USB_DP 最后一跳 | Connection **21→19**；分诊：GND=9, 3V3=4, 5V_IN=4, U0TXD=2 | 本轮 |

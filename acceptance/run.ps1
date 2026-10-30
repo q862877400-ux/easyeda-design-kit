@@ -201,15 +201,26 @@ function Test-PcbLayout {
 
 function Test-PcbConnectivity {
     if ([string]::IsNullOrWhiteSpace($Project)) { Add-Result "pcb-connectivity" "BLOCKED" "未指定 -Project"; return }
-    $args = @("pcb", "drc", "--project", $Project)
-    if ($Doc) { $args += @("--doc", $Doc) }
-    $drc = Invoke-Json $args
-    if (-not $drc) { Add-Result "pcb-connectivity" "FAIL" "pcb drc 读不到 JSON"; return }
-    $n = Get-FirstJsonNumber $drc '"errorType"\s*:\s*"Connection Error"'
-    $text = $drc | ConvertTo-Json -Depth 20 -Compress
-    $count = ([regex]::Matches($text, '"errorType"\s*:\s*"Connection Error"')).Count
-    if ($count -eq 0) { Add-Result "pcb-connectivity" "PASS" "Connection Error 0" }
-    else { Add-Result "pcb-connectivity" "FAIL" "Connection Error $count 条" }
+    $a = @("pcb", "drc", "--project", $Project, "--json")
+    if ($Doc) { $a += @("--doc", $Doc) }
+    # 先探测窗口：无窗口是环境缺失，不是设计缺陷 → BLOCKED
+    $probe = & $Cli @("pcb", "drc", "--project", $Project) 2>&1 | Out-String
+    if ($probe -match "no connected window|daemon health") { Add-Result "pcb-connectivity" "BLOCKED" "没有在线窗口，无法读 DRC"; return }
+    $drc = Invoke-Json $a
+    if (-not $drc) { Add-Result "pcb-connectivity" "FAIL" "pcb drc --json 读不到 JSON"; return }
+    # 扁平结构（实测）：{ passed, total, counts:{rule→n}, violations:[{rule,net,objType,x,y,...}] }
+    $counts = $drc.counts
+    $connCount = 0
+    $rowsProbe = @($drc.violations | Where-Object { $_.rule -eq "Connection Error" })
+    if ($counts -and $counts.PSObject.Properties.Name -contains "Connection Error") { $connCount = [int]$counts."Connection Error" }
+    # 防假绿：counts 缺键但逐行存在 Connection Error 时，以行数为准
+    if ($connCount -eq 0 -and $rowsProbe.Count -gt 0) { $connCount = $rowsProbe.Count }
+    if ($connCount -eq 0) { Add-Result "pcb-connectivity" "PASS" "Connection Error 0"; return }
+    $rows = @($drc.violations | Where-Object { $_.rule -eq "Connection Error" })
+    $byNet = @($rows | Group-Object net | Sort-Object Count -Descending | ForEach-Object { "$($_.Name)=$($_.Count)" })
+    $pads = @($rows | Where-Object { $_.objType -notmatch "Via" }).Count
+    $vias = @($rows | Where-Object { $_.objType -match "Via" }).Count
+    Add-Result "pcb-connectivity" "FAIL" ("Connection Error {0} 条（焊盘 {1} / 过孔 {2}）： {3}" -f $connCount, $pads, $vias, ($byNet -join ", "))
 }
 
 function Test-PcbDfm {
