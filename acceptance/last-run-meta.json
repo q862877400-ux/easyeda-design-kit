@@ -1,11 +1,11 @@
 {
   "case": "esp32-4layer",
   "executor": "unspecified",
-  "finishedAt": "2026-10-31T02:05:03",
-  "exitCode": 1,
+  "finishedAt": "2026-10-31T02:06:08",
+  "exitCode": 2,
   "pass": 7,
-  "fail": 1,
-  "blocked": 5,
+  "fail": 0,
+  "blocked": 6,
   "stages": [
     {
       "stage": "kit-integrity",
@@ -33,15 +33,15 @@
     },
     {
       "stage": "pcb-layout",
-      "status": "PASS"
+      "status": "BLOCKED"
     },
     {
       "stage": "pcb-connectivity",
-      "status": "FAIL"
+      "status": "BLOCKED"
     },
     {
       "stage": "pcb-dfm",
-      "status": "PASS"
+      "status": "BLOCKED"
     },
     {
       "stage": "delivery",
@@ -49,7 +49,7 @@
     },
     {
       "stage": "no-oneoff-scripts",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "stage": "positive-goal",
@@ -57,7 +57,7 @@
     },
     {
       "stage": "negative-drift",
-      "status": "BLOCKED"
+      "status": "PASS"
     }
   ]
 }
