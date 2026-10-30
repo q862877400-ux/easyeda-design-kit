@@ -1,0 +1,55 @@
+{
+  "case": "esp32-4layer",
+  "executor": "lead/A",
+  "finishedAt": "2026-10-31T00:52:09",
+  "exitCode": 2,
+  "pass": 3,
+  "fail": 0,
+  "blocked": 8,
+  "stages": [
+    {
+      "stage": "kit-integrity",
+      "status": "PASS"
+    },
+    {
+      "stage": "tool-decision-table",
+      "status": "PASS"
+    },
+    {
+      "stage": "environment",
+      "status": "BLOCKED"
+    },
+    {
+      "stage": "schematic-gates",
+      "status": "BLOCKED"
+    },
+    {
+      "stage": "pcb-layout",
+      "status": "BLOCKED"
+    },
+    {
+      "stage": "pcb-connectivity",
+      "status": "BLOCKED"
+    },
+    {
+      "stage": "pcb-dfm",
+      "status": "BLOCKED"
+    },
+    {
+      "stage": "delivery",
+      "status": "BLOCKED"
+    },
+    {
+      "stage": "no-oneoff-scripts",
+      "status": "BLOCKED"
+    },
+    {
+      "stage": "positive-goal",
+      "status": "PASS"
+    },
+    {
+      "stage": "negative-drift",
+      "status": "BLOCKED"
+    }
+  ]
+}

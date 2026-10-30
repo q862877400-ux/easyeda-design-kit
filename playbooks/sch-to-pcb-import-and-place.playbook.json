@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "sch-to-pcb-import-and-place",
+    "description": "原理图 → PCB 的固定前三步：结构孔 -> 导入变更 -> 约束布局 -> 落盘。对应 docs/phases/pcb-p0-p10.md 的 P0–P3。\n\n为什么是这个顺序（每条都是踩出来的）：\n1. `pcb mount-holes` 必须在 import-changes **之前**：导入变更时器件按飞线聚团落在板中心，若四角 M3 孔后放，会把已落好的器件挤走，重新布局的成本远高于先占位。\n2. `pcb import-changes` 只在原理图**已保存**时才有内容可导；原理图未落盘时它会静默成功但什么都不改——所以跑完必须用 `pcb layout-lint` 核对器件数，不能只看命令成功。\n3. `pcb place-constrained` 是在导入后的器件堆上做约束布局；它需要在同一轮里紧跟 import，否则飞线（ratsnest）是按导入瞬间的网表算的，隔一轮会与实际网表脱节。\n4. 本链**不铺铜、不布线**：布局阶段就布线会锁死器件位置，后续 P3 模块化布局无法再动。\n5. 最后 `pcb save`，之后必须 `easyeda doc reload` 再读，否则 DRC/ratsnest 是中间态（曾把 Connection 读成 104，重载后真实 41）。\n\n板框约束：本板板框由客户给定，禁止 `pcb outline-fit`；四角 M3 孔用 mount-holes 生成，不移动板框。",
+    "project": "agent-e2e-esp32s3-board31",
+    "doc": "PCB1"
+  },
+  "defaults": { "timeoutSec": 300, "retry": 0, "continueOnError": false },
+  "steps": [
+    {
+      "id": "mount-holes",
+      "run": "pcb mount-holes",
+      "name": "先占四角 M3 结构孔，避免导入后被器件挤走",
+      "flags": {}
+    },
+    {
+      "id": "import-changes",
+      "run": "pcb import-changes",
+      "name": "把原理图变更导入 PCB（器件与网络）",
+      "flags": {}
+    },
+    {
+      "id": "place-constrained",
+      "run": "pcb place-constrained",
+      "name": "在导入后的飞线基础上做约束布局",
+      "flags": {}
+    },
+    {
+      "id": "layout-check",
+      "run": "pcb layout-lint",
+      "name": "核对器件数与合法性：0 短路 / 0 重叠 / 0 出框，并记下 ratsnest 数字",
+      "flags": {}
+    },
+    {
+      "id": "save",
+      "run": "pcb save",
+      "name": "落盘；之后必须 doc reload 再读才算数"
+    }
+  ]
+}

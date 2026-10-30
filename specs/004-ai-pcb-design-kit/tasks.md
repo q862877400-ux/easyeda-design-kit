@@ -42,8 +42,8 @@
 - [x] T012 反偷换纪律文档 `docs/anti-drift.md`（判据 + 事故对照 + 每轮用法）
 - [x] T013 决策表契约 `contracts/decision-row.schema.md`（解析算法为权威定义）
 - [x] T014 验收报告契约 `contracts/acceptance-report.schema.md`（退出码不变式）
-- [ ] T015 [P] **批准宪法**：用 `speckit-constitution` 把 plan.md「Constitution Check」的 G1–G5 正式写入 `.specify/memory/constitution.md`（当前仍是未填模板）
-- [ ] T016 [P] `docs/capability-boundary.md` 骨架（E4 字段：capability/evidence/triedTools/alternative/status）
+- [x] T015 [P] **批准宪法**：用 `speckit-constitution` 把 plan.md「Constitution Check」的 G1–G5 正式写入 `.specify/memory/constitution.md`（当前仍是未填模板）
+- [x] T016 [P] `docs/capability-boundary.md` 骨架（E4 字段：capability/evidence/triedTools/alternative/status）
 
 **Checkpoint**：门禁可运行且自测 8/8、矩阵 16/16 → 之后所有工作都可被判分。
 
@@ -55,13 +55,13 @@
 **Independent Test**：全新会话、零上下文，只读 `docs/` 与 `playbooks/`，按阶段文档走完并验收通过。
 
 - [x] T017 [P] [US1] 决策表 `docs/tool-decision-table.md`：84 行，工具名全部可解析（`tool-decision-table` PASS）
-- [ ] T018 [P] [US1] 阶段文档 `docs/phases/schematic-s0-s6.md`：7 阶段，每阶段 entry/actions/exit/onFail（E2 字段）
-- [ ] T019 [P] [US1] 阶段文档 `docs/phases/pcb-p0-p10.md`：11 阶段，同上；每条 `exit` 必须是命令或数字阈值
-- [ ] T020 [US1] `playbooks/README.md`：现有链路索引（名称、用途、前置、影响面）
-- [ ] T021 [US1] 把 `pcb-rebuild-routed.playbook.json` 的「顺序理由」补进 playbooks/README
-- [ ] T022 [US1] 新增 playbook：`sch-import-then-place`（原理图→PCB 的导入与约束布局链）
-- [ ] T023 [US1] 在 `docs/phases/pcb-p0-p10.md` 写明每个阶段**首选扩展**（PCB Auto Router / 内电层自动分划 / 嘉立创下单检查 / PCB Delivery Export）
-- [ ] T024 [US1] 写 `docs/harness-install.md`：把 kit 装进任意 harness 的步骤（skill 目录形态）
+- [x] T018 [P] [US1] 阶段文档 `docs/phases/schematic-s0-s6.md`：7 阶段，每阶段 entry/actions/exit/onFail（E2 字段）
+- [x] T019 [P] [US1] 阶段文档 `docs/phases/pcb-p0-p10.md`：11 阶段，同上；每条 `exit` 必须是命令或数字阈值
+- [x] T020 [US1] `playbooks/README.md`：现有链路索引（名称、用途、前置、影响面）
+- [x] T021 [US1] 把 `pcb-rebuild-routed.playbook.json` 的「顺序理由」补进 playbooks/README
+- [x] T022 [US1] 新增 playbook：`sch-import-then-place`（原理图→PCB 的导入与约束布局链）
+- [x] T023 [US1] 在 `docs/phases/pcb-p0-p10.md` 写明每个阶段**首选扩展**（PCB Auto Router / 内电层自动分划 / 嘉立创下单检查 / PCB Delivery Export）
+- [x] T024 [US1] 写 `docs/harness-install.md`：把 kit 装进任意 harness 的步骤（skill 目录形态）
 - [ ] T025 [US1] 未见板执行剧本 `docs/playbook-unseen-board.md`：从需求到验收的完整操作序列（含 tee 日志）
 
 **Checkpoint**：一个没看过本项目的人能照文档画出板并自证。
@@ -73,9 +73,9 @@
 **Goal**：产品能力不依赖特定模型。
 **Independent Test**：同需求、两个执行者，各自跑完并都通过；阶段结论一致。
 
-- [ ] T026 [US2] `acceptance/compare-runs.ps1`：输入两份 `last-report.json`，输出阶段结论差异与一致性判定
+- [x] T026 [US2] `acceptance/compare-runs.ps1`：输入两份 `last-report.json`，输出阶段结论差异与一致性判定
 - [ ] T027 [US2] `docs/phases/pcb-p0-p10.md` 增加「执行者无关性」小节：哪些步骤允许顺序不同、哪些必须一致
-- [ ] T028 [US2] 记录模型/执行者到报告：`last-report.json` 增加 `executor` 字段（model + harness + session）
+- [x] T028 [US2] 记录模型/执行者到报告：`last-report.json` 增加 `executor` 字段（model + harness + session）
 - [ ] T029 [US2] 在 `quickstart.md` 加"第二执行者复跑"章节，含弱化验证（无模型切换时）的标注规则
 
 **Checkpoint**：能证明（或诚实标注无法证明）SC-004。

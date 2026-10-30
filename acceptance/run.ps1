@@ -22,6 +22,7 @@ param(
     [Parameter(Mandatory = $false)][int]$DecisionBaseline = -1,
     [Parameter(Mandatory = $false)][string]$SourceRoot = "",
     [Parameter(Mandatory = $false)][string]$InstalledCli = "",
+    [Parameter(Mandatory = $false)][string]$Executor = "",
     [Parameter(Mandatory = $false)][switch]$Quiet
 )
 
@@ -247,6 +248,16 @@ if (-not $Quiet) {
 
 $report = Join-Path $script:AcceptDir "last-report.json"
 $script:Results | ConvertTo-Json -Depth 5 | Set-Content $report -Encoding UTF8
+if ([string]::IsNullOrWhiteSpace($Executor)) { $Executor = "unspecified" }
+$meta = [ordered]@{
+    case = $Case
+    executor = $Executor
+    finishedAt = (Get-Date).ToString("s")
+    exitCode = $(if ($fail -gt 0) { 1 } elseif ($blocked -gt 0) { 2 } else { 0 })
+    pass = $pass; fail = $fail; blocked = $blocked
+    stages = @($script:Results | ForEach-Object { [ordered]@{ stage = $_.Stage; status = $_.Status } })
+}
+$meta | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $script:AcceptDir "last-run-meta.json") -Encoding UTF8
 
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }

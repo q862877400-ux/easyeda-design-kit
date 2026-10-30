@@ -1,0 +1,57 @@
+[
+  {
+    "Stage": "kit-integrity",
+    "Status": "PASS",
+    "Detail": "8 份必需文档齐备"
+  },
+  {
+    "Stage": "tool-decision-table",
+    "Status": "PASS",
+    "Detail": "84 行，点名工具全部可解析"
+  },
+  {
+    "Stage": "environment",
+    "Status": "BLOCKED",
+    "Detail": "没有在线的 EDA 窗口（windows 为空）"
+  },
+  {
+    "Stage": "schematic-gates",
+    "Status": "BLOCKED",
+    "Detail": "未指定 -Project"
+  },
+  {
+    "Stage": "pcb-layout",
+    "Status": "BLOCKED",
+    "Detail": "未指定 -Project"
+  },
+  {
+    "Stage": "pcb-connectivity",
+    "Status": "BLOCKED",
+    "Detail": "未指定 -Project"
+  },
+  {
+    "Stage": "pcb-dfm",
+    "Status": "BLOCKED",
+    "Detail": "未指定 -Project"
+  },
+  {
+    "Stage": "delivery",
+    "Status": "BLOCKED",
+    "Detail": "未指定 -DeliveryDir"
+  },
+  {
+    "Stage": "no-oneoff-scripts",
+    "Status": "BLOCKED",
+    "Detail": "未指定 -RunLog（无法审计）"
+  },
+  {
+    "Stage": "positive-goal",
+    "Status": "PASS",
+    "Detail": "规范产物 9/3/14/9；SC 判据 6 条；三态语义由 run.ps1 保障（BLOCKED≠PASS，交付物查非空）；playbook 11 步全部命中现有命令；门禁脚本 5 个均可解析"
+  },
+  {
+    "Stage": "negative-drift",
+    "Status": "BLOCKED",
+    "Detail": "N4–N6 需要 -RunLog 才能审计（缺快照重取 / rip-up 撤路径 / 未重载就读 DRC）；自建检查器 0 个（提字样 0 个均非实现）；决策表 84 行"
+  }
+]
