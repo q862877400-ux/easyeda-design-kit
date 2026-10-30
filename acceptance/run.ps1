@@ -340,6 +340,7 @@ if (-not $Quiet) {
 Test-KitIntegrity
 Test-KitPortability
 Test-DecisionTable
+Test-InstalledClaims
 Test-CapabilityBoundary
 Test-Environment
 Test-SchematicGates

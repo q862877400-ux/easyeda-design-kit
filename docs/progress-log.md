@@ -50,3 +50,4 @@
 | 19 | 补 `SKILL.md`（可装进任意 harness 的入口）+ 新增 `kit-portability` 门禁（禁止文档含本机绝对路径）| kit-integrity 13/13、selftest **23/23** | 本轮 |
 | 20 | 自包含实测（复制到临时目录仍 7 PASS/0 FAIL/7 BLOCKED）+ 写 `docs/HANDOVER.md` 交接说明 | kit-integrity 14/14、自测 23/23、矩阵 16/16 | 本轮 |
 | 21 | **GUI 接入成功**（bsk 会话 + 扩展菜单无障碍树）；纠正重大文档错误：实装 22 个而非 75 个，PCB Auto Router/FreeRouting 均未装 | 决策表 65/67 行、P6 阶段、索引均改为已装工具；GAP-026 | 本轮 |
+| 21 | 新增 `installed-claims` 门禁（决策表里标「首选/已装」的扩展必须在装机清单，否则 FAIL）+ `docs/installed-extensions.json`（22 项权威清单）| 自测 **25/25**，含反例（把 PCB Auto Router 写成首选必 FAIL）| 本轮 |

@@ -239,7 +239,7 @@ Assert-Case "决策表：CLI 命令名可解析" {
     $d = Join-Path $probe "dt"
     New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
     $rows = @("# 测试决策表", "", "| 情境 | 用哪个 | 参数 |", "|---|---|---|")
-    for ($i = 1; $i -le 30; $i++) { $rows += "| 情境$i | pcb route fill | 参数 |" }
+    for ($i = 1; $i -le 30; $i++) { $rows += "| 场景$i | pcb route fill | 参数 |" }
     $rows | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'tool-decision-table').Status -eq 'PASS'
 }
@@ -257,10 +257,28 @@ Assert-Case "kit-portability → 含 D:\\Agent-Studio 判 FAIL" {
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $pd) 'kit-portability').Status -eq 'FAIL'
 }
 
+
+# 断言 24–25：装机宣称（kit 自身 PASS / 把未装工具写成首选必须 FAIL）
+Assert-Case "installed-claims → kit 自身 PASS" {
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot) 'installed-claims').Status -eq 'PASS'
+}
+
+Assert-Case "installed-claims → 把 PCB Auto Router 写成首选 判 FAIL" {
+    $d = Join-Path $probe "claims"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
+    Copy-Item (Join-Path $KitRoot "docs\installed-extensions.json") (Join-Path $d "docs") -Force
+    $rows = @("| 情境 | 用哪个 | 参数 |", "|---|---|---|")
+    for ($i = 1; $i -le 30; $i++) { $rows += "| 场景$i | pcb route fill | 参数 |" }
+    $rows += "| 全板自动布线（首选） | PCB Auto Router | AI+GPU |"
+    $rows | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'installed-claims').Status -eq 'FAIL'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host ("===== {0} PASS / {1} FAIL =====" -f $script:Pass, $script:Fail)
 if ($script:Fail -gt 0) { exit 1 }
 exit 0
+
 

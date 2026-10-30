@@ -342,3 +342,52 @@ function Test-KitPortability {
         Add-Result "kit-portability" "PASS" "文档无本机绝对路径"
     }
 }
+
+# ══════════════════════════════════════════════════════════════════════
+# 装机宣称校验：标为「首选 / 已装 / 推荐」的扩展，必须真在装机清单里。
+#
+# 事故：决策表把 PCB Auto Router 写成"全板自动布线（首选）"，而 GUI 实测本机只装了 22 个扩展，
+# 其中没有它。任何照文档执行的模型都会去拿一个不存在的工具。
+# ══════════════════════════════════════════════════════════════════════
+function Test-InstalledClaims {
+    $listPath = Join-Path $script:AuditRoot 'docs\installed-extensions.json'
+    $tablePath = Join-Path $script:AuditRoot 'docs\tool-decision-table.md'
+    if (-not (Test-Path $listPath)) { Add-Result "installed-claims" "FAIL" "缺 docs/installed-extensions.json（装机清单）"; return }
+    if (-not (Test-Path $tablePath)) { Add-Result "installed-claims" "BLOCKED" "决策表不存在，无法校验装机宣称"; return }
+    try { $inv = Get-Content $listPath -Raw | ConvertFrom-Json } catch { Add-Result "installed-claims" "FAIL" "装机清单不是合法 JSON"; return }
+    $installed = @($inv.installed)
+    $rows = Get-Content $tablePath | Where-Object { $_ -match '^\|' -and $_ -notmatch '^\|\s*-+' -and $_ -notmatch '情境' }
+    $bad = @()
+    foreach ($r in $rows) {
+        $cells = $r.Split('|')
+        if ($cells.Count -lt 4) { continue }
+        $situation = $cells[1].Trim()
+        $tool = $cells[2].Trim().Trim('`', '*')
+        $params = $cells[3].Trim()
+        if ([string]::IsNullOrWhiteSpace($tool)) { continue }
+        # 只在"宣称可用"的行上校验
+        if ($situation -notmatch '首选|已装|推荐|默认') { continue }
+        # CLI 命令与类型化动作不算扩展，跳过
+        if ($tool -cmatch '^pcb\s' -or $tool -match '^[a-z][a-z0-9-]*\.[a-z0-9_.]+$') { continue }
+        $isInstalled = $false
+        foreach ($i in $installed) { if ($tool -like "*$i*" -or $i -like "*$tool*") { $isInstalled = $true; break } }
+        if (-not $isInstalled -and $params -notmatch '未装|需现装|需先在扩展广场') {
+            $bad += "$tool（$situation）"
+        }
+    }
+    # 阶段文档里凡是写「首选 <某扩展>」的，同样必须在装机清单里
+    $phaseDir = Join-Path $script:AuditRoot "docs\phases"
+    if (Test-Path $phaseDir) {
+        foreach ($pf in Get-ChildItem $phaseDir -File -Filter "*.md") {
+            $text = Get-Content $pf.FullName -Raw
+            foreach ($u in @($inv.knownUninstalled)) {
+                if ($text -match ("首选[^\r\n]{0,40}" + [regex]::Escape($u))) { $bad += "$u（$($pf.Name) 首选）" }
+            }
+        }
+    }
+    if ($bad.Count -gt 0) {
+        Add-Result "installed-claims" "FAIL" ("$($bad.Count) 个被判『首选/已装』但不在装机清单且未标注未装： " + (($bad | Select-Object -First 4) -join '; '))
+    } else {
+        Add-Result "installed-claims" "PASS" ("装机清单 $($installed.Count) 项；决策表里所有『首选/已装』宣称均与之一致")
+    }
+}
