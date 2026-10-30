@@ -51,3 +51,4 @@
 | 20 | 自包含实测（复制到临时目录仍 7 PASS/0 FAIL/7 BLOCKED）+ 写 `docs/HANDOVER.md` 交接说明 | kit-integrity 14/14、自测 23/23、矩阵 16/16 | 本轮 |
 | 21 | **GUI 接入成功**（bsk 会话 + 扩展菜单无障碍树）；纠正重大文档错误：实装 22 个而非 75 个，PCB Auto Router/FreeRouting 均未装 | 决策表 65/67 行、P6 阶段、索引均改为已装工具；GAP-026 | 本轮 |
 | 21 | 新增 `installed-claims` 门禁（决策表里标「首选/已装」的扩展必须在装机清单，否则 FAIL）+ `docs/installed-extensions.json`（22 项权威清单）| 自测 **25/25**，含反例（把 PCB Auto Router 写成首选必 FAIL）| 本轮 |
+| 22 | GUI 进扩展广场（ext.lceda.cn 实测可达）：确认 PCB Auto Router v1.48.7 在列并下载 .eext（288 KB）；查明它**依赖单独主程序**（127.0.0.1）；发现扩展菜单懒渲染 → 「22 个已装」降级为某次读取结果 | GAP-027/028；装机清单加 caveat | 本轮 |

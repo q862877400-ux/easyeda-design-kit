@@ -51,5 +51,10 @@
     "交付导出": "PCB 交付（已装）+ 类型化动作 pcb.export.gerber / pcb.export.pick_place / schematic.export.bom",
     "等长": "一键等长 / 线段等距（已装）",
     "铺铜/平面": "命令层 pcb power-planes / pcb pour-fit / pcb pour-rebuild（已装 CLI）"
+  },
+  "caveat": "警告：扩展菜单是懒渲染的，两次读取得到的条目不同（一次 22 项、一次 14 项）。本文件只能当\"某次读取结果\"，权威装机状态必须看 高级→扩展管理器→已安装 列表。",
+  "marketplaceVerified": {
+    "note": "2026-10-31 实测可访问，登录态在浏览器里；列表里能看到 PCB Auto Router v1.48.7（414 安装）等扩展",
+    "url": "https://ext.lceda.cn/"
   }
 }
