@@ -149,8 +149,6 @@
 - **evidence**：`easyeda call schematic.export.bom --payload '{"fileType":"xlsx"}'`（未固定文档）返回
   `ok:false`「BOM export returned no file.」；改用 `--doc <原理图页 uuid>` 后 **`ok:true`**，
   产出 `20261031-011335-schematic_bom-e43f4f93.xlsx`（**8,378 B**）。csv 同样成功。
-  `ok:false`，`code=EDA_CALL_FAILED`，`message="BOM export returned no file."`；
-  同时 `schematic.export.netlist` 等动作存在。切到原理图窗口后仍如此。
 - **triedTools**：`schematic.export.bom`、`PCB Delivery Export`、`多板生产文件一键导出`
 - **alternative**：调用时**必须** `--doc <原理图页 uuid>` 固定文档；否则动作找不到 BOM 上下文。
 - **status**：`resolved`
