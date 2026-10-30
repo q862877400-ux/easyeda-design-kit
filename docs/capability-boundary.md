@@ -223,3 +223,16 @@
   had no clearance-clean via spot`，说明剩余多为**布局挤死**（GAP-008），不是布线能解。
 - **status**：`open`
 
+
+---
+
+## GAP-018 DRC 标的「未连过孔」不等于孤儿，删掉会更糟
+
+- **capability**：把 DRC 列为 Connection Error 的过孔当垃圾清掉。
+- **evidence**：对 4 个该类过孔执行 `pcb via-delete --ids`（GND/3V3/5V_IN×2）后，
+  Connection **33 → 38**（+5），Clearance 不变。按原坐标用 `pcb via` 重建后，**恢复为 33**。
+  结论：DRC 的「未连」表示"未接入全网"，这些过孔仍在承载层间连接。
+- **triedTools**：`pcb via-delete`、`pcb via`、`pcb drc`
+- **alternative**：清理前必须先确认该图元是否真的孤立（看 `pcb via-list` 两端是否无铜）；
+  否则不要删。撤销用原坐标 `pcb via --x --y --net` 重建（实测可恢复）。
+- **status**：`accepted`
