@@ -46,7 +46,7 @@ function Test-PositiveGoal {
     if ($isExternal) {
         # 外部审计：连接器/CLI 本身是合法基础设施，不能按"kit 里零实现代码"判。
         # 只判"功能与既有扩展重叠"的那部分——那才是重复造轮子。
-        $dupSig = '(?i)(check|drc|dfm|autorout|shortroute|route_)'
+        $dupSig = '(?i)(check|drc|dfm|autorout|shortroute|route_|silk|pour|export|gerber|bom)'
         $dup = @($impl | Where-Object { $_.Name -match $dupSig -and $_.Length -gt 20KB -and $_.Name -notmatch '_test' })
         if ($dup.Count -gt 0) {
             $fail += "P3(外部审计) $($dup.Count) 个实现文件与既有扩展功能重叠（重复造轮子）： $(($dup | Select-Object -First 4 | ForEach-Object { $_.Name }) -join ', ')"
@@ -91,6 +91,14 @@ function Test-PositiveGoal {
         }
         if ($fail.Count -eq 0) { $note += "playbook $stepChecked 步全部命中现有命令" }
     }
+    # P7 门禁脚本自身必须可解析（事故：改了门禁但脚本已坏，门禁静默失效）
+    $badScript = @()
+    foreach ($sf in Get-ChildItem (Join-Path $script:AcceptDir '*.ps1') -File -ErrorAction SilentlyContinue) {
+        $perr = $null
+        [System.Management.Automation.Language.Parser]::ParseFile($sf.FullName, [ref]$null, [ref]$perr) | Out-Null
+        if ($perr -and $perr.Count -gt 0) { $badScript += $sf.Name }
+    }
+    if ($badScript.Count -gt 0) { $fail += "P7 门禁脚本语法错误（门禁会静默失效）： $($badScript -join ', ')" } else { $note += "门禁脚本 $(@(Get-ChildItem (Join-Path $script:AcceptDir '*.ps1') -File).Count) 个均可解析" }
     if ($fail.Count -gt 0) { Add-Result "positive-goal" "FAIL" ($fail -join '；') }
     else { Add-Result "positive-goal" "PASS" ($note -join '；') }
 }
@@ -189,9 +197,21 @@ function Test-NegativeDrift {
         if (Test-Path $bp) {
             $b2 = Get-Content $bp -Raw | ConvertFrom-Json
             if ($null -ne $b2.decision_rows -and $rows -lt [int]$b2.decision_rows) { $fail += "N8 决策表行数从 $($b2.decision_rows) 降到 $rows（工具经验在减少）" }
+            elseif ($script:DecisionBaseline -ge 0 -and $rows -lt $script:DecisionBaseline) { $fail += "N8 决策表行数 $rows < 注入基线 $script:DecisionBaseline（工具经验在减少）" }
         }
         $note += "决策表 $rows 行"
     } finally { Pop-Location }
+    # N9 改了源码却没重装就继续跑（事故：我改完 Go 代码，跑的仍是旧 exe，据此下了错误结论）
+    if (-not [string]::IsNullOrWhiteSpace($script:SourceRoot) -and (Test-Path $script:SourceRoot) -and (Test-Path $script:InstalledCli)) {
+        $newest = Get-ChildItem $script:SourceRoot -Recurse -File -Include '*.go' -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\\.git\\' } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($newest) {
+            $exeTime = (Get-Item $script:InstalledCli).LastWriteTime
+            if ($newest.LastWriteTime -gt $exeTime) {
+                $fail += "N9 源码比已安装 CLI 新（改了没重装就跑了旧二进制）： $($newest.Name) 新于 $([System.IO.Path]::GetFileName($script:InstalledCli))"
+            } else { $note += "已安装 CLI 不旧于源码" }
+        }
+    }
     if ($fail.Count -gt 0) { Add-Result "negative-drift" "FAIL" ($fail -join '；') }
     elseif ($blocked.Count -gt 0) { Add-Result "negative-drift" "BLOCKED" (($blocked + $note) -join '；') }
     else { Add-Result "negative-drift" "PASS" ($note -join '；') }
@@ -206,6 +226,10 @@ function Get-CanonicalCounts {
         spec_files = @(Get-ChildItem (Join-Path $script:RepoRoot 'specs') -Recurse -File -ErrorAction SilentlyContinue).Count
     }
 }
+
+
+
+
 
 
 

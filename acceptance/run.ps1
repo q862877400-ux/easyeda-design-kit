@@ -19,6 +19,9 @@ param(
     [Parameter(Mandatory = $false)][string]$RunLog = "",
     [Parameter(Mandatory = $false)][string]$AuditRoot = "",
     [Parameter(Mandatory = $false)][string]$CodeScope = "",
+    [Parameter(Mandatory = $false)][int]$DecisionBaseline = -1,
+    [Parameter(Mandatory = $false)][string]$SourceRoot = "",
+    [Parameter(Mandatory = $false)][string]$InstalledCli = "",
     [Parameter(Mandatory = $false)][switch]$Quiet
 )
 
