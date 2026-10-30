@@ -71,6 +71,7 @@ function Test-KitIntegrity {
     $required = @(
         "PRODUCT.md",
         "SKILL.md",
+        "docs\HANDOVER.md",
         "specs\004-ai-pcb-design-kit\spec.md",
         "docs\anti-drift.md",
         "docs\tool-decision-table.md",

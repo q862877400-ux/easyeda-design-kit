@@ -48,3 +48,4 @@
 | 17 | 命令行穷尽验证（D2_5 三组、U0TXD 七组全 incomplete）；converge 出 T055（GUI 授权）/T056（布局风险）| Connection 6 保持；停止条件达成：仅剩需业主决策项 | 本轮 |
 | 18 | 把 39→6 的战法沉淀成 `docs/phases/pcb-connectivity-recovery.md`；决策表补 5 行 CLI 命令；判据修：决策表阶段现在认 CLI 命令名（与 P6 同口径）| kit-integrity 12/12、决策表 **92 行**、selftest 21/21 | 本轮 |
 | 19 | 补 `SKILL.md`（可装进任意 harness 的入口）+ 新增 `kit-portability` 门禁（禁止文档含本机绝对路径）| kit-integrity 13/13、selftest **23/23** | 本轮 |
+| 20 | 自包含实测（复制到临时目录仍 7 PASS/0 FAIL/7 BLOCKED）+ 写 `docs/HANDOVER.md` 交接说明 | kit-integrity 14/14、自测 23/23、矩阵 16/16 | 本轮 |
