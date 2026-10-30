@@ -46,3 +46,4 @@
 | 15 | 系统化「未连焊盘 → 已接地焊盘」走线：GND 两屏蔽盘 + 3V3 C5.1/C7.1 + 5V_IN C8.1 全部接通 | Connection **14→8**（GND 清零），DFM ERROR 0 | 本轮 |
 | 16 | 3V3 清零（U3.4/C7.1 → C5.1 走线）；判定剩余 6 条为两个孤岛（5V_IN D2_5 需过孔无空间、U0TXD 走廊被占）| Connection **8→6**，DFM ERROR 0 | 本轮 |
 | 17 | 命令行穷尽验证（D2_5 三组、U0TXD 七组全 incomplete）；converge 出 T055（GUI 授权）/T056（布局风险）| Connection 6 保持；停止条件达成：仅剩需业主决策项 | 本轮 |
+| 18 | 把 39→6 的战法沉淀成 `docs/phases/pcb-connectivity-recovery.md`；决策表补 5 行 CLI 命令；判据修：决策表阶段现在认 CLI 命令名（与 P6 同口径）| kit-integrity 12/12、决策表 **92 行**、selftest 21/21 | 本轮 |

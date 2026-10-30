@@ -29,6 +29,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$script:DtHelpCache = @{}
 $script:AcceptDir = Split-Path -Parent $PSCommandPath
 $script:RepoRoot = Split-Path -Parent $script:AcceptDir
 if ([string]::IsNullOrWhiteSpace($AuditRoot)) { $script:AuditRoot = $script:RepoRoot } else { $script:AuditRoot = (Resolve-Path $AuditRoot).Path }
@@ -77,6 +78,7 @@ function Test-KitIntegrity {
         "docs\phases\pcb-p0-p10.md",
         "playbooks\README.md"
         "docs\playbook-unseen-board.md"
+        "docs\phases\pcb-connectivity-recovery.md"
         "docs\publish-extension.md"
         "docs\prior-art-map.md"
     )
@@ -117,6 +119,11 @@ $tablePath = Join-Path $script:RepoRoot "docs\tool-decision-table.md"
         $tool = $cells[2].Trim().Trim('`', '*')
         if ([string]::IsNullOrWhiteSpace($tool) -or $tool -match '^\.\.\.$') { continue }
         $hit = ($actionText -match [regex]::Escape($tool)) -or ($extText -match [regex]::Escape($tool))
+        if (-not $hit -and $tool -match '^([a-z][a-z0-9-]*)\s+(\S+)') {
+            $grp = $Matches[1]; $sub = $Matches[2]
+            if (-not $script:DtHelpCache.ContainsKey($grp)) { $script:DtHelpCache[$grp] = (& $Cli @($grp, '--help') 2>$null | Out-String) }
+            if ($script:DtHelpCache[$grp] -match [regex]::Escape($sub)) { $hit = $true }
+        }
         if (-not $hit) { $unresolved += $tool }
     }
     if ($unresolved.Count -eq 0) {

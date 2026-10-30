@@ -233,6 +233,17 @@ Assert-Case "N5：3 次 route fill + 0 次 dump → 不判 N5" {
     $r.Detail -notmatch 'N5 求解'
 }
 
+
+# 断言 21：决策表里写 CLI 命令名也必须可解析（与 P6 同口径）
+Assert-Case "决策表：CLI 命令名可解析" {
+    $d = Join-Path $probe "dt"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
+    $rows = @("# 测试决策表", "", "| 情境 | 用哪个 | 参数 |", "|---|---|---|")
+    for ($i = 1; $i -le 30; $i++) { $rows += "| 情境$i | pcb route fill | 参数 |" }
+    $rows | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'tool-decision-table').Status -eq 'PASS'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

@@ -139,6 +139,11 @@
 | 丝印填充避让 | 动态丝印填充 | 当前未装 |
 | 3D 渲染 | PCB Blender 渲染工具 | WebSocket 发 Blender |
 
+| 未连焊盘要接到同网已连通铜 | pcb route fill | 逐跳、每跳后重铺复测；实测把 39 条未连降到 6 条的主力手段 |
+| 板子布完仍报一堆未连 | pcb drc | 用 `--json` 扁平输出；坐标是 **mil**（嵌套输出是 mm）；先按网分诊再动手 |
+| 未连集中在电源/地 | pcb power-planes | 看 `stitch.<net>.unplaced`，>0 表示该焊盘周围无干净落孔位 |
+| 必须在焊盘内打散热孔 | pcb via-stitch | 矩形须落在焊盘铜内；默认 24/12 常放不下，用 16/8；dry-run 不校验间距 |
+| 撤销本次落的铜 | pcb via-delete | 按 id 精确删；**绝不删 DRC 标的未连过孔**，也绝不用 rip-up --net |
 ## L. 计算 / 知识
 
 | 情境 | 用哪个 | 参数 / 坑 |
