@@ -195,5 +195,5 @@ T025 docs/playbook-unseen-board.md
 
 ## Phase 9: 交付链路补全（converge 新增）
 
-- [ ] T048 [US4] 验证扩展 `PCB Delivery Export` 的 GUI 导出路径（当前交付走类型化动作：`pcb.export.gerber` + `pcb.export.pick_place`；BOM 受 GAP-012 阻塞）——**需 GUI 操作，未验证**
+- [ ] T048 [US4] 验证扩展 `PCB Delivery Export` 的 GUI 导出路径（类型化动作面已打通：`pcb.export.gerber` 74,863 B、`pcb.export.pick_place` 13,358 B、`schematic.export.bom` 8,378 B 需 `--doc`）——**需 GUI 点击，未验证**
 - [x] T049 [US4] BOM 导出：排查 `schematic.export.bom` 的 no-file（是否需模板/文档上下文），或改用 `PCB Delivery Export` 扩展
