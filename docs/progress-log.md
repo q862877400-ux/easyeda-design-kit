@@ -25,3 +25,4 @@
 | environment / schematic-gates / pcb-* / delivery / no-oneoff-scripts | BLOCKED（无工程/无窗口/无日志）|
 
 **结论**：产品骨架与自证体系已成型；**尚未在任何真板上端到端跑通**（P4 未开始，缺未见板题目）。
+| 2 | 扩展口径对账（169 动作 / 27 命令组为权威）+ 全量回归 | selftest 13/13、matrix 16/16、sample 5/5、run 4 PASS 0 FAIL | 本轮 |
