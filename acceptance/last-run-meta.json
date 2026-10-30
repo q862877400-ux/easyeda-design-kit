@@ -1,7 +1,7 @@
 {
   "case": "esp32-4layer",
-  "executor": "lead/deepseek-v4.1/dsh",
-  "finishedAt": "2026-10-31T01:41:09",
+  "executor": "unspecified",
+  "finishedAt": "2026-10-31T01:46:02",
   "exitCode": 1,
   "pass": 12,
   "fail": 1,

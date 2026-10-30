@@ -35,3 +35,4 @@
 | 6 | 修 `sch drc` 未传 `--json` 的判据缺陷；用运行日志解掉 2 个 BLOCKED | **12 PASS / 1 FAIL / 0 BLOCKED**；仅剩 pcb-connectivity 37 条 | 本轮 |
 | 7 | 逐跳 `route fill` 打通电源三网（VIN/5V/5V_IN）；修 N5 误报判据 | Connection **37→33**，Clearance 18、DFM ERROR 0；selftest 20/20 | 本轮 |
 | 8 | 5 个信号网 + USB_DP 两跳落板；记录「删未连过孔会更糟」的教训 | Connection **33→21**（累计 −16），Clearance 18、DFM ERROR 0 | 本轮 |
+| 9 | 探明 U0TXD 六种参数组合均不可解；查明 via-stitch 无间距校验 | Connection 21 保持；Clearance 18 保持；结论入边界 GAP-019/020 | 本轮 |

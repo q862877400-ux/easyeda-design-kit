@@ -236,3 +236,31 @@
 - **alternative**：清理前必须先确认该图元是否真的孤立（看 `pcb via-list` 两端是否无铜）；
   否则不要删。撤销用原坐标 `pcb via --x --y --net` 重建（实测可恢复）。
 - **status**：`accepted`
+
+---
+
+## GAP-019 U0TXD（U1.37 ↔ U3.3）在多种参数下均不可解
+
+- **capability**：把 U0TXD 这一跳连通。
+- **evidence**：`pcb route fill --net U0TXD --from U1.37 --to U3.3 --layers 1,2 --width 10`
+  在 **step 20 / detour 1500**、**step 15 / detour 2000**、**step 25 / detour 2500** 三组参数下
+  全部返回 `status=incomplete`（`segs` 空）。同板另 6 条信号跳（IO0/LED_GPIO/Q2_B/RTS/U0RXD/USB_DP）
+  同参数下均 `found`，因此不是工具坏了，而是这跳被硬阻。
+- **triedTools**：`pcb route fill`、`pcb route solve`、`PCB Auto Router`
+- **alternative**：绕行需从更远处走（U1.36/U1.37 相邻，U0RXD 已占用邻近通道）；可先连 U0RXD 的另一侧
+  通道，或调整 U1 与 U3 之间器件的位置腾出走廊。**未验证**：`PCB Auto Router` 扩展能否自动解。
+- **status**：`open`
+
+---
+
+## GAP-020 `pcb via-stitch` 不做间距校验，盲铺可能产生 Clearance Error
+
+- **capability**：用 `via-stitch` 一键补缝合孔而不用担心间距。
+- **evidence**：`--help` 只有几何参数（`--rect` / `--pitch` / `--margin` / `--diameter` / `--hole`），
+  无任何"跳过与既有铜冲突点"的开关；`--dry-run` 只输出网格坐标（实测 16 点，全部按 pitch 均布），
+  **不报告与走线/焊盘的冲突**。
+- **triedTools**：`pcb via-stitch`、`pcb power-planes`、`电源地就近打孔`
+- **alternative**：先 `--dry-run` 看网格，再用**小矩形 + 大 pitch** 落少量孔，落完立即
+  `pour-rebuild` + `pcb drc` 复测；若 Clearance 变差，用 `pcb via-delete --ids` 精确删掉本次新增
+  （不要删 DRC 标记的历史孔，见 GAP-018）。扩展形态的 `电源地就近打孔` 自带避让，可作为替代。
+- **status**：`accepted`
