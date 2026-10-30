@@ -1,0 +1,6 @@
+easyeda daemon health
+easyeda sch drc --project agent-e2e-esp32s3-board31
+easyeda pcb layout-lint --project agent-e2e-esp32s3-board31 --doc e8c8b7cb5507b5e2
+easyeda pcb drc --project agent-e2e-esp32s3-board31 --doc e8c8b7cb5507b5e2
+easyeda pcb check --project agent-e2e-esp32s3-board31 --doc e8c8b7cb5507b5e2
+easyeda doc reload --project agent-e2e-esp32s3-board31

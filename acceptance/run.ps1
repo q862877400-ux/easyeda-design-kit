@@ -14,6 +14,8 @@ param(
     [Parameter(Mandatory = $false)][string]$Case = "esp32-4layer",
     [Parameter(Mandatory = $false)][string]$Project = "",
     [Parameter(Mandatory = $false)][string]$Doc = "",
+    [Parameter(Mandatory = $false)][string]$SchDoc = "",
+    [Parameter(Mandatory = $false)][string]$IR = "",
     [Parameter(Mandatory = $false)][string]$Cli = "$env:USERPROFILE\.local\bin\easyeda.exe",
     [Parameter(Mandatory = $false)][string]$DeliveryDir = "",
     [Parameter(Mandatory = $false)][string]$RunLog = "",
@@ -48,9 +50,9 @@ function Invoke-Json {
     param([string[]]$CliArgs)
     $raw = & $Cli $CliArgs 2>$null | Out-String
     if ([string]::IsNullOrWhiteSpace($raw)) { return $null }
-    $idx = $raw.IndexOf("{")
-    if ($idx -lt 0) { return $null }
-    try { return ($raw.Substring($idx) | ConvertFrom-Json) } catch { return $null }
+    $idx = $raw.IndexOf("{"); $last = $raw.LastIndexOf("}")
+    if ($idx -lt 0 -or $last -le $idx) { return $null }
+    try { return ($raw.Substring($idx, $last - $idx + 1) | ConvertFrom-Json) } catch { return $null }
 }
 
 function Get-FirstJsonNumber {
@@ -142,13 +144,45 @@ function Test-Environment {
 }
 
 # ── 阶段 4–8：需要一个真实工程 ────────────────────────────────────────────
+# ── 阶段：Design IR 离线校验（Gate-1）──────────────────────────────────
+# 采用上游 smart-hardware-engineer 的 IR schema 与校验器（见 vendor/prior-art 的 README）。
+# 为什么需要它：直接从需求跳到 EDA 操作，改一次就要重画一次，且无法离线自检。
+function Test-DesignIR {
+    if ([string]::IsNullOrWhiteSpace($IR)) { Add-Result "design-ir" "BLOCKED" "未指定 -IR（design.ir.json）"; return }
+    if (-not (Test-Path $IR)) { Add-Result "design-ir" "FAIL" "IR 文件不存在： $IR"; return }
+    $validator = Join-Path $script:RepoRoot "vendor\prior-art\smart-hardware-engineer\scripts\ir_validate.py"
+    if (-not (Test-Path $validator)) { Add-Result "design-ir" "FAIL" "IR 校验器缺失（vendor 未随包分发？）"; return }
+    $env:PYTHONUTF8 = "1"
+    $env:PYTHONIOENCODING = "utf-8"
+    $raw = & python $validator $IR 2>&1 | Out-String
+    $code = $LASTEXITCODE
+    $last = ($raw -split "`n" | Where-Object { $_ -match "结果:" } | Select-Object -Last 1)
+    if ([string]::IsNullOrWhiteSpace($last)) { $last = ($raw -split "`n" | Select-Object -Last 1) }
+    $last = $last.Trim()
+    if ($code -eq 0) { Add-Result "design-ir" "PASS" $last }
+    else { Add-Result "design-ir" "FAIL" $last }
+}
+
 function Test-SchematicGates {
     if ([string]::IsNullOrWhiteSpace($Project)) { Add-Result "schematic-gates" "BLOCKED" "未指定 -Project"; return }
-    $drc = Invoke-Json @("sch", "drc", "--project", $Project)
-    if (-not $drc) { Add-Result "schematic-gates" "FAIL" "sch drc 读不到 JSON"; return }
-    $passed = $drc.result.passed
-    if ($passed -eq $true) { Add-Result "schematic-gates" "PASS" "sch drc passed" }
-    else { Add-Result "schematic-gates" "FAIL" "sch drc 未通过" }
+    if ([string]::IsNullOrWhiteSpace($SchDoc)) { Add-Result "schematic-gates" "BLOCKED" "未指定 -SchDoc（原理图文档 uuid）；无活动原理图页时 sch drc/check 均无法验证"; return }
+    $args1 = @("sch", "drc", "--project", $Project, "--doc", $SchDoc)
+    $raw = & $Cli $args1 2>&1 | Out-String
+    # 实测：部分文档类型 sch drc 返回 "doctype(3) not support check sch drc"（GAP-014）
+    if ($raw -match "not support") {
+        $raw2 = & $Cli @("sch", "check", "--project", $Project, "--doc", $SchDoc) 2>&1 | Out-String
+        if ($raw2 -match "(?i)failed|Cannot verify") {
+            $msg = ($raw2 -split "`n" | Select-Object -First 1)
+            Add-Result "schematic-gates" "BLOCKED" "sch drc 不支持该文档类型，sch check 亦无法验证： $msg"
+        } else {
+            Add-Result "schematic-gates" "PASS" "sch drc 不支持 doctype(3)，回退 sch check 且未报错"
+        }
+        return
+    }
+    if ($raw -match '"passed"\s*:\s*true') { Add-Result "schematic-gates" "PASS" "sch drc passed"; return }
+    if ($raw -match '"passed"\s*:\s*false') { Add-Result "schematic-gates" "FAIL" "sch drc passed=false"; return }
+    $msg = ($raw -split "`n" | Select-Object -First 1)
+    Add-Result "schematic-gates" "BLOCKED" "sch drc 未给出可解析结论： $msg"
 }
 
 function Test-PcbLayout {
@@ -281,6 +315,7 @@ Test-DecisionTable
 Test-CapabilityBoundary
 Test-Environment
 Test-SchematicGates
+Test-DesignIR
 Test-PcbLayout
 Test-PcbConnectivity
 Test-PcbDfm

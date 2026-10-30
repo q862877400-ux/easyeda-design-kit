@@ -197,3 +197,10 @@ T025 docs/playbook-unseen-board.md
 
 - [ ] T048 [US4] 验证扩展 `PCB Delivery Export` 的 GUI 导出路径（类型化动作面已打通：`pcb.export.gerber` 74,863 B、`pcb.export.pick_place` 13,358 B、`schematic.export.bom` 8,378 B 需 `--doc`）——**需 GUI 点击，未验证**
 - [x] T049 [US4] BOM 导出：排查 `schematic.export.bom` 的 no-file（是否需模板/文档上下文），或改用 `PCB Delivery Export` 扩展
+
+## Phase 10: 生态复用（按业主指示，避免重复造轮子）
+
+- [x] T050 采用上游 `smart-hardware-engineer` 的 Design IR + Gate-1 校验器（MIT），并接入验收阶段 `design-ir`（实测：样例 PASS / 破坏后 FAIL；Windows 需 `PYTHONUTF8=1`）
+- [ ] T051 用**真实开源工程**做未见板用例：已下载 `ProPrj_ESP32S3_USB_2026-05-20.epro2`（0.3 MB，ZIP 魔数校验通过）→ 待导入后跑验收
+- [ ] T052 `.epro2` 导入为**一次性 GUI 操作**（动作目录无 project import）；导入后其余流程全 CLI 驱动——**需 GUI，未验证**
+- [ ] T053 评估把上游 `references/` 的电路架构知识并入决策表（去重后引用，不整份复制）

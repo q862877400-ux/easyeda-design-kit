@@ -1,0 +1,118 @@
+{
+  "meta": {
+    "project_name": "blinky_usb_mcu",
+    "version": "0.1.0",
+    "units": "mm",
+    "fab": "JLCPCB",
+    "author": "smart-hardware-engineer",
+    "confirmed": true,
+    "confirmed_at": "2026-06-16"
+  },
+  "requirements": {
+    "summary": "USB-C 供电的最小 MCU 点灯板：上电后 LED 以 1Hz 闪烁，预留 SWD 调试口。用于打通'需求→IR→驱动→原理图→PCB→DRC→导出'最小闭环。",
+    "assumptions": [
+      "USB-C 仅取电(device, sink)，不做数据通信",
+      "MCU 用 3V3 供电；具体型号在选型阶段从 JLC 库确认(此处为占位)",
+      "板尺寸 30x25mm，2 层即可"
+    ],
+    "success_criteria": [
+      "原理图 ERC 干净且连通性与 IR 一致",
+      "PCB DRC 0 错、0 未布线",
+      "导出 Gerber/BOM/CPL 一致"
+    ],
+    "constraints": {
+      "supply": "USB-C 5V",
+      "board_size": "30x25mm",
+      "layers": 2,
+      "quantity": 5,
+      "assembly": "JLC SMT",
+      "cost_target": "低",
+      "rf": false,
+      "high_voltage": false
+    }
+  },
+  "architecture": {
+    "power_tree": [
+      { "rail": "VBUS", "voltage_v": 5.0, "source": "USB-C J1", "current_budget_a": 0.2, "regulator": "connector" },
+      { "rail": "+3V3", "voltage_v": 3.3, "source": "VBUS", "current_budget_a": 0.05, "regulator": "U2", "margin_note": "LDO 压差 1.7V@50mA => ~85mW，SOT-23 余量充足" }
+    ],
+    "blocks": ["usb-c-power-in", "ldo-3v3", "mcu-core", "led-indicator", "swd-debug"],
+    "risks": ["MCU 为占位，需在选型阶段用 lib_Device.search 确认真实引脚数与封装"]
+  },
+  "components": [
+    { "refdes": "J1", "type": "connector", "value": "USB-C 16P sink", "mpn": "TBD", "assembly": "extended", "placeholder": true },
+    { "refdes": "U2", "type": "ldo", "value": "3V3 LDO SOT-23-5", "mpn": "TBD", "assembly": "basic", "power_pins": ["IN", "OUT"], "placeholder": true },
+    { "refdes": "U1", "type": "mcu", "value": "MCU 占位(QFN/SOP)", "mpn": "TBD", "assembly": "extended", "power_pins": ["VDD"], "placeholder": true },
+    { "refdes": "C1", "type": "cap", "value": "10uF", "assembly": "basic" },
+    { "refdes": "C2", "type": "cap", "value": "1uF", "assembly": "basic" },
+    { "refdes": "C3", "type": "cap", "value": "100nF", "assembly": "basic" },
+    { "refdes": "C4", "type": "cap", "value": "100nF", "assembly": "basic" },
+    { "refdes": "R1", "type": "res", "value": "5.1k", "assembly": "basic" },
+    { "refdes": "R2", "type": "res", "value": "5.1k", "assembly": "basic" },
+    { "refdes": "R3", "type": "res", "value": "1k", "assembly": "basic" },
+    { "refdes": "D1", "type": "led", "value": "LED 0805", "assembly": "basic" },
+    { "refdes": "J2", "type": "connector", "value": "SWD 4P 2.54", "assembly": "manual" }
+  ],
+  "nets": [
+    { "name": "VBUS", "class": "power", "nodes": ["J1.VBUS", "U2.IN", "C1.1"] },
+    { "name": "+3V3", "class": "power", "nodes": ["U2.OUT", "C2.1", "C3.1", "C4.1", "U1.VDD", "J2.1"] },
+    { "name": "GND", "class": "gnd", "nodes": ["J1.GND", "U2.GND", "C1.2", "C2.2", "C3.2", "C4.2", "U1.GND", "D1.2", "J2.4"] },
+    { "name": "CC1", "class": "lf-signal", "nodes": ["J1.CC1", "R1.1"] },
+    { "name": "CC2", "class": "lf-signal", "nodes": ["J1.CC2", "R2.1"] },
+    { "name": "CC1_GND", "class": "lf-signal", "nodes": ["R1.2", "J1.GND_R1"] },
+    { "name": "CC2_GND", "class": "lf-signal", "nodes": ["R2.2", "J1.GND_R2"] },
+    { "name": "LED_CTRL", "class": "lf-signal", "nodes": ["U1.PA1", "R3.1"] },
+    { "name": "LED_A", "class": "lf-signal", "nodes": ["R3.2", "D1.1"] },
+    { "name": "SWDIO", "class": "lf-signal", "nodes": ["U1.PA13", "J2.2"] },
+    { "name": "SWCLK", "class": "lf-signal", "nodes": ["U1.PA14", "J2.3"] }
+  ],
+  "schematic": {
+    "sheet_size": "A4",
+    "page_rect": { "x": 0, "y": 0, "w": 297, "h": 210 },
+    "usable_rect": { "x": 10, "y": 10, "w": 230, "h": 180 },
+    "keepout_rects": [ { "x": 210, "y": 160, "w": 80, "h": 50 } ]
+  },
+  "board": {
+    "outline": { "x": 0, "y": 0, "w": 30, "h": 25 },
+    "layers": 2,
+    "copper_oz": 1,
+    "thickness_mm": 1.6,
+    "rules": [
+      { "class": "power", "trace_width_mm": 0.4, "clearance_mm": 0.2, "via": "0.3/0.6" },
+      { "class": "gnd", "trace_width_mm": 0.4, "clearance_mm": 0.2, "via": "0.3/0.6" },
+      { "class": "lf-signal", "trace_width_mm": 0.2, "clearance_mm": 0.2, "via": "0.3/0.6" }
+    ],
+    "mounting_holes": [
+      { "ref": "MH1", "x": 3, "y": 3, "hole_mm": 3.2, "metallization": false },
+      { "ref": "MH2", "x": 27, "y": 22, "hole_mm": 3.2, "metallization": false }
+    ]
+  },
+  "placement": {
+    "order": ["J1", "U2", "U1", "C1", "C2", "C3", "C4", "R1", "R2", "R3", "D1", "J2"],
+    "items": [
+      { "refdes": "J1", "x": 4, "y": 12, "rotation": 0, "layer": "top", "group": "power-in" },
+      { "refdes": "U2", "x": 10, "y": 12, "rotation": 0, "layer": "top", "group": "power" },
+      { "refdes": "U1", "x": 18, "y": 12, "rotation": 0, "layer": "top", "group": "mcu" }
+    ]
+  },
+  "routing": {
+    "order": ["gnd", "power", "lf-signal"],
+    "critical_manual": ["VBUS", "+3V3", "GND"],
+    "autoroute_after": "原理图正确 + 布局 placement DRC 干净 + 规则就绪"
+  },
+  "manufacturing": {
+    "exports": ["gerber", "drill", "bom", "cpl"],
+    "silk_checks": ["位号不压焊盘/过孔", "Pin1/极性标清晰", "板边丝印≥0.2mm"],
+    "order_boundary": "评审为止，不擅自提交/付款"
+  },
+  "firmware": {
+    "target_mcu": "TBD(选型后确定)",
+    "toolchain": "GCC + 厂商SDK(选型后确定)",
+    "pin_map": [
+      { "signal": "LED_CTRL", "pin": "PA1", "dir": "out" },
+      { "signal": "SWDIO", "pin": "PA13" },
+      { "signal": "SWCLK", "pin": "PA14" }
+    ],
+    "build": "最小骨架：1Hz 翻转 PA1 点灯 + 上电自检"
+  }
+}

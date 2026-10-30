@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smart-hardware-engineer/ir/design_ir.schema.json",
+  "title": "Design IR",
+  "description": "代码优先的硬件设计中间表示。随设计推进逐层填充；ir_validate.py 在落 JLCEDA 前做离线 ERC 级校验。",
+  "type": "object",
+  "required": ["meta", "requirements", "components", "nets"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["project_name", "version", "units", "confirmed"],
+      "additionalProperties": true,
+      "properties": {
+        "project_name": { "type": "string" },
+        "version": { "type": "string" },
+        "units": { "type": "string", "enum": ["mm", "mil"] },
+        "fab": { "type": "string", "description": "目标工艺/厂，如 JLCPCB" },
+        "author": { "type": "string" },
+        "confirmed": { "type": "boolean", "description": "用户是否已确认方案(Gate-0)" },
+        "confirmed_at": { "type": "string" }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "description": "中文需求与显式假设；成功判据与约束。",
+      "required": ["summary"],
+      "additionalProperties": true,
+      "properties": {
+        "summary": { "type": "string" },
+        "assumptions": { "type": "array", "items": { "type": "string" } },
+        "success_criteria": { "type": "array", "items": { "type": "string" } },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "supply": { "type": "string" },
+            "board_size": { "type": "string" },
+            "layers": { "type": "integer", "minimum": 1 },
+            "quantity": { "type": "integer", "minimum": 1 },
+            "assembly": { "type": "string" },
+            "cost_target": { "type": "string" },
+            "rf": { "type": "boolean" },
+            "high_voltage": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "architecture": {
+      "type": "object",
+      "description": "电源树、功能块、关键网类、风险。",
+      "additionalProperties": true,
+      "properties": {
+        "power_tree": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rail", "voltage_v"],
+            "additionalProperties": true,
+            "properties": {
+              "rail": { "type": "string", "description": "rail 网名，如 +3V3" },
+              "voltage_v": { "type": "number" },
+              "source": { "type": "string", "description": "来源 rail 或输入" },
+              "current_budget_a": { "type": "number" },
+              "regulator": { "type": "string", "description": "refdes 或类别(buck/ldo)" },
+              "margin_note": { "type": "string" }
+            }
+          }
+        },
+        "blocks": { "type": "array", "items": { "type": "string" } },
+        "risks": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["refdes", "type"],
+        "additionalProperties": true,
+        "properties": {
+          "refdes": { "type": "string", "pattern": "^[A-Za-z]+[0-9]+$", "description": "唯一位号，如 U1/R3/C10" },
+          "type": { "type": "string", "description": "功能类别，如 mcu/ldo/cap/res/connector" },
+          "value": { "type": "string" },
+          "mpn": { "type": "string", "description": "制造商料号；概念阶段可空或标 TBD" },
+          "lcsc": { "type": "string", "description": "LCSC/JLC 编号" },
+          "footprint": { "type": "string" },
+          "library_uuid": { "type": "string" },
+          "assembly": { "type": "string", "enum": ["basic", "extended", "manual", "unknown"] },
+          "power_pins": { "type": "array", "items": { "type": "string" }, "description": "电源引脚 pin 名，用于去耦校验" },
+          "decouple_required": { "type": "boolean", "default": true },
+          "alternatives": { "type": "array", "items": { "type": "string" } },
+          "placeholder": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "nets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "class", "nodes"],
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "class": {
+            "type": "string",
+            "enum": ["power", "gnd", "analog", "clk", "rf", "diff", "highcurrent", "lf-signal", "safety", "nc"]
+          },
+          "nodes": {
+            "type": "array",
+            "description": "连接点，形如 'U1.7'（refdes.pin）",
+            "items": { "type": "string", "pattern": "^[A-Za-z]+[0-9]+\\.[A-Za-z0-9_]+$" }
+          },
+          "single_ended_ok": { "type": "boolean", "default": false, "description": "允许只有1个节点(如测试点/NC)" },
+          "diff_partner": { "type": "string", "description": "差分对的另一半网名" },
+          "width_rule": { "type": "string" }
+        }
+      }
+    },
+    "schematic": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "page_rect": { "$ref": "#/$defs/rect" },
+        "usable_rect": { "$ref": "#/$defs/rect" },
+        "keepout_rects": { "type": "array", "items": { "$ref": "#/$defs/rect" } },
+        "block_layout": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "sheet_size": { "type": "string", "description": "如 A4/A3/custom" }
+      }
+    },
+    "board": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "outline": { "$ref": "#/$defs/rect" },
+        "layers": { "type": "integer", "minimum": 1 },
+        "copper_oz": { "type": "number" },
+        "thickness_mm": { "type": "number" },
+        "rules": {
+          "type": "array",
+          "description": "按网类的规则",
+          "items": {
+            "type": "object",
+            "required": ["class"],
+            "additionalProperties": true,
+            "properties": {
+              "class": { "type": "string" },
+              "trace_width_mm": { "type": "number" },
+              "clearance_mm": { "type": "number" },
+              "via": { "type": "string" }
+            }
+          }
+        },
+        "mounting_holes": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "keepouts": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "order": { "type": "array", "items": { "type": "string" } },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["refdes"],
+            "additionalProperties": true,
+            "properties": {
+              "refdes": { "type": "string" },
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "rotation": { "type": "number" },
+              "layer": { "type": "string", "enum": ["top", "bottom"] },
+              "group": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "order": { "type": "array", "items": { "type": "string" }, "description": "布线顺序(网类)" },
+        "critical_manual": { "type": "array", "items": { "type": "string" }, "description": "需手布的关键网" },
+        "autoroute_after": { "type": "string", "description": "自动布线前置条件" }
+      }
+    },
+    "manufacturing": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "exports": { "type": "array", "items": { "type": "string" }, "description": "如 gerber/drill/bom/cpl" },
+        "silk_checks": { "type": "array", "items": { "type": "string" } },
+        "order_boundary": { "type": "string", "default": "评审为止，不擅自提交/付款" }
+      }
+    },
+    "firmware": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "target_mcu": { "type": "string" },
+        "toolchain": { "type": "string" },
+        "pin_map": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "build": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "rect": {
+      "type": "object",
+      "required": ["x", "y", "w", "h"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "w": { "type": "number" },
+        "h": { "type": "number" }
+      }
+    }
+  }
+}

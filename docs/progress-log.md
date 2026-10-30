@@ -29,3 +29,4 @@
 | 3 | `.eext` 打包要求核实到官方文档 + 本地打包校验器（三态实测）| kit-integrity 10/10、selftest 15/15、capability-boundary 11 条 | 本轮 |
 | 3 | 交付链路打通（类型化动作面）+ 交付按证据判定 | Gerber 74,863 B zip（钻孔在包内）、坐标 13,358 B CSV；BOM 动作返回 no file（GAP-012）| 本轮 |
 | 3 | **交付阶段首次在真板 PASS**（四类齐备）| Gerber 74,863 B + 坐标 13,358 B + BOM 8,378 B；钻孔在 Gerber 包内；`delivery` PASS | 本轮 |
+| 4 | 采用上游 Design IR + Gate-1 校验器（MIT），新增 `design-ir` 阶段 | design-ir 正例 PASS / 反例 FAIL；selftest 19/19；全量 6 PASS 0 FAIL | 本轮 |

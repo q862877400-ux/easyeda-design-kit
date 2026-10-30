@@ -203,6 +203,22 @@ Assert-Case "delivery 证据：BOM 返回 no file → FAIL" {
     ($r.Status -eq 'FAIL') -and ($r.Detail -match 'BOM export returned no file')
 }
 
+
+# 断言 18–19：Design IR 校验（正例 / 反例）
+Assert-Case "design-ir → 上游样例 PASS" {
+    $ir = Join-Path $KitRoot "vendor\prior-art\smart-hardware-engineer\ir\examples\blinky_usb_mcu.ir.json"
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-IR', $ir) 'design-ir').Status -eq 'PASS'
+}
+
+Assert-Case "design-ir → 破坏后 FAIL" {
+    $src = Join-Path $KitRoot "vendor\prior-art\smart-hardware-engineer\ir\examples\blinky_usb_mcu.ir.json"
+    $obj = Get-Content $src -Raw | ConvertFrom-Json
+    $obj.PSObject.Properties.Remove("meta")
+    $bad = Join-Path $probe "broken.ir.json"
+    $obj | ConvertTo-Json -Depth 20 | Set-Content $bad -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-IR', $bad) 'design-ir').Status -eq 'FAIL'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
