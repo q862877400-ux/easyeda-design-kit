@@ -41,3 +41,4 @@
 | 12 | J2_9 屏蔽地焊盘 16/8 孔径 4 孔成功；U3_4 被 DTR 走线封死（1.3–2.7mil）记录为 GAP-021 | Connection **15→14**，DFM ERROR 保持 0 | 本轮 |
 | 13 | 试 D2_5（4.0mil 压焊盘，回滚）与 J2_11（无效但无害，无 ERROR）；确认剩余点皆空间受限 | Connection 14 保持，DFM ERROR 0 保持 | 本轮 |
 | 13 | 探明 `net-path` 不覆盖平面（GAP-023）；J2_11 三次尝试均无效，判定内层平面未覆盖（GAP-024）| Connection 14 保持，DFM ERROR 0 保持 | 本轮 |
+| 14 | 重跑 power-planes（GND unplaced 4→3）；**推翻**「平面未覆盖」假设（pour-fit 是整板矩形），改记为「铺铜避让隔离」| Connection 14 保持，DFM ERROR 0 保持 | 本轮 |

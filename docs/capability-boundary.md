@@ -319,15 +319,20 @@
 
 ---
 
-## GAP-024 焊盘内打过孔仍不连通，说明内层平面未覆盖该处
+## GAP-024 焊盘内打过孔仍不连通，原因是铺铜避让隔离（不是平面缺覆盖）
 
 - **capability**：给 J2_11（GND，中心 1025.4,1710.3）在焊盘内打孔以接入内层地。
 - **evidence**：三种尝试均不改善（Connection 保持 14、GND 保持 4）：
   1. `--rect "1010,1695,1041,1726" --pitch 30 --diameter 16 --hole 8` → 落 4 孔，DRC 不变；
   2. 同矩形 `--pitch 20`（仅 1 孔，落点在焊盘内）→ DRC 仍不变；
   3. 上述尝试期间 DFM 始终保持 ERROR 0（没有新违规）。
-  同板 J2_9 用同样手法**成功**（GND 5→4），所以工具与手法都对，差别在该处是否被内层平面覆盖。
+  同板 J2_9 用同样手法**成功**（GND 5→4），说明差别不在"平面覆盖"，而在该点周围铜的密度。
+  **补充实测**：`pcb pour-fit --help` 明确其行为是"pour a net-bound plane sized to the board,
+  inset from the edge"——矩形按板框 bbox 生成，所以平面覆盖全板；重跑 `power-planes` 后
+  GND `unplaced` 由 4 降到 3，但 Connection 仍 14，进一步否证"扩平面即可"的设想。
 - **triedTools**：`pcb via-stitch`、`pcb pour-rebuild`、`pcb net-path`、`pcb power-planes`
-- **alternative**：需扩大/重塑内层 GND 平面覆盖（`内电层自动分划` 或 `pcb pour-fit --net GND --layer 15`），
-  或改布局。**未验证**：扩大平面后是否能覆盖 J2_11。
+- **alternative**：**假设已被推翻**——`pour-fit` 铺的是"整板 bbox 矩形"（`--inset` 只改内缩），
+  因此 GND 平面**本来就覆盖全板**，不是"没覆盖到 J2_11"。
+  真正原因是该焊盘被**铺铜避让（anti-pad）**与邻网铜隔离：周围没有 thermal spoke 通道。
+  可行路径只剩改布局/改走线让开空间，或换到信号层绕行。**未验证**：改布局后的效果。
 - **status**：`open`
