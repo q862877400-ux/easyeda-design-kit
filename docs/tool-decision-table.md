@@ -124,7 +124,7 @@
 | Gerber+BOM+坐标一键 | PCB Delivery Export | CPL 过滤 + 双语制造要求；**打样交付首选** |
 | 只要 Gerber（含钻孔） | pcb.export.gerber | 动作面：`--payload {"unit":"mm","integerNumber":4,"decimalNumber":6}`；**产出是一个 zip，钻孔数据在包内**（metallic/nonMetallic/drillTable 默认 true）；空板/无铜返回 null；实测 74,863 B |
 | 要坐标文件（CPL） | pcb.export.pick_place | 动作面：`fileType=csv|xlsx`，`unit=mm|inch`；实测 13,358 B CSV |
-| 要 BOM | schematic.export.bom | 动作面实测 `ok:false`「BOM export returned no file.」→ 见 GAP-012，改走 `PCB Delivery Export` |
+| 要 BOM | schematic.export.bom | 动作面：**必须 `--doc <原理图页 uuid>`**，否则返回 `ok:false`「BOM export returned no file.」；`fileType=csv|xlsx`；实测 xlsx 8,378 B |
 | 多子板生产+测试资料 | 多板生产文件一键导出 | 17 类接口，6 语言 |
 | 工程源文件批量 | 工程文档批量导出 | .epro2，每工程一子目录；需开「项目管理>下载工程」 |
 | 工程+库压缩包 | 导出设计压缩包 | 备份/交接用 |

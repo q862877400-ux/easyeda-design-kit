@@ -1,11 +1,11 @@
 {
   "case": "esp32-4layer",
   "executor": "unspecified",
-  "finishedAt": "2026-10-31T01:13:00",
+  "finishedAt": "2026-10-31T01:14:53",
   "exitCode": 2,
-  "pass": 7,
+  "pass": 6,
   "fail": 0,
-  "blocked": 5,
+  "blocked": 6,
   "stages": [
     {
       "stage": "kit-integrity",
@@ -21,7 +21,7 @@
     },
     {
       "stage": "environment",
-      "status": "PASS"
+      "status": "BLOCKED"
     },
     {
       "stage": "schematic-gates",

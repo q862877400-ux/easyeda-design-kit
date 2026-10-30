@@ -150,9 +150,9 @@
   `ok:false`，`code=EDA_CALL_FAILED`，`message="BOM export returned no file."`；
   同时 `schematic.export.netlist` 等动作存在。切到原理图窗口后仍如此。
 - **triedTools**：`schematic.export.bom`、`PCB Delivery Export`、`多板生产文件一键导出`
-- **alternative**：BOM 走扩展 `PCB Delivery Export`（一键含 BOM），或 `project.export` 导出工程源；
+- **alternative**：**根因已定位并解决** —— 必须用 `--doc <原理图页 uuid>` 固定文档，否则返回 no file。
   动作面暂不可用。**未验证**：BOM 是否需特定模板参数。
-- **status**：`open`
+- **status**：`resolved`
 
 ---
 
@@ -167,3 +167,4 @@
 - **alternative**：以 `artifactPath` 为准收集文件，再复制到交付目录；验收读
   `delivery-evidence.json`（记录 artifactPath/size/drilling），不靠文件名猜。
 - **status**：`accepted`
+
