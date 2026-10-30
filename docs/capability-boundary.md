@@ -260,7 +260,13 @@
   无任何"跳过与既有铜冲突点"的开关；`--dry-run` 只输出网格坐标（实测 16 点，全部按 pitch 均布），
   **不报告与走线/焊盘的冲突**。
 - **triedTools**：`pcb via-stitch`、`pcb power-planes`、`电源地就近打孔`
-- **alternative**：先 `--dry-run` 看网格，再用**小矩形 + 大 pitch** 落少量孔，落完立即
-  `pour-rebuild` + `pcb drc` 复测；若 Clearance 变差，用 `pcb via-delete --ids` 精确删掉本次新增
-  （不要删 DRC 标记的历史孔，见 GAP-018）。扩展形态的 `电源地就近打孔` 自带避让，可作为替代。
+- **alternative**（已实测有效）：**矩形必须落在焊盘铜内**，并以焊盘中心为基准（例：EPAD 中心
+  mil (474,619) → `--rect "458,603,492,637" --pitch 30`，落 4 孔）。落完立即
+  `pour-rebuild` + `save` + `doc reload` + `pcb drc` 复测。
+  **实测**：U1_41 两个 EPAD 各 4 孔后 GND 未连 9→7；U3_1 EPAD 4 孔后 7→5。
+  若某个角落孔引入 Clearance（U3_1 的 (1646,1478) 距 U0RXD 仅 5.1mil < 6），
+  **只删那一个孔**（`pcb via-delete --ids`），其余保留——实测删后 DFM ERROR 回到 0 且连通性不回退。
+- **反例（我自己的错）**：把 `pcb drc` 的**嵌套输出（mm）**坐标当成扁平 `--json`（mil）坐标用，
+  把孔打到 (1846,2400) 的空白处，Connection 19→22，被迫回滚。
 - **status**：`accepted`
+
