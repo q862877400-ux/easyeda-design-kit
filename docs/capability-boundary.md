@@ -431,3 +431,28 @@
   因此登录动作**无法由我代做**。
   未登录时的替代路径：已装的扩展 `JsPCB自动布线`（编辑器内、无外部依赖、无额度限制）。
 - **status**：`open`（已装好主程序；缺一次登录）
+
+---
+
+## GAP-030 PCB Auto Router 实测：335/335 连通达成，但会留 3 条微米级间距误差
+
+- **capability**：用 `PCB Auto Router` 主程序（DSN→SES）一次把整板连通性清零。
+- **evidence**（2026-10-31 全流程实测，登录后）：
+  1. `pcb_autorouter.exe -i board.dsn -a -o board.ses --threads 8` →
+     **`connections: 335/335, unconnected: 0`**，耗时 2.5s；
+     导回后 `Connection Error` **6 → 0**（本会话从 39 起算，累计 −39）。
+  2. **必须先清空旧铜再导入**：直接 `import-autoroute` 是在原走线上**叠加**一层
+     （实测同网 0mil 违规 182 条）；正确顺序是
+     `pcb rip-up`（不带 --net = 全部）→ `pcb import-autoroute <ses>` → `pcb pour-rebuild`。
+  3. 剩下 **3 条 Clearance**（6mil 规则，实测 5.4 / 5.5 / 5.8mil）：
+     - (1735,1403) 5V_IN 走线 vs USB_DM 过孔（2 条）
+     - (1675,1396) U0TXD 走线 vs 5V_IN 过孔（1 条）
+     把 DSN 每层 `(clearance 5)` 提到 6.5 甚至 8 后**三条数值一模一样**，说明这是布线器
+     **对"过孔↔异网走线"不检查**的固定产物，不是规则没给够。
+  4. **`pcb drc --json` 与 `pcb check` 读数不一致**：同一时刻前者报 `Clearance Error 0`，
+     后者 `ERROR=3 clearance=3`。门禁以 `pcb check` 为准（`pcb-dfm` 阶段）。
+- **triedTools**：`pcb_autorouter.exe -a`、`pcb export-dsn`、`pcb import-autoroute`、`pcb rip-up`、
+  `pcb check`、`pcb drc`
+- **alternative**：这 3 条需**局部微调**（挪过孔 3mil 或删除该段重走）；或用
+  `pcb drc-rules-set` 提高该类间距让布线器重跑（**未验证**）。
+- **status**：`open`（连通性已达标；间距差 3 条）
