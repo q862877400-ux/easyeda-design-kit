@@ -222,6 +222,17 @@ Assert-Case "design-ir → 破坏后 FAIL" {
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-IR', $bad) 'design-ir').Status -eq 'FAIL'
 }
 
+
+# 断言 20：route fill 自带快照，不得触发 N5 误报
+Assert-Case "N5：3 次 route fill + 0 次 dump → 不判 N5" {
+    $lg = Join-Path $probe "fill-only.log"
+    @('easyeda pcb route fill --net A --from X.1 --to Y.1',
+      'easyeda pcb route fill --net B --from X.2 --to Y.2',
+      'easyeda pcb route fill --net C --from X.3 --to Y.3') | Set-Content $lg -Encoding UTF8
+    $r = Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-RunLog', $lg) 'negative-drift'
+    $r.Detail -notmatch 'N5 求解'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

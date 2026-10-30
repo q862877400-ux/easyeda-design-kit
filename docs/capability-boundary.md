@@ -216,6 +216,10 @@
   `pcb drc` 仍报 **Connection Error (37)**，Clearance 18 未变；说明它既没连上这些跳，也没制造新问题。
   原因：这些跳多为电源/地（GND 9、3V3 4、5V_IN 4、VIN 2、5V 2）或长距离信号，超出其阈值。
 - **triedTools**：`pcb route-short`、`PCB自动化工具`、`PCB Auto Router`
-- **alternative**：逐跳用 `pcb route solve`（`layers:[1,2]`）+ `pcb route fill` 落线；
-  电源/地优先靠 `pcb power-planes` 与铺铜承担，而不是走线。
+- **alternative**：逐跳用 `pcb route fill`（内部自带取快照，`layers:[1,2]`）。
+  **实测有效**：VIN（27 段，1378 mil）、5V（40 段 + 2 孔，1679 mil）、5V_IN（10 段 + 2 孔，452 mil）
+  三跳落板后 Connection **37 → 33**，Clearance 保持 18、DFM ERROR 保持 0。
+  电源/地仍优先靠 `pcb power-planes` 与铺铜承担；`power-planes` 报 `GND: 4 pads / 3V3: 2 pads
+  had no clearance-clean via spot`，说明剩余多为**布局挤死**（GAP-008），不是布线能解。
 - **status**：`open`
+

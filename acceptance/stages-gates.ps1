@@ -162,11 +162,16 @@ function Test-NegativeDrift {
         if ($ripupNet.Count -gt 0) { $fail += "N4 使用了 rip-up --net $($ripupNet.Count) 次（会删掉该网原有合法铜）" }
 
         # N5 一次快照求解多对（事故：第 43/46 轮，Clearance 18→31）
+        # N5：`route solve` 需要外部 board 文件（可能对着旧快照），`route fill` 自带取快照。
+        # 反例（2026-10-31）：日志里 3 次 `route fill`、0 次显式 dump，`fill` 内部每次都重取快照，
+        # 旧判据把 fill 也算作"求解"，于是误报 FAIL。
         $dumps = @($log | Where-Object { $_ -match 'pcb\s+dump' }).Count
-        $solves = @($log | Where-Object { $_ -match 'route\s+solve|route\s+fill' }).Count
+        $solves = @($log | Where-Object { $_ -match 'route\s+solve' }).Count
+        $fills = @($log | Where-Object { $_ -match 'route\s+fill' }).Count
         if ($solves -gt $dumps -and $solves -gt 0) {
             $fail += "N5 求解 $solves 次但只取快照 $dumps 次（存在对着旧快照求解）"
         }
+        $note += "日志审计：dump $dumps / solve $solves / fill $fills（fill 自带快照）"
 
         # N6 改完没重载就读 DRC（事故：第 20/36/46 轮，读到中间态并据此下结论）
         $saved = -1; $reloaded = -1; $drcAfterSave = -1
@@ -178,7 +183,6 @@ function Test-NegativeDrift {
         if ($saved -ge 0 -and $drcAfterSave -ge 0 -and $reloaded -lt $saved) {
             $fail += "N6 save 之后、DRC 之前没有 doc reload（会读到中间态）"
         }
-        $note += "日志审计：dump $dumps / solve $solves"
     }
 
     # N7 新增实现代码必须同提交带边界证据（证明试过现有工具）
