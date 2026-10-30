@@ -114,6 +114,37 @@ Assert-Case "capability-boundary → 缺 triedTools 判 FAIL" {
     ($r.Status -eq 'FAIL') -and ($r.Detail -match 'GAP-003')
 }
 
+
+# 断言 11–13：交付阶段（四类齐备 / 缺项 / 零字节）
+Assert-Case "delivery → 四类齐备 PASS" {
+    $d = Join-Path $probe "delivery-ok"
+    New-Item -ItemType Directory -Force -Path $d | Out-Null
+    Set-Content (Join-Path $d "g.zip") -Value ("x" * 100) -Encoding UTF8
+    Set-Content (Join-Path $d "d.drl") -Value ("x" * 100) -Encoding UTF8
+    Set-Content (Join-Path $d "c.csv") -Value ("x" * 100) -Encoding UTF8
+    Set-Content (Join-Path $d "b.xlsx") -Value ("x" * 100) -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery').Status -eq 'PASS'
+}
+
+Assert-Case "delivery → 缺钻孔 FAIL" {
+    $d = Join-Path $probe "delivery-miss"
+    New-Item -ItemType Directory -Force -Path $d | Out-Null
+    Set-Content (Join-Path $d "g.zip") -Value ("x" * 100) -Encoding UTF8
+    Set-Content (Join-Path $d "c.csv") -Value ("x" * 100) -Encoding UTF8
+    Set-Content (Join-Path $d "b.xlsx") -Value ("x" * 100) -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery').Status -eq 'FAIL'
+}
+
+Assert-Case "delivery → 零字节文件 FAIL" {
+    $d = Join-Path $probe "delivery-zero"
+    New-Item -ItemType Directory -Force -Path $d | Out-Null
+    Set-Content (Join-Path $d "g.zip") -Value ("x" * 100) -Encoding UTF8
+    Set-Content (Join-Path $d "c.csv") -Value ("x" * 100) -Encoding UTF8
+    Set-Content (Join-Path $d "b.xlsx") -Value ("x" * 100) -Encoding UTF8
+    [System.IO.File]::WriteAllBytes((Join-Path $d "d.drl"), @())
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery').Status -eq 'FAIL'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

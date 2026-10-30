@@ -190,15 +190,29 @@ function Test-PcbDfm {
 function Test-Delivery {
     if ([string]::IsNullOrWhiteSpace($DeliveryDir)) { Add-Result "delivery" "BLOCKED" "未指定 -DeliveryDir"; return }
     if (-not (Test-Path $DeliveryDir)) { Add-Result "delivery" "FAIL" "交付目录不存在： $DeliveryDir"; return }
-    $need = @{ "Gerber" = "*.g*"; "钻孔" = "*.drl"; "坐标" = "*.csv"; "BOM" = "*.xlsx" }
-    $missing = @()
-    foreach ($k in $need.Keys) {
-        $hit = Get-ChildItem $DeliveryDir -Filter $need[$k] -File -ErrorAction SilentlyContinue |
-            Where-Object { $_.Length -gt 0 } | Select-Object -First 1
-        if (-not $hit) { $missing += $k }
+    $need = [ordered]@{
+        "Gerber" = @("*.g*", "*.zip")
+        "钻孔"   = @("*.drl", "*.txt")
+        "坐标"   = @("*.csv", "*.xlsx")
+        "BOM"    = @("*.xlsx", "*.csv")
     }
-    if ($missing.Count -eq 0) { Add-Result "delivery" "PASS" "Gerber/钻孔/坐标/BOM 均非空" }
-    else { Add-Result "delivery" "FAIL" "缺交付物： $($missing -join ', ')" }
+    $missing = @()
+    $found = [ordered]@{}
+    foreach ($k in $need.Keys) {
+        $hit = $null
+        foreach ($pat in $need[$k]) {
+            $cand = Get-ChildItem $DeliveryDir -Filter $pat -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Length -gt 0 } | Sort-Object Length -Descending | Select-Object -First 1
+            if ($cand) { $hit = $cand; break }
+        }
+        if ($hit) { $found[$k] = "{0} ({1:N0} B)" -f $hit.Name, $hit.Length } else { $found[$k] = $null }
+    }
+    $missing = @($found.Keys | Where-Object { -not $found[$_] })
+    if ($missing.Count -eq 0) {
+        Add-Result "delivery" "PASS" (($found.Keys | ForEach-Object { "$_=$($found[$_])" }) -join "；")
+    } else {
+        Add-Result "delivery" "FAIL" "缺交付物： $($missing -join "", "")（目录 $DeliveryDir）"
+    }
 }
 
 # ── 阶段 9：不许一次性脚本（反自欺条款）────────────────────────────────

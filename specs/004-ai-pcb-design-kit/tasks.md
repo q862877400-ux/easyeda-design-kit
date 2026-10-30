@@ -74,9 +74,9 @@
 **Independent Test**：同需求、两个执行者，各自跑完并都通过；阶段结论一致。
 
 - [x] T026 [US2] `acceptance/compare-runs.ps1`：输入两份 `last-report.json`，输出阶段结论差异与一致性判定
-- [ ] T027 [US2] `docs/phases/pcb-p0-p10.md` 增加「执行者无关性」小节：哪些步骤允许顺序不同、哪些必须一致
+- [x] T027 [US2] `docs/phases/pcb-p0-p10.md` 增加「执行者无关性」小节：哪些步骤允许顺序不同、哪些必须一致
 - [x] T028 [US2] 记录模型/执行者到报告：`last-report.json` 增加 `executor` 字段（model + harness + session）
-- [ ] T029 [US2] 在 `quickstart.md` 加"第二执行者复跑"章节，含弱化验证（无模型切换时）的标注规则
+- [x] T029 [US2] 在 `quickstart.md` 加"第二执行者复跑"章节，含弱化验证（无模型切换时）的标注规则
 
 **Checkpoint**：能证明（或诚实标注无法证明）SC-004。
 
@@ -99,10 +99,10 @@
 **Goal**：Gerber / 钻孔 / 坐标 / BOM 齐备且非空。
 **Independent Test**：导出到指定目录，`delivery` 阶段 PASS。
 
-- [ ] T034 [US4] 在 `docs/tool-decision-table.md` 的 J 节补「PCB Delivery Export」的实际参数与坑（实测后填）
-- [ ] T035 [US4] 用 `PCB Delivery Export` 在基线板上导出一次，记录文件清单与体积（证据入台账）
-- [ ] T036 [US4] `acceptance/run.ps1` 的 `delivery` 阶段支持扩展命名（当前仅 glob），避免导出命名差异导致误判
-- [ ] T037 [US4] 把"交付文件真实存在且非空"的证据格式写进 `contracts/acceptance-report.schema.md`
+- [ ] T034 [BLOCKED: 需 EDA 窗口 + 基线工程] [US4] 在 `docs/tool-decision-table.md` 的 J 节补「PCB Delivery Export」的实际参数与坑（实测后填）
+- [ ] T035 [BLOCKED: 同 T034] [US4] 用 `PCB Delivery Export` 在基线板上导出一次，记录文件清单与体积（证据入台账）
+- [x] T036 [US4] `acceptance/run.ps1` 的 `delivery` 阶段支持扩展命名（当前仅 glob），避免导出命名差异导致误判
+- [x] T037 [US4] 把"交付文件真实存在且非空"的证据格式写进 `contracts/acceptance-report.schema.md`
 
 ---
 
@@ -119,11 +119,11 @@
 
 ## Phase 8: Polish & Cross-Cutting
 
-- [ ] T042 [P] 安装/发布形态：调研 `.eext` 打包（research.md U1 未决项），产出 `docs/publish-extension.md`
+- [ ] T042 [BLOCKED: 需 .eext 样例或扩展中心打包文档] [P] 安装/发布形态：调研 `.eext` 打包（research.md U1 未决项），产出 `docs/publish-extension.md`
 - [ ] T043 [P] 扩展装机口径对账：以 `easyeda actions` 为准，更新 `docs/extensions-index.md` 中漂移的数字
-- [ ] T044 [P] `README.md` 链接 quickstart 与 tasks，避免新读者无从下手
+- [x] T044 [P] `README.md` 链接 quickstart 与 tasks，避免新读者无从下手
 - [ ] T045 全量回归：`selftest.ps1` 8/8 + `mistake-matrix.ps1` 16/16 + `run.ps1` 无 FAIL
-- [ ] T046 台账记录：本轮改了什么工具、板子推进到哪、下一步
+- [x] T046 台账记录：本轮改了什么工具、板子推进到哪、下一步
 - [x] T047 [P] 把 plan/tasks/quickstart 同步一份到 kit 仓库 `specs/`（保持单一来源说明）
 
 ---

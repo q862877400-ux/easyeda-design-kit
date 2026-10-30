@@ -155,3 +155,47 @@ P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8 → P9 → P10
 | P8 内层 | `内电层自动分划` |
 | P10 DFM | `嘉立创下单检查` |
 | P10 交付 | `PCB Delivery Export` |
+
+---
+
+## 执行者无关性（SC-004 的依据）
+
+同一块板由**不同执行者**（另一个模型 / 另一个全新会话）跑，下面这些**必须一致**，其余允许不同。
+
+### 必须一致（不一致 = 产品不可信）
+
+| 项 | 为什么不许有差异 |
+|---|---|
+| 各阶段的 PASS / FAIL / BLOCKED 结论 | 这是验收的唯一判据；结论不同说明流程不可复现 |
+| DRC 的 Connection Error 数 | 连不上就是连不上，与执行者无关 |
+| DFM ERROR 数 | 权威口径是 `嘉立创下单检查`，数字应一致 |
+| 交付文件类别（Gerber/钻孔/坐标/BOM）齐备性 | 缺项是事实，不是风格 |
+
+### 允许不同（不算不一致）
+
+| 项 | 原因 |
+|---|---|
+| 布线路径的具体几何 | 求解器/自动布线器的搜索顺序可不同；只要 DRC 数字达标即等价 |
+| 走线/过孔总数 | 同上，是路径差异的结果而非缺陷 |
+| 阶段内耗时、命令条数 | 执行效率差异 |
+| 中间过程的临时文件命名 | 不影响结果 |
+| `coupling` / `acute` 等 WARN 级指标 ±少量 | WARN 不是通过判据；但**若跨越 ELIGIBLE 阈值导致 ERROR，则必须一致** |
+
+### 怎么验证
+
+```powershell
+# 执行者 A
+pwsh -NoProfile -File acceptance/run.ps1 -Case <case> -Executor "modelA/harnessA" ...
+Copy-Item acceptance/last-report.json runs\a.json
+
+# 执行者 B（另一个模型或全新会话）
+pwsh -NoProfile -File acceptance/run.ps1 -Case <case> -Executor "modelB/harnessB" ...
+Copy-Item acceptance/last-report.json runs\b.json
+
+# 比对
+pwsh -NoProfile -File acceptance/compare-runs.ps1 -A runs\a.json -B runs\b.json
+# 退出码 0 = 阶段结论一致；1 = 有差异（会列出具体阶段）
+```
+
+**无法切换模型时**：用"全新会话 + 零上下文"代替，并在报告里显式标注
+`弱化验证：未换模型`——不得把它写成已满足 SC-004。

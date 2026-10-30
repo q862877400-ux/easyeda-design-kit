@@ -1,0 +1,27 @@
+# 进度账本（产品视角）
+
+**规则**：每轮追加一行，只记**能力**变化与门禁证据；板子细节属于练习题，不在此表。
+
+| 轮次 | 本轮长出的能力 | 门禁证据 | 提交 |
+|---|---|---|---|
+| 0 | 仓库与三件套骨架（文档 + playbook + 验收） | kit-integrity FAIL（缺 5 份）| `51af5b8` |
+| 0 | 反目标偷换门禁（N1/N2/N3 + 双向） | drift-guard 双向验证 | `f6c6f43` |
+| 0 | 门禁自测 8 条 + 历史错误矩阵 16 条 | selftest 8/8、matrix 16/16 | `3dd591a`→`1502018` |
+| 1 | 决策表 84 行（工具名可解析） | tool-decision-table PASS | `47d7f86` |
+| 1 | 边界清单 10 条 + 阶段文档 S0–S6 / P0–P10 + playbook 索引 | kit-integrity 8/8 PASS | `e029c30` |
+| 1 | 宪法 v1.0.0 + 执行者比对 + 安装文档 + 新 playbook | selftest 8/8、matrix 16/16 | `70f6504` |
+| 2 | 边界结构校验阶段 + 抽样脚本 + 未见板剧本 | capability-boundary PASS、sample 5/5、selftest 10/10 | `bc4efda` |
+| 2 | 执行者无关性章节 + 复跑章节 + README 导航 + delivery 多命名 + 证据格式 | delivery 三态实测（齐备/缺项/零字节）、selftest 13 条 | 本轮 |
+
+## 当前状态（以门禁为准）
+
+| 阶段 | 状态 |
+|---|---|
+| kit-integrity | PASS（9 份必需文档）|
+| tool-decision-table | PASS（84 行）|
+| capability-boundary | PASS（10 条）|
+| positive-goal | PASS |
+| negative-drift | BLOCKED（需要运行日志）|
+| environment / schematic-gates / pcb-* / delivery / no-oneoff-scripts | BLOCKED（无工程/无窗口/无日志）|
+
+**结论**：产品骨架与自证体系已成型；**尚未在任何真板上端到端跑通**（P4 未开始，缺未见板题目）。

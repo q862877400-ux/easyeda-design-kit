@@ -108,3 +108,42 @@ pwsh -NoProfile -File acceptance/run.ps1 -Case esp32-4layer `
 | "数字变好就是进步" | 不是。`positive-goal` 会问这轮有没有长出规范产物 |
 | "写个脚本先跑通再说" | 会被 N1 抓；要落成 playbook 或具名命令 |
 | "kit 里加点实现更方便" | 会被 P3 抓；实现属于独立仓库 |
+
+---
+
+## 7. 第二执行者复跑（SC-004）
+
+单次通过只证明"这次能做"，不证明"产品能做"。复跑步骤：
+
+```powershell
+# A 执行者
+pwsh -NoProfile -File acceptance/run.ps1 -Case esp32-4layer -Executor "A/<harness>/<session>" `
+  -Project <p> -Doc <d> -DeliveryDir <dir> -RunLog <log-a>
+Copy-Item acceptance/last-report.json runs\a.json
+Copy-Item acceptance/last-run-meta.json runs\a-meta.json
+
+# B 执行者：换模型，或至少换全新会话（零上下文）
+pwsh -NoProfile -File acceptance/run.ps1 -Case esp32-4layer -Executor "B/<harness>/<session>" `
+  -Project <p> -Doc <d> -DeliveryDir <dir> -RunLog <log-b>
+Copy-Item acceptance/last-report.json runs\b.json
+Copy-Item acceptance/last-run-meta.json runs\b-meta.json
+
+# 比对
+pwsh -NoProfile -File acceptance/compare-runs.ps1 -A runs\a.json -B runs\b.json `
+  -MetaA runs\a-meta.json -MetaB runs\b-meta.json
+```
+
+**判定**
+
+| 结果 | 含义 |
+|---|---|
+| 退出码 0（CONSISTENT） | 阶段结论一致，SC-004 在该强度下成立 |
+| 退出码 1（INCONSISTENT） | 列出差异阶段；差异若在"必须一致"清单里 → 产品不成立，必须修 |
+
+**弱化验证的写法（重要）**：若无法切换模型，只能用"全新会话零上下文"，报告里 MUST 写
+
+```
+弱化验证：未换模型，仅用全新会话（零上下文）。SC-004 视为未完全验证。
+```
+
+不得写成"已满足 SC-004"。

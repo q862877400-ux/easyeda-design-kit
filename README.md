@@ -130,3 +130,20 @@ pwsh -NoProfile -File acceptance/mistake-matrix.ps1
 **这个矩阵本身也抓过我的错**：它三次抓出我写的复现物不合格（1KB 够不到 20KB 阈值、
 `-Cli` 重复传参、断言匹配了不会出现的字样）——说明它在真检查，不是橡皮章。
 
+
+---
+
+## 10. 从这里开始读（导航）
+
+| 你想做什么 | 读这个 |
+|---|---|
+| 了解产品是什么、不是什么 | [PRODUCT.md](PRODUCT.md) |
+| 判断某件事该调哪个工具 | [docs/tool-decision-table.md](docs/tool-decision-table.md) |
+| 画原理图 | [docs/phases/schematic-s0-s6.md](docs/phases/schematic-s0-s6.md) |
+| 画 PCB（布局/布线/铺铜/交付） | [docs/phases/pcb-p0-p10.md](docs/phases/pcb-p0-p10.md) |
+| 处理"做不到"的情况 | [docs/capability-boundary.md](docs/capability-boundary.md) |
+| 跑一块没画过的板 | [docs/playbook-unseen-board.md](docs/playbook-unseen-board.md) |
+| 装到别的 harness | [docs/harness-install.md](docs/harness-install.md) |
+| 验证它真的能工作 | [specs/004-ai-pcb-design-kit/quickstart.md](specs/004-ai-pcb-design-kit/quickstart.md) |
+| 看还有哪些没做完 | [specs/004-ai-pcb-design-kit/tasks.md](specs/004-ai-pcb-design-kit/tasks.md) |
+| 理解为什么有这些门禁 | [docs/anti-drift.md](docs/anti-drift.md) · [docs/retro-audit.md](docs/retro-audit.md) |
