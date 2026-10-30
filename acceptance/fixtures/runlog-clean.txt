@@ -1,0 +1,8 @@
+easyeda pcb dump --out b1.json
+easyeda pcb route fill --net FB --from R4.1 --to U2.5
+easyeda pcb dump --out b2.json
+easyeda pcb route fill --net Q2_B --from Q2.1 --to R8.2
+easyeda pcb track-delete --ids abc123
+easyeda pcb save
+easyeda doc reload
+easyeda pcb drc

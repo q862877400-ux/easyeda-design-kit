@@ -1,0 +1,7 @@
+easyeda pcb dump --out board.json
+easyeda pcb route solve --board board.json --from a.json --out p1.json
+easyeda pcb route solve --board board.json --from b.json --out p2.json
+easyeda pcb route fill --net Q2_B --from Q2.1 --to R8.2
+easyeda pcb rip-up --net VIN
+easyeda pcb save
+easyeda pcb drc

@@ -1,0 +1,151 @@
+# stages-gates.ps1 — 双向门禁
+#
+# 正向（positive-goal）：这一轮/这个仓库，是不是在朝「可安装、可验收的能力」走。
+# 负面（negative-drift）：有没有再犯以前真实跑偏过的错误。
+#
+# 每条判据都对应一次**真实事故**，不是假想。事故出处写在判据旁边。
+
+# ══════════════════════════════════════════════════════════════════════
+# 正向：是不是符合目标
+# ══════════════════════════════════════════════════════════════════════
+function Test-PositiveGoal {
+    $fail = @(); $note = @()
+
+    # P1 规范产物只增不减（能力在长，而不是在整理）
+    $baselinePath = Join-Path $script:AcceptDir 'baseline.json'
+    if (Test-Path $baselinePath) {
+        $b = Get-Content $baselinePath -Raw | ConvertFrom-Json
+        $now = Get-CanonicalCounts
+        foreach ($k in @('docs_files', 'playbooks', 'acceptance', 'spec_files')) {
+            if ($null -ne $b.$k -and $now[$k] -lt [int]$b.$k) {
+                $fail += "$k 从 $($b.$k) 降到 $($now[$k])（能力退化）"
+            }
+        }
+        $note += "规范产物 $($now.docs_files)/$($now.playbooks)/$($now.acceptance)/$($now.spec_files)"
+    }
+
+    # P2 playbook 必须是**可执行的**，不能是"写段说明就叫 playbook"
+    # （事故：把一段流程说明登记成「工具件」自我加分）
+    $pbDir = Join-Path $script:RepoRoot 'playbooks'
+    if (Test-Path $pbDir) {
+        foreach ($f in Get-ChildItem $pbDir -File -Filter '*.playbook.json') {
+            try {
+                $j = Get-Content $f.FullName -Raw | ConvertFrom-Json
+                if (-not $j.version -or -not $j.meta -or -not $j.steps -or $j.steps.Count -lt 1) {
+                    $fail += "$($f.Name) 不是可执行 playbook（缺 version/meta/steps）"
+                }
+            } catch { $fail += "$($f.Name) 不是合法 JSON" }
+        }
+    }
+
+    # P3 复用优先：kit 仓库里不许出现"实现类代码"
+    # （事故：手搓布线器/DFM/丝印，而扩展中心已有对应工具）
+    $impl = Get-ChildItem $script:RepoRoot -Recurse -File -Include '*.go', '*.ts', '*.js' -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '\\\.git\\' -and $_.FullName -notmatch '\\acceptance\\' }
+    if ($impl.Count -gt 0) {
+        $fail += "kit 里出现 $($impl.Count) 个实现类源文件（应先复用扩展中心）： $(($impl | Select-Object -First 3 | ForEach-Object { $_.Name }) -join ', ')"
+    }
+
+    # P4 规格里必须有可测量的判据（否则"验收"无从谈起）
+    $spec = Join-Path $script:RepoRoot 'specs\004-ai-pcb-design-kit\spec.md'
+    if (Test-Path $spec) {
+        $sc = (Select-String -Path $spec -Pattern '^\s*-\s+\*\*SC-\d{3}\*\*').Count
+        if ($sc -lt 3) { $fail += "spec 里可测量判据只有 $sc 条（要求 ≥3）" }
+        else { $note += "SC 判据 $sc 条" }
+    } else { $fail += "spec.md 不存在" }
+
+    # P5 验收得能区分三态：BLOCKED 不能被当 PASS
+    if (Test-Path (Join-Path $script:AcceptDir 'baseline.json')) {
+        $note += "三态语义由 run.ps1 保障（BLOCKED≠PASS，交付物查非空）"
+    }
+
+    if ($fail.Count -gt 0) { Add-Result "positive-goal" "FAIL" ($fail -join '；') }
+    else { Add-Result "positive-goal" "PASS" ($note -join '；') }
+}
+
+# ══════════════════════════════════════════════════════════════════════
+# 负面：有没有再犯以前跑偏的错
+# ══════════════════════════════════════════════════════════════════════
+function Test-NegativeDrift {
+    $fail = @(); $blocked = @(); $note = @()
+
+    # N1 一次性产物（事故：26 个生成器 + 28 个一次性 playbook，能力归零）
+    $oneoffPatterns = @('*\gen*.py', '*apply*.json')
+    $oneoffDirs = @('.work', 'scratch', 'tmp', 'oneoff', '_scratch')
+    $offenders = @()
+    foreach ($pat in $oneoffPatterns) {
+        $offenders += Get-ChildItem $script:RepoRoot -Recurse -File -Filter $pat -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\playbooks\\' -and $_.FullName -notmatch '\\\.git\\' }
+    }
+    foreach ($d in $oneoffDirs) {
+        $p = Join-Path $script:RepoRoot $d
+        if (Test-Path $p) { $offenders += Get-ChildItem $p -Recurse -File | Select-Object -First 5 }
+    }
+    $stray = Get-ChildItem $script:RepoRoot -Recurse -File -Include '*.py', '*.ps1' -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.FullName -notmatch '\\acceptance\\' -and $_.FullName -notmatch '\\\.git\\' -and
+            (Select-String -Path $_.FullName -Pattern 'easyeda' -Quiet -ErrorAction SilentlyContinue)
+        }
+    $offenders += $stray
+    if ($offenders.Count -gt 0) {
+        $fail += "N1 一次性产物 $($offenders.Count) 个： $(($offenders | Select-Object -Unique -First 3 | ForEach-Object { $_.Name }) -join ', ')"
+    }
+
+    # N2 提交只动板子/临时文件（事故：49 轮里大量"只改板子"的轮次）
+    Push-Location $script:RepoRoot
+    try {
+        $lastFiles = & git show --pretty=format: --name-only HEAD 2>$null
+        $canonical = @($lastFiles | Where-Object { $_ -match '^(docs|playbooks|acceptance|specs)/' })
+        if ($lastFiles.Count -gt 0 -and $canonical.Count -eq 0) {
+            $fail += "N2 最近提交没动任何规范产物，只动了： $(($lastFiles | Select-Object -First 3) -join ', ')"
+        }
+        # N3 工程内不该有"自建检查器给自己打分"（事故：用自写 DFM 给自己开绿灯）
+        $selfScorer = Get-ChildItem $script:RepoRoot -Recurse -File -Include '*.go', '*.py' -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\acceptance\\' -and $_.FullName -notmatch '\\\.git\\' -and
+                (Select-String -Path $_.FullName -Pattern 'clearance|drc|dfm' -Quiet -ErrorAction SilentlyContinue) }
+        if ($selfScorer.Count -gt 0) { $fail += "N3 出现自建检查器实现 $($selfScorer.Count) 个（应使用既有检查器）" }
+    } finally { Pop-Location }
+
+    # 以下需要运行日志；没有日志时如实报 BLOCKED（不报 PASS）
+    if ([string]::IsNullOrWhiteSpace($RunLog) -or -not (Test-Path $RunLog)) {
+        $blocked += "N4–N6 需要 -RunLog 才能审计（缺快照重取 / rip-up 撤路径 / 未重载就读 DRC）"
+    } else {
+        $log = Get-Content $RunLog
+        # N4 用 rip-up --net 撤销已落板路径（事故：第 46 轮整网被删，Connection 21→31）
+        $ripupNet = @($log | Where-Object { $_ -match 'rip-up.*--net' })
+        if ($ripupNet.Count -gt 0) { $fail += "N4 使用了 rip-up --net $($ripupNet.Count) 次（会删掉该网原有合法铜）" }
+
+        # N5 一次快照求解多对（事故：第 43/46 轮，Clearance 18→31）
+        $dumps = @($log | Where-Object { $_ -match 'pcb\s+dump' }).Count
+        $solves = @($log | Where-Object { $_ -match 'route\s+solve|route\s+fill' }).Count
+        if ($solves -gt $dumps -and $solves -gt 0) {
+            $fail += "N5 求解 $solves 次但只取快照 $dumps 次（存在对着旧快照求解）"
+        }
+
+        # N6 改完没重载就读 DRC（事故：第 20/36/46 轮，读到中间态并据此下结论）
+        $saved = -1; $reloaded = -1; $drcAfterSave = -1
+        for ($i = 0; $i -lt $log.Count; $i++) {
+            if ($saved -lt 0 -and $log[$i] -match 'pcb\s+save') { $saved = $i }
+            if ($log[$i] -match 'doc\s+reload') { $reloaded = $i }
+            if ($saved -ge 0 -and $log[$i] -match 'pcb\s+drc') { $drcAfterSave = $i; break }
+        }
+        if ($saved -ge 0 -and $drcAfterSave -ge 0 -and $reloaded -lt $saved) {
+            $fail += "N6 save 之后、DRC 之前没有 doc reload（会读到中间态）"
+        }
+        $note += "日志审计：dump $dumps / solve $solves"
+    }
+
+    if ($fail.Count -gt 0) { Add-Result "negative-drift" "FAIL" ($fail -join '；') }
+    elseif ($blocked.Count -gt 0) { Add-Result "negative-drift" "BLOCKED" (($blocked + $note) -join '；') }
+    else { Add-Result "negative-drift" "PASS" ($note -join '；') }
+}
+
+# 规范产物计数（正向 P1 与基线共用）
+function Get-CanonicalCounts {
+    return [ordered]@{
+        docs_files = @(Get-ChildItem (Join-Path $script:RepoRoot 'docs') -Recurse -File -ErrorAction SilentlyContinue).Count
+        playbooks  = @(Get-ChildItem (Join-Path $script:RepoRoot 'playbooks') -Recurse -File -ErrorAction SilentlyContinue).Count
+        acceptance = @(Get-ChildItem (Join-Path $script:RepoRoot 'acceptance') -Recurse -File -ErrorAction SilentlyContinue).Count
+        spec_files = @(Get-ChildItem (Join-Path $script:RepoRoot 'specs') -Recurse -File -ErrorAction SilentlyContinue).Count
+    }
+}

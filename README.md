@@ -99,5 +99,6 @@ specs/               需求规格与质量清单
 2. **最近一次提交必须动到** `docs/`、`playbooks/`、`acceptance/`、`specs/` 之一；
 3. 规范产物数量**只能增不能减**（棘轮，基线 `acceptance/baseline.json`）。
 
-**它 FAIL，这一轮就不算数**——无论板子看起来多好。详见 [docs/anti-drift.md](docs/anti-drift.md)。
+门禁是**双向**的：`positive-goal` 查「是不是在长产品能力」（规范产物棘轮、playbook 必须可执行、kit 内禁实现代码、SC 判据 ≥3），`negative-drift` 查「有没有再犯历史错误」（一次性产物、只改板子的提交、自建检查器、rip-up 撤网、旧快照求解、未重载就读 DRC）。\n\n**两者都必须 PASS，这一轮才算数**——无论板子看起来多好。详见 [docs/anti-drift.md](docs/anti-drift.md)。
+
 

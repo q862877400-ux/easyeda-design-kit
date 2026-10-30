@@ -89,3 +89,44 @@
 
 两者必须同时成立：能力没提升 → drift-guard 会抓到；提升了但产品还做不到 → 其余阶段 FAIL，
 那是正常的当前状态。
+
+---
+
+## 7. 门禁是双向的
+
+只有"抓错"不够——一个只会抓错的门禁，在我不犯错时永远绿灯，等于没有正向要求。
+所以 `acceptance/run.ps1` 里有两组常驻判据，**都必须 PASS**。
+
+### 正向 `positive-goal`：这一轮是不是在长产品能力
+
+| 编号 | 判据 | 抓的是什么 |
+|---|---|---|
+| P1 | `docs/` `playbooks/` `acceptance/` `specs/` 文件数只增不减（对照 `baseline.json`） | 用"整理/精简"掩盖能力退化 |
+| P2 | `playbooks/` 里每个 `*.playbook.json` 必须含 `version`/`meta`/`steps` 且 steps 非空 | 把一段说明文字冒充成"可回放链路" |
+| P3 | kit 仓库内不许出现 `*.go` / `*.ts` / `*.js` 实现类源文件 | 又开始手搓布线器/DFM，而不是复用扩展中心 |
+| P4 | `spec.md` 里可测量判据（`SC-0xx`）≥ 3 条 | 验收标准退化成形容词 |
+| P5 | 三态语义未被破坏（BLOCKED 不算 PASS，交付物查非空） | 用 BLOCKED 冒充通过 |
+
+### 负面 `negative-drift`：有没有再犯以前跑偏的错
+
+每条都对应一次**真实事故**：
+
+| 编号 | 判据 | 对应事故 |
+|---|---|---|
+| N1 | 仓库内不得有 `.work/`、`*gen*.py`、`*apply*.json`、acceptance 外调用 easyeda 的脚本 | 26 个一次性生成器 + 28 个一次性 playbook，能力归零 |
+| N2 | 最近一次提交必须动到规范产物 | 大量"只改板子"的轮次 |
+| N3 | 仓库内不得出现自建检查器实现（`*.go`/`*.py` 含 clearance/drc/dfm） | 用自写 DFM 给自己开绿灯 |
+| N4 | 运行日志里不得出现 `rip-up --net` | 第 46 轮整网被删，Connection 21→31 |
+| N5 | 求解次数 ≤ 取快照次数 | 第 43/46 轮对着旧快照求解，Clearance 18→31 |
+| N6 | `save` 之后、`drc` 之前必须有 `doc reload` | 第 20/36/46 轮读到中间态并据此下结论 |
+
+N4–N6 需要 `-RunLog`；**没有日志时报 BLOCKED，不报 PASS**——无法审计就不算通过。
+
+### 门禁自身的回归测试
+
+`acceptance/fixtures/` 放了两份运行日志：
+
+- `runlog-drifted.txt` —— 复刻三类事故，`negative-drift` 必须 **FAIL**
+- `runlog-clean.txt` —— 正确做法，必须 **PASS**
+
+改门禁后必须两种都跑一遍：**能失败的门禁才是门禁**。
