@@ -100,5 +100,18 @@ specs/               需求规格与质量清单
 3. 规范产物数量**只能增不能减**（棘轮，基线 `acceptance/baseline.json`）。
 
 门禁是**双向**的：`positive-goal` 查「是不是在长产品能力」（规范产物棘轮、playbook 必须可执行、kit 内禁实现代码、SC 判据 ≥3），`negative-drift` 查「有没有再犯历史错误」（一次性产物、只改板子的提交、自建检查器、rip-up 撤网、旧快照求解、未重载就读 DRC）。\n\n**两者都必须 PASS，这一轮才算数**——无论板子看起来多好。详见 [docs/anti-drift.md](docs/anti-drift.md)。
+---
 
+## 8. 门禁自测（门禁也要被门禁检查）
+
+门禁自己会静默失效——本项目已发生两次：`-match` 用非法正则导致范围过滤没生效；
+判据只看关键词导致数字不可核对。所以门禁配了自测：
+
+```powershell
+pwsh -NoProfile -File acceptance/selftest.ps1
+```
+
+它逐条验证**每个分支的正例与反例**：kit 自身必须 PASS；反例日志必须 FAIL；
+`N3` 对"仅提及关键词"不判死、对"实质实现（>20KB）"必判死并报体积；
+`-CodeScope` 必须真的缩小范围；历史回测必须抓到 N1/N5。当前 **8/8 通过**。
 
