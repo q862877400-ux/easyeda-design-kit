@@ -119,7 +119,7 @@
 
 ## Phase 8: Polish & Cross-Cutting
 
-- [ ] T042 [BLOCKED: 需 .eext 样例或扩展中心打包文档] [P] 安装/发布形态：调研 `.eext` 打包（research.md U1 未决项），产出 `docs/publish-extension.md`
+- [x] T042 [P] 安装/发布形态：调研 `.eext` 打包（research.md U1 未决项），产出 `docs/publish-extension.md`
 - [x] T043 [P] 扩展装机口径对账：以 `easyeda actions` 为准，更新 `docs/extensions-index.md` 中漂移的数字
 - [x] T044 [P] `README.md` 链接 quickstart 与 tasks，避免新读者无从下手
 - [x] T045 全量回归：`selftest.ps1` 8/8 + `mistake-matrix.ps1` 16/16 + `run.ps1` 无 FAIL

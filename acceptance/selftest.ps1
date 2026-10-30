@@ -145,6 +145,38 @@ Assert-Case "delivery → 零字节文件 FAIL" {
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery').Status -eq 'FAIL'
 }
 
+
+# 断言 14–15：扩展包校验（正例 / 缺字段反例）
+Assert-Case "check-extension-package → 合法包 PASS" {
+    $pk = Join-Path $probe "ext"
+    New-Item -ItemType Directory -Force -Path (Join-Path $pk "dist"), (Join-Path $pk "images") | Out-Null
+    $desc = "按规范把电路板从需求画到可打样，含决策表、阶段流程、边界清单与验收脚本，供任意模型按文档执行。"
+    $mf = [ordered]@{ name="kit"; uuid="0000000000000000000000000000a1b2"; displayName="Kit"; description=$desc;
+                      version="1.0.0"; license="MIT"; categories=@("PCB"); entry="dist/index.js"; icon="images/logo.jpg" }
+    $mf | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $pk "extension.json") -Encoding UTF8
+    Set-Content (Join-Path $pk "dist\index.js") -Value "console.log(1)" -Encoding UTF8
+    Set-Content (Join-Path $pk "images\logo.jpg") -Value ("x" * 100) -Encoding UTF8
+    $zip = Join-Path $probe "good.eext"
+    Compress-Archive -Path (Join-Path $pk "*") -DestinationPath $zip -Force
+    $out = & pwsh -NoProfile -File (Join-Path $AcceptDir "check-extension-package.ps1") -Package $zip 2>&1 | Out-String
+    $LASTEXITCODE -eq 0
+}
+
+Assert-Case "check-extension-package → 缺 license 判 FAIL" {
+    $pk = Join-Path $probe "ext2"
+    New-Item -ItemType Directory -Force -Path (Join-Path $pk "dist"), (Join-Path $pk "images") | Out-Null
+    $mf = [ordered]@{ name="kit"; uuid="0000000000000000000000000000a1b2"; displayName="Kit";
+                      description=("x" * 100); version="1.0.0"; categories=@("PCB");
+                      entry="dist/index.js"; icon="images/logo.jpg" }
+    $mf | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $pk "extension.json") -Encoding UTF8
+    Set-Content (Join-Path $pk "dist\index.js") -Value "x" -Encoding UTF8
+    Set-Content (Join-Path $pk "images\logo.jpg") -Value "x" -Encoding UTF8
+    $zip = Join-Path $probe "bad.eext"
+    Compress-Archive -Path (Join-Path $pk "*") -DestinationPath $zip -Force
+    $null = & pwsh -NoProfile -File (Join-Path $AcceptDir "check-extension-package.ps1") -Package $zip 2>&1
+    $LASTEXITCODE -eq 1
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

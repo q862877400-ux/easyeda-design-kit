@@ -74,6 +74,7 @@ function Test-KitIntegrity {
         "docs\phases\pcb-p0-p10.md",
         "playbooks\README.md"
         "docs\playbook-unseen-board.md"
+        "docs\publish-extension.md"
     )
     $missing = @()
     foreach ($rel in $required) {

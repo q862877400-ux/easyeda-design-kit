@@ -127,3 +127,16 @@
 2. `triedTools` 至少 1 个真实工具名，否则该条无效；
 3. 解决后改 `status: resolved` 并附证据；
 4. 条目数只增不减（与决策表同源纪律）。
+
+---
+
+## GAP-011 扩展形态无法携带 CLI 依赖
+
+- **capability**：把 Kit 完整能力（169 动作、193 命令、playbook、验收脚本）打包成 `.eext` 扩展。
+- **evidence**：`.eext` 是标准 ZIP，只含 `extension.json` + 编译后的入口 bundle + 图标 + 文档
+  （官方要求见 `docs/publish-extension.md`）。扩展运行在 EasyEDA Pro 内，**无法携带或调用
+  `easyeda.exe`**，因此 `acceptance/*.ps1` 与 playbook 在扩展内不可运行。
+- **triedTools**：`EDA Agent Connector`、`PCB Delivery Export`、`eda.pcb_Document`
+- **alternative**：扩展形态定位为「入门 + 随身手册」（内置决策表与阶段文档、调用 `eda.*` 做单点动作）；
+  完整能力走 CLI 形态安装。两种形态共用同一套文档（`docs/harness-install.md` 已写清）。
+- **status**：`accepted`
