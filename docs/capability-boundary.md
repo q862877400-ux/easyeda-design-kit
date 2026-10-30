@@ -285,3 +285,18 @@
   同一轮里 **J2_9**（GND，中心 1025.4,1545.7）用 16/8 孔径 4 孔**成功**：GND 未连 5→4，
   说明方法本身有效，卡的是该点的空间。
 - **status**：`open`
+
+---
+
+## GAP-022 5V_IN 的 D2_5 与 GND 的 J2_11 都打不了有效孔
+
+- **capability**：在 D2_5（5V_IN，中心 1740,1360.2）与 J2_11（GND，中心 1025.4,1710.3）打散热孔。
+- **evidence**：两者用 16/8 孔径均**成功落 4 孔**（`placed:4, failed:0`），但结果不同：
+  - **D2_5**：随即产生 **4 条 Clearance ERROR**——每孔距 D2.6（USB_DP）/D2.4（USB_DM）焊盘仅
+    **4.0 mil**（要求 6）；**且连通性无改善**（5V_IN 仍 4）。删孔后 ERROR 回 0。
+  - **J2_11**：**无 ERROR**，但**连通性无变化**（GND 仍 4，总数仍 14）——孔落在了已有铜上，
+    没改变 DRC 判定。
+- **triedTools**：`pcb via-stitch`、`pcb via-delete`、`pcb pour-fit`、`pcb pour-rebuild`
+- **alternative**：这两点不值得继续加孔。D2_5 需改走线/布局；J2_11 的未连判定来自别的路径，
+  应先查 `pcb net-path <net> <pad>` 弄清它到底缺哪一段铜，再决定动作。**未验证**：net-path 诊断。
+- **status**：`open`
