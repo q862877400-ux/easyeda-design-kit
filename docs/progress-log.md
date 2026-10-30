@@ -38,3 +38,4 @@
 | 9 | 探明 U0TXD 六种参数组合均不可解；查明 via-stitch 无间距校验 | Connection 21 保持；Clearance 18 保持；结论入边界 GAP-019/020 | 本轮 |
 | 10 | 连通性 FAIL 输出改为按网分诊（焊盘/过孔分开）+ 防假绿保险；补 USB_DP 最后一跳 | Connection **21→19**；分诊：GND=9, 3V3=4, 5V_IN=4, U0TXD=2 | 本轮 |
 | 11 | 验证「焊盘内散热孔」法：U1_41/U3_1 的 EPAD 各 4 孔接通内层地；单孔超距用精确删除修复 | Connection **19→15**（GND 9→5），DFM ERROR 保持 0 | 本轮 |
+| 12 | J2_9 屏蔽地焊盘 16/8 孔径 4 孔成功；U3_4 被 DTR 走线封死（1.3–2.7mil）记录为 GAP-021 | Connection **15→14**，DFM ERROR 保持 0 | 本轮 |

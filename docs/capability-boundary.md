@@ -270,3 +270,18 @@
   把孔打到 (1846,2400) 的空白处，Connection 19→22，被迫回滚。
 - **status**：`accepted`
 
+
+---
+
+## GAP-021 3V3 的 U3_4 焊盘被 DTR 走线封死，无法打散热孔
+
+- **capability**：在 U3_4（3V3，中心 1780.7,1462.7 mil）打散热孔接到内层 3V3。
+- **evidence**：`pcb via-stitch --net 3V3 --rect "1765,1447,1796,1478"` 用默认 24/12 孔径时
+  **4 孔全部失败**（`placed:0, failed:4`）；改用 16/8 孔径可落 4 孔，但随即产生
+  **4 条 Clearance ERROR**：每个孔距 DTR 走线仅 **1.3–2.7 mil**（要求 6 mil），
+  坐标 (1765/1795, 1447/1477)。删除这 4 孔后 DFM ERROR 回到 0。
+- **triedTools**：`pcb via-stitch`、`pcb via-delete`、`pcb power-planes`
+- **alternative**：该点须先改走线（把 DTR 让开）或改布局；仅靠加孔不可行。
+  同一轮里 **J2_9**（GND，中心 1025.4,1545.7）用 16/8 孔径 4 孔**成功**：GND 未连 5→4，
+  说明方法本身有效，卡的是该点的空间。
+- **status**：`open`
