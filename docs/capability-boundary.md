@@ -300,3 +300,34 @@
 - **alternative**：这两点不值得继续加孔。D2_5 需改走线/布局；J2_11 的未连判定来自别的路径，
   应先查 `pcb net-path <net> <pad>` 弄清它到底缺哪一段铜，再决定动作。**未验证**：net-path 诊断。
 - **status**：`open`
+
+---
+
+## GAP-023 `pcb net-path` 不覆盖铺铜/填充/PLANE，对内层供电网会误报 FAIL
+
+- **capability**：用 `net-path` 判断某个电源/地焊盘"到底缺哪段铜"。
+- **evidence**：`pcb net-path --net GND --from J2.11 --to J2.9` 输出
+  `FAIL: no continuous listed-copper path`，并在 `scope:` 行自陈
+  **"copper pours, fills, and PLANE connectivity excluded"**。
+  也就是说它只证明"已列出的走线/过孔/焊盘"之间的连续路径；本板 GND/3V3 由**内层平面**供电，
+  该命令结构上无法证明——它的 FAIL 对本场景是**预期行为**，不是缺陷证据。
+- **triedTools**：`pcb net-path`、`pcb drc`
+- **alternative**：内层供电网的连通性只认 `pcb drc` 的 Connection Error；
+  若要诊断"为什么没接到平面"，看 `power-planes` 的 `unplaced` 报告与 `pcb via-list` 是否在焊盘内，
+  而不是 net-path。
+- **status**：`accepted`
+
+---
+
+## GAP-024 焊盘内打过孔仍不连通，说明内层平面未覆盖该处
+
+- **capability**：给 J2_11（GND，中心 1025.4,1710.3）在焊盘内打孔以接入内层地。
+- **evidence**：三种尝试均不改善（Connection 保持 14、GND 保持 4）：
+  1. `--rect "1010,1695,1041,1726" --pitch 30 --diameter 16 --hole 8` → 落 4 孔，DRC 不变；
+  2. 同矩形 `--pitch 20`（仅 1 孔，落点在焊盘内）→ DRC 仍不变；
+  3. 上述尝试期间 DFM 始终保持 ERROR 0（没有新违规）。
+  同板 J2_9 用同样手法**成功**（GND 5→4），所以工具与手法都对，差别在该处是否被内层平面覆盖。
+- **triedTools**：`pcb via-stitch`、`pcb pour-rebuild`、`pcb net-path`、`pcb power-planes`
+- **alternative**：需扩大/重塑内层 GND 平面覆盖（`内电层自动分划` 或 `pcb pour-fit --net GND --layer 15`），
+  或改布局。**未验证**：扩大平面后是否能覆盖 J2_11。
+- **status**：`open`
