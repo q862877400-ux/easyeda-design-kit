@@ -87,7 +87,7 @@ function Test-KitIntegrity {
 
 # ── 阶段 2：决策表可用性（每行点名的工具必须真实存在）────────────────────
 function Test-DecisionTable {
-    $tablePath = Join-Path $script:RepoRoot "easyeda-auto\docs\tool-decision-table.md"
+$tablePath = Join-Path $script:RepoRoot "docs\tool-decision-table.md"
     if (-not (Test-Path $tablePath)) {
         Add-Result "tool-decision-table" "BLOCKED" "决策表不存在，无法校验"
         return
