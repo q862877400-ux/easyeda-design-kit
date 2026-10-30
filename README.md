@@ -86,3 +86,18 @@ specs/               需求规格与质量清单
 - 通过依赖任何一次性脚本；
 - 交付文件缺失却报 PASS；
 - 把「数字变好」当成通过。
+---
+
+## 7. 反目标偷换（每轮的常驻门禁）
+
+产品最大的失效模式不是「做不出来」，而是**把目标偷换**成「用一堆一次性脚本把眼前这块板画出来」。
+它不会自我暴露，只会看起来一直在推进（实测：一次性脚本 26 个、一次性 playbook 28 个）。
+
+因此 `acceptance/run.ps1` 里有一条常驻阶段 `drift-guard`，判据只看仓库事实：
+
+1. 仓库内**不许存在**一次性产物（`.work/`、`*gen*.py`、`*apply*.json`、acceptance 之外调用 easyeda 的脚本）；
+2. **最近一次提交必须动到** `docs/`、`playbooks/`、`acceptance/`、`specs/` 之一；
+3. 规范产物数量**只能增不能减**（棘轮，基线 `acceptance/baseline.json`）。
+
+**它 FAIL，这一轮就不算数**——无论板子看起来多好。详见 [docs/anti-drift.md](docs/anti-drift.md)。
+

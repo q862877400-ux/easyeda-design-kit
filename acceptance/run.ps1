@@ -58,6 +58,7 @@ function Test-KitIntegrity {
     $required = @(
         "PRODUCT.md",
         "specs\004-ai-pcb-design-kit\spec.md",
+        "docs\anti-drift.md",
         "docs\tool-decision-table.md",
         "docs\capability-boundary.md",
         "docs\phases\schematic-s0-s6.md",
@@ -204,6 +205,81 @@ function Test-NoOneOffScripts {
     else { Add-Result "no-oneoff-scripts" "FAIL" "$($suspects.Count) 处疑似一次性脚本，首条： $($suspects[0])" }
 }
 
+# ── 阶段 10：反目标偷换（drift-guard）────────────────────────────────────
+# 这是本产品最重要的一条门禁。
+#
+# 失效模式（我在前 49 轮真实犯过）：把「造出可复用的能力」偷换成「用大量一次性
+# 脚本/playbook 把眼前这块板画出来」。症状是：一次性文件变多、可复用文档没长、
+# 每个提交只动了板子或临时脚本。它不会自我暴露，只会表现为「看起来一直在推进」。
+#
+# 因此这里不看叙述，只看仓库事实：
+#   a) 仓库里不许存在一次性脚本/一次性产物（模式见下）；
+#   b) 最近一次提交必须动到 ≥1 个规范产物（docs/ playbooks/ acceptance/ specs/）；
+#   c) 规范产物数量只能增，不能减（棘轮，基线存 acceptance/baseline.json）。
+function Test-DriftGuard {
+    $oneoffPatterns = @('*\gen*.py', '*apply*.json', '*.tmp.ps1')
+    $oneoffDirs = @('.work', 'scratch', 'tmp', 'oneoff', '_scratch')
+
+    # a) 一次性文件
+    $offenders = @()
+    foreach ($pat in $oneoffPatterns) {
+        $offenders += Get-ChildItem $script:RepoRoot -Recurse -File -Filter $pat -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\playbooks\\' -and $_.FullName -notmatch '\\.git\\' }
+    }
+    foreach ($d in $oneoffDirs) {
+        $p = Join-Path $script:RepoRoot $d
+        if (Test-Path $p) { $offenders += Get-ChildItem $p -Recurse -File | Select-Object -First 5 }
+    }
+    # 除验收脚本外，仓库内不允许出现「直接调用 easyeda 的一次性脚本」
+    $strayScripts = Get-ChildItem $script:RepoRoot -Recurse -File -Include '*.py', '*.ps1' -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.FullName -notmatch '\\acceptance\\' -and
+            $_.FullName -notmatch '\\.git\\' -and
+            (Select-String -Path $_.FullName -Pattern 'easyeda' -Quiet -ErrorAction SilentlyContinue)
+        }
+    $offenders += $strayScripts
+
+    if ($offenders.Count -gt 0) {
+        $names = ($offenders | Select-Object -Unique -First 5 | ForEach-Object { $_.FullName.Replace($script:RepoRoot, '.') })
+        Add-Result "drift-guard" "FAIL" "发现 $($offenders.Count) 个一次性产物（目标被偷换成用胶水画板）： $($names -join ', ')"
+        return
+    }
+
+    # b) 最近一次提交是否动到规范产物
+    Push-Location $script:RepoRoot
+    try {
+        $lastFiles = & git show --pretty=format: --name-only HEAD 2>$null
+        $canonicalTouched = @($lastFiles | Where-Object { $_ -match '^(docs|playbooks|acceptance|specs)/' })
+        if ($canonicalTouched.Count -eq 0 -and $lastFiles.Count -gt 0) {
+            Add-Result "drift-guard" "FAIL" "最近一次提交没有动任何规范产物（docs|playbooks|acceptance|specs），只动了： $($lastFiles -join ', ')"
+            return
+        }
+
+        # c) 棘轮：规范产物数量不许减少
+        $counts = [ordered]@{
+            docs_files      = @(Get-ChildItem (Join-Path $script:RepoRoot 'docs') -Recurse -File -ErrorAction SilentlyContinue).Count
+            playbooks       = @(Get-ChildItem (Join-Path $script:RepoRoot 'playbooks') -Recurse -File -ErrorAction SilentlyContinue).Count
+            acceptance      = @(Get-ChildItem (Join-Path $script:RepoRoot 'acceptance') -Recurse -File -ErrorAction SilentlyContinue).Count
+            spec_files      = @(Get-ChildItem (Join-Path $script:RepoRoot 'specs') -Recurse -File -ErrorAction SilentlyContinue).Count
+        }
+        $baselinePath = Join-Path $script:AcceptDir 'baseline.json'
+        if (Test-Path $baselinePath) {
+            $baseline = Get-Content $baselinePath -Raw | ConvertFrom-Json
+            $shrunk = @()
+            foreach ($k in $counts.Keys) {
+                if ($null -ne $baseline.$k -and $counts[$k] -lt [int]$baseline.$k) {
+                    $shrunk += "$k $($counts[$k]) < $($baseline.$k)"
+                }
+            }
+            if ($shrunk.Count -gt 0) {
+                Add-Result "drift-guard" "FAIL" "规范产物减少（能力在退化）： $($shrunk -join '; ')"
+                return
+            }
+        }
+        Add-Result "drift-guard" "PASS" "无一次性产物；最近提交动了 $($canonicalTouched.Count) 个规范产物；规范产物 $($counts.docs_files)/$($counts.playbooks)/$($counts.acceptance)/$($counts.spec_files)"
+    } finally { Pop-Location }
+}
+
 # ── 主流程 ────────────────────────────────────────────────────────────────
 $caseFile = Join-Path $script:AcceptDir "cases\$Case.md"
 if (-not (Test-Path $caseFile)) {
@@ -225,6 +301,7 @@ Test-PcbConnectivity
 Test-PcbDfm
 Test-Delivery
 Test-NoOneOffScripts
+Test-DriftGuard
 
 $fail = @($script:Results | Where-Object Status -eq "FAIL").Count
 $blocked = @($script:Results | Where-Object Status -eq "BLOCKED").Count
@@ -240,5 +317,7 @@ $script:Results | ConvertTo-Json -Depth 5 | Set-Content $report -Encoding UTF8
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0
+
+
 
 
