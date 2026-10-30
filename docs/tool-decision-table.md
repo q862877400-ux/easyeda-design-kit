@@ -65,6 +65,7 @@
 | 全板自动布线（**已装可用**） | JsPCB自动布线 | 扩展菜单里唯一实际安装的自动布线器（基于 JS-PCB）；**PCB Auto Router / FreeRouting 本机未装** |
 | 想用开源布线器（**未装**） | FreeRouting | 需先在扩展广场现装；本机未安装，未验证 |
 | 命令行逐跳布线（已装，实测 39→6） | pcb route fill | 本会话主力：未连焊盘→同网已连通焊盘，逐跳落线并复测 |
+| 全板自动布线（DSN→SES，主程序无头 CLI） | pcb_autorouter.exe | `-i board.dsn -a -o board.ses --threads 8 --auto-rules`；配合 `pcb export-dsn` / `pcb import-autoroute`；需主程序已登录（免费档 100 网/600 焊盘/4 层） |
 | 管脚扇出打孔 | PCB自动化工具 | 子功能「管脚扇出打孔」；信号/电源孔径分开配 |
 | 模块级扇出 | PCB自动化工具 | 子功能「模块自动扇出打孔」；按封装类型批量 |
 | 单焊盘/批量扇出 | 焊盘扇出 | 8 方向、盲埋孔、规则跟随 |

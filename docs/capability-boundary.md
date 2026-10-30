@@ -402,3 +402,32 @@
 - **alternative**：权威来源只有 **高级 → 扩展管理器 → 已安装** 页；或读本地扩展目录/IndexedDB（**未验证**）。
   决策表判据 `installed-claims` 的清单须来自该页，而不是菜单快照。
 - **status**：`open`
+
+---
+
+## GAP-029 PCB Auto Router 主程序：已装 + 免费额度够，但需登录（原生 GUI 无法自动化）
+
+- **capability**：用 `PCB Auto Router` 打通 DSN→SES 自动布线。
+- **evidence**（2026-10-31 全程实测）：
+  1. **下载**：官网 `https://www.pcbautorouter.top/zh/` 的真实安装包为
+     `https://download.pcbautorouter.top/releases/PCBAutoRouter-1.4807-setup.exe`（7.4 MB，**无代码签名**）；
+     `.eext` 为 `.../jlceda-plugin-1.48.7.eext`。注意网页按钮会被「迅雷/AIX 下载器」截获，
+     直接 `Invoke-WebRequest` 取直链才可靠。
+  2. **安装**：`PCBAutoRouter-1.4807-setup.exe /S` → 退出码 0，装到 `C:\Program Files\PCBAutoRouter\`。
+  3. **主程序自带无头 CLI**（关键发现，不需要 GUI 也不需要插件）：
+     `pcb_autorouter.exe -i <board.dsn> -a -o <board.ses> [--threads 0|4|8|16] [--auto-rules]`
+  4. **DSN 导出可行**：`easyeda pcb export-dsn --project <p> --doc <pcb>` → 131.1 KB，
+     `keepout` 段落存在（2 处），pins=279。
+  5. **免费版额度**：游客 网络50/焊盘200/2层；**注册会员（免费）网络100/焊盘600/4层/板框100mm**；
+     专业版 ¥129/月、¥999/年、¥1999 永久。
+     本板 21 网 / 279 焊盘 / 4 层 / 70×45mm → **注册会员免费档即可，无需付费**。
+  6. **实际报错**：`Error: design exceeds free version limits (pins=279 nets=21 layers=4), please upgrade to Pro`
+     —— 因为当时是**未登录游客**（2 层上限）。登录后应落回 4 层档。
+- **triedTools**：`pcb_autorouter.exe --help/-a/-u`、`easyeda pcb export-dsn`、官网定价页
+- **alternative**：登录有两种，但都需人工一步——
+  (a) 打开 GUI（`pcb_autorouter.exe -u`）用邮箱注册/登录；
+  (b) 提供账号凭据。
+  **本工具的边界**：这是**原生 GLFW 窗口**，不在浏览器自动化范围内，且当前模型不支持读图，
+  因此登录动作**无法由我代做**。
+  未登录时的替代路径：已装的扩展 `JsPCB自动布线`（编辑器内、无外部依赖、无额度限制）。
+- **status**：`open`（已装好主程序；缺一次登录）

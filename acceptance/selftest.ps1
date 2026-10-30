@@ -274,11 +274,25 @@ Assert-Case "installed-claims → 把 PCB Auto Router 写成首选 判 FAIL" {
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'installed-claims').Status -eq 'FAIL'
 }
 
+
+# 断言 26：未被 external-tools.json 收录的 exe 必须判解析失败（防"外部工具"口子被滥开）
+Assert-Case "决策表：未收录的 exe 仍判 FAIL" {
+    $d = Join-Path $probe "dt2"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
+    Copy-Item (Join-Path $KitRoot "docs\external-tools.json") (Join-Path $d "docs") -Force
+    $rows = @("| 情境 | 用哪个 | 参数 |", "|---|---|---|")
+    for ($i = 1; $i -le 30; $i++) { $rows += "| 场景$i | pcb route fill | 参数 |" }
+    $rows += "| 某场景X | totally-unknown-router.exe | 参数 |"
+    $rows | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'tool-decision-table').Status -eq 'FAIL'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host ("===== {0} PASS / {1} FAIL =====" -f $script:Pass, $script:Fail)
 if ($script:Fail -gt 0) { exit 1 }
 exit 0
+
 
 

@@ -200,3 +200,20 @@ pwsh -NoProfile -File acceptance/compare-runs.ps1 -A runs\a.json -B runs\b.json
 **无法切换模型时**：用"全新会话 + 零上下文"代替，并在报告里显式标注
 `弱化验证：未换模型`——不得把它写成已满足 SC-004。
 
+
+### P6 补充：DSN→SES 用 PCB Auto Router 主程序（无头 CLI，实测）
+
+```powershell
+# 1) 导出 DSN（注意：CLI 输出里的 📎 行会破坏 JSON 解析，用正则抓 .dsn 路径）
+easyeda pcb export-dsn --project <工程> --doc <PCB uuid>
+#    实测产物 131 KB，含 keepout 段落（否则布线器会从天线下方走线）
+
+# 2) 无头布线（主程序在 C:\Program Files\PCBAutoRouter\pcb_autorouter.exe）
+& "C:\Program Files\PCBAutoRouter\pcb_autorouter.exe" -i board.dsn -a -o board.ses --threads 8 --auto-rules
+
+# 3) 导回 SES
+easyeda pcb import-autoroute board.ses --project <工程> --doc <PCB uuid>
+```
+
+**额度**：注册会员（免费）网络 100 / 焊盘 600 / 4 层；本板 21 / 279 / 4 层在限额内。
+**前置**：主程序必须已登录（原生 GUI 登录一次即可），否则报 `design exceeds free version limits`。

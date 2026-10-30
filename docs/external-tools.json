@@ -1,0 +1,17 @@
+{
+  "verifiedAt": "2026-10-31",
+  "note": "本清单只收录「在扩展中心/动作目录之外、但已在本机实测可调用」的外部可执行工具。每条必须有 evidence（实测命令与结果）。决策表可点名这里的工具；未列入者仍判解析失败。",
+  "tools": [
+    {
+      "name": "pcb_autorouter.exe",
+      "displayName": "PCB Auto Router 主程序（DSN→SES 布线引擎）",
+      "path": "C:\\Program Files\\PCBAutoRouter\\pcb_autorouter.exe",
+      "installer": "https://download.pcbautorouter.top/releases/PCBAutoRouter-1.4807-setup.exe",
+      "version": "1.4807",
+      "signed": false,
+      "headlessCli": "pcb_autorouter.exe -i <board.dsn> -a -o <board.ses> [--threads 0|4|8|16] [--auto-rules]",
+      "evidence": "实测：--help 列出 -i/-a/-o/--threads/--auto-rules；对 131 KB DSN 执行 -a 返回 Error: design exceeds free version limits (pins=279 nets=21 layers=4)（未登录=游客 2 层档），证明 CLI 与额度校验均生效",
+      "notes": "需登录一次（原生 GLFW GUI，无法自动化）；注册会员免费档额度：网络100/焊盘600/4层/板框100mm"
+    }
+  ]
+}

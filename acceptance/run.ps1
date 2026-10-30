@@ -98,7 +98,7 @@ function Test-KitIntegrity {
 
 # ── 阶段 2：决策表可用性（每行点名的工具必须真实存在）────────────────────
 function Test-DecisionTable {
-$tablePath = Join-Path $script:RepoRoot "docs\tool-decision-table.md"
+$tablePath = Join-Path $script:AuditRoot "docs\tool-decision-table.md"
     if (-not (Test-Path $tablePath)) {
         Add-Result "tool-decision-table" "BLOCKED" "决策表不存在，无法校验"
         return
@@ -125,6 +125,14 @@ $tablePath = Join-Path $script:RepoRoot "docs\tool-decision-table.md"
             $grp = $Matches[1]; $sub = $Matches[2]
             if (-not $script:DtHelpCache.ContainsKey($grp)) { $script:DtHelpCache[$grp] = (& $Cli @($grp, '--help') 2>$null | Out-String) }
             if ($script:DtHelpCache[$grp] -match [regex]::Escape($sub)) { $hit = $true }
+        }
+        # 外部可执行工具：只认 docs/external-tools.json 里带 evidence 的条目
+        if (-not $hit) {
+            $etPath = Join-Path $script:AuditRoot "docs\external-tools.json"
+            if (Test-Path $etPath) {
+                try { $etList = (Get-Content $etPath -Raw | ConvertFrom-Json).tools } catch { $etList = @() }
+                foreach ($et in @($etList)) { if ($et.name -and $tool.Contains($et.name)) { $hit = $true; break } }
+            }
         }
         if (-not $hit) { $unresolved += $tool }
     }
