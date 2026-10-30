@@ -205,3 +205,9 @@ T025 docs/playbook-unseen-board.md
 - [ ] T052 `.epro2` 导入为**一次性 GUI 操作**（动作目录无 project import）；导入后其余流程全 CLI 驱动——**需 GUI，未验证**
 - [x] T053 评估把上游 `references/` 的电路架构知识并入决策表（去重后引用，不整份复制）
 - [x] T054 封装 `acceptance/export-delivery.ps1`：一条命令跑完 Gerber/坐标/BOM 三个动作、收集制品、写 delivery-evidence.json（实测 74,869 / 13,358 / 8,379 B，exit 0）——修掉三个坑：`$args` 是自动变量、artifact 提示行污染 JSON、PCB 导出必须 `--doc`
+
+## Phase 11: 收敛（converge）——剩余两个孤岛的处置
+
+- [ ] T055 **[需业主授权]** 用扩展 `PCB Auto Router` 全板重布，取代命令行逐跳。理由：剩余 6 条（GAP-025）已是两个孤岛，命令行六种参数组合全部 incomplete。**需要业主**：允许我操作 EasyEDA GUI（浏览器自动化点击扩展面板）。
+- [ ] T056 **[高风险，需先具备回退基准]** 挪动 D2 或 U1/U3 之间器件腾出过孔位/走廊。前置：把当前 6 条未连 + 全部走线坐标落盘作为回退基准；失败时按坐标挪回。**需要业主**：确认可以承受「断掉现有走线再重连」的风险。
+- [x] T057 命令行层面已穷尽：D2_5 三组参数（默认 / step15+detour1500 ×2 目标）与 U0TXD 七组参数全部 `incomplete`，已如实记入 GAP-019/025，不再盲试。
