@@ -83,7 +83,7 @@
 - **capability**：早期连接器只实现 3 个制造导出方法（BOM/DSN/ExportDocument），无 Gerber。
   `eda.pcb_ManufactureData.*` 有 29 个方法，未逐个接线。
 - **evidence**：`specs/003-pcb-design-authoring/spec.md` 记录的调研表：`getGerberFile` 未实现。
-- **triedTools**：`PCB Delivery Export`、`多板生产文件一键导出`、`pcb.manufacture.*`
+- **triedTools**：`PCB Delivery Export`、`多板生产文件一键导出`、`pcb drc`
 - **alternative**：交付改用扩展 `PCB Delivery Export`（Gerber+BOM+CPL 一键），不走自研导出。
 - **status**：`resolved`（走扩展）；如有缺口，按 E4 记录新条目
 

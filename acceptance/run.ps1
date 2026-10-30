@@ -73,6 +73,7 @@ function Test-KitIntegrity {
         "docs\phases\schematic-s0-s6.md",
         "docs\phases\pcb-p0-p10.md",
         "playbooks\README.md"
+        "docs\playbook-unseen-board.md"
     )
     $missing = @()
     foreach ($rel in $required) {
@@ -228,6 +229,7 @@ if (-not $Quiet) {
 
 Test-KitIntegrity
 Test-DecisionTable
+Test-CapabilityBoundary
 Test-Environment
 Test-SchematicGates
 Test-PcbLayout

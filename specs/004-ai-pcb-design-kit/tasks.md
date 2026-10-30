@@ -62,7 +62,7 @@
 - [x] T022 [US1] 新增 playbook：`sch-import-then-place`（原理图→PCB 的导入与约束布局链）
 - [x] T023 [US1] 在 `docs/phases/pcb-p0-p10.md` 写明每个阶段**首选扩展**（PCB Auto Router / 内电层自动分划 / 嘉立创下单检查 / PCB Delivery Export）
 - [x] T024 [US1] 写 `docs/harness-install.md`：把 kit 装进任意 harness 的步骤（skill 目录形态）
-- [ ] T025 [US1] 未见板执行剧本 `docs/playbook-unseen-board.md`：从需求到验收的完整操作序列（含 tee 日志）
+- [x] T025 [US1] 未见板执行剧本 `docs/playbook-unseen-board.md`：从需求到验收的完整操作序列（含 tee 日志）
 
 **Checkpoint**：一个没看过本项目的人能照文档画出板并自证。
 
@@ -89,8 +89,8 @@
 
 - [x] T030 [US3] N1 判据：`.work/`、`*gen*.py`、`*apply*.json`、acceptance 外调用 easyeda 的脚本
 - [x] T031 [US3] N4/N5/N6 日志审计：rip-up --net、求解>快照、save→drc 无 reload
-- [ ] T032 [US3] `playbooks/capture-run.ps1`→ 改为**文档化流程**：执行者用 `Tee-Object` 落日志（不引入新脚本，写进 playbooks/README 的操作说明）
-- [ ] T033 [US3] 把"撤销已落板路径"的正确做法写成 playbook 片段：`track-delete --ids` / `via-delete --ids`（对照 N4）
+- [x] T032 [US3] `playbooks/capture-run.ps1`→ 改为**文档化流程**：执行者用 `Tee-Object` 落日志（不引入新脚本，写进 playbooks/README 的操作说明）
+- [x] T033 [US3] 把"撤销已落板路径"的正确做法写成 playbook 片段：`track-delete --ids` / `via-delete --ids`（对照 N4）
 
 ---
 
@@ -110,10 +110,10 @@
 
 **Goal**：做不到的说清楚，给替代路径，不让执行者在失败里反复试。
 
-- [ ] T038 [US5] `docs/capability-boundary.md` 首版：至少 8 条，来自 49 轮实测（双层求解边界、单层 solver 限制、rip-up 语义、丝印清除需 ids、Gerber 导出历史缺口等）
-- [ ] T039 [US5] 每条必须含 `triedTools`（≥1 个真实工具名）——由 `capability-boundary` 校验器检查
-- [ ] T040 [US5] 增加校验：`docs/capability-boundary.md` 的条目结构检查并入 `positive-goal`（缺字段即 FAIL）
-- [ ] T041 [US5] 抽样验证脚本：随机抽 5 条边界，检查 `alternative` 描述的路径确实存在（人工确认 + 记录）
+- [x] T038 [US5] `docs/capability-boundary.md` 首版：至少 8 条，来自 49 轮实测（双层求解边界、单层 solver 限制、rip-up 语义、丝印清除需 ids、Gerber 导出历史缺口等）
+- [x] T039 [US5] 每条必须含 `triedTools`（≥1 个真实工具名）——由 `capability-boundary` 校验器检查
+- [x] T040 [US5] 增加校验：`docs/capability-boundary.md` 的条目结构检查并入 `positive-goal`（缺字段即 FAIL）
+- [x] T041 [US5] 抽样验证脚本：随机抽 5 条边界，检查 `alternative` 描述的路径确实存在（人工确认 + 记录）
 
 ---
 
@@ -124,7 +124,7 @@
 - [ ] T044 [P] `README.md` 链接 quickstart 与 tasks，避免新读者无从下手
 - [ ] T045 全量回归：`selftest.ps1` 8/8 + `mistake-matrix.ps1` 16/16 + `run.ps1` 无 FAIL
 - [ ] T046 台账记录：本轮改了什么工具、板子推进到哪、下一步
-- [ ] T047 [P] 把 plan/tasks/quickstart 同步一份到 kit 仓库 `specs/`（保持单一来源说明）
+- [x] T047 [P] 把 plan/tasks/quickstart 同步一份到 kit 仓库 `specs/`（保持单一来源说明）
 
 ---
 

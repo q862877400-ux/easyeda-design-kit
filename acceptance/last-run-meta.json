@@ -1,9 +1,9 @@
 {
   "case": "esp32-4layer",
   "executor": "unspecified",
-  "finishedAt": "2026-10-31T00:54:43",
+  "finishedAt": "2026-10-31T00:59:47",
   "exitCode": 2,
-  "pass": 5,
+  "pass": 6,
   "fail": 0,
   "blocked": 6,
   "stages": [
@@ -13,6 +13,10 @@
     },
     {
       "stage": "tool-decision-table",
+      "status": "PASS"
+    },
+    {
+      "stage": "capability-boundary",
       "status": "PASS"
     },
     {

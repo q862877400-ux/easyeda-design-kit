@@ -236,3 +236,63 @@ function Get-CanonicalCounts {
 
 
 
+
+# ══════════════════════════════════════════════════════════════════════
+# 能力边界的结构校验（E4 字段：capability / evidence / triedTools / alternative / status）
+#
+# 为什么要机械校验：边界清单最容易退化成"感觉做不到"的散文。
+# triedTools 为空 = 还没试过现有工具就宣布做不到，这条无效。
+# ══════════════════════════════════════════════════════════════════════
+function Test-CapabilityBoundary {
+    $path = Join-Path $script:AuditRoot 'docs\capability-boundary.md'
+    if (-not (Test-Path $path)) {
+        Add-Result "capability-boundary" "FAIL" "文件不存在： docs\capability-boundary.md"
+        return
+    }
+    $lines = Get-Content $path
+    $entries = @()
+    $cur = $null
+    foreach ($ln in $lines) {
+        if ($ln -match '^##\s+(GAP-\d+)') {
+            if ($cur) { $entries += $cur }
+            $cur = [ordered]@{ id = $Matches[1]; text = @() }
+        } elseif ($cur) {
+            $cur.text += $ln
+        }
+    }
+    if ($cur) { $entries += $cur }
+
+    if ($entries.Count -lt 8) {
+        Add-Result "capability-boundary" "FAIL" "只有 $($entries.Count) 条边界（要求 ≥8）"
+        return
+    }
+
+    $bad = @()
+    foreach ($e in $entries) {
+        $body = $e.text -join "`n"
+        $missing = @()
+        foreach ($field in @('capability', 'evidence', 'triedTools', 'alternative', 'status')) {
+            if ($body -notmatch "(?i)\*\*$field\*\*") { $missing += $field }
+        }
+        # triedTools 必须有实际内容（去掉标记后仍有工具名）
+        if ($body -match '(?im)^-\s+\*\*triedTools\*\*\s*[:：]\s*(.*)$') {
+            $tools = $Matches[1].Trim()
+            if ([string]::IsNullOrWhiteSpace($tools) -or $tools -eq '无' -or $tools -eq '-') { $missing += 'triedTools(空)' }
+        } else {
+            # 解析不到 vs 内容为空：必须区分。过去"解析不到就跳过"让校验器空转。
+            $missing += 'triedTools(格式不可解析，需 `- **triedTools**：...`)'
+        }
+        # status 必须是三值之一
+        if ($body -match '(?im)^-\s+\*\*status\*\*\s*[::]\s*`?([a-z]+)`?') {
+            if ($Matches[1] -notin @('open', 'accepted', 'resolved')) { $missing += "status=$($Matches[1])" }
+        }
+        if ($missing.Count -gt 0) { $bad += "$($e.id): $($missing -join '/')" }
+    }
+
+    if ($bad.Count -gt 0) {
+        Add-Result "capability-boundary" "FAIL" "$($bad.Count)/$($entries.Count) 条结构不全 — $($bad -join '; ')"
+    } else {
+        Add-Result "capability-boundary" "PASS" "$($entries.Count) 条边界，字段齐全且 status 合法"
+    }
+}
+

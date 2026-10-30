@@ -90,6 +90,30 @@ if (Test-Path $historyRepo) {
     Write-Host "[SKIP] 历史回测（找不到 easyeda-auto）"
 }
 
+
+# 断言 9：能力边界结构校验（正例）
+Assert-Case "capability-boundary → kit 自身 PASS" {
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot) 'capability-boundary').Status -eq 'PASS'
+}
+
+# 断言 10：缺字段必须判失败（反例）
+Assert-Case "capability-boundary → 缺 triedTools 判 FAIL" {
+    $bp = Join-Path $probe "docs"
+    New-Item -ItemType Directory -Force -Path $bp | Out-Null
+    $lines = @("# 边界")
+    for ($i = 1; $i -le 8; $i++) {
+        $lines += "## GAP-00$i"
+        $lines += "- **capability**：做不到 $i"
+        $lines += "- **evidence**：实测 $i"
+        if ($i -ne 3) { $lines += "- **triedTools**：pcb drc" }
+        $lines += "- **alternative**：用 pcb drc 替代"
+        $lines += "- **status**：accepted"
+    }
+    Set-Content (Join-Path $bp "capability-boundary.md") -Value ($lines -join "`n") -Encoding UTF8
+    $r = Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $probe) 'capability-boundary'
+    ($r.Status -eq 'FAIL') -and ($r.Detail -match 'GAP-003')
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
