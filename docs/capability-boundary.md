@@ -339,3 +339,19 @@
   真正原因是该焊盘被**铺铜避让（anti-pad）**与邻网铜隔离：周围没有 thermal spoke 通道。
   可行路径只剩改布局/改走线让开空间，或换到信号层绕行。**未验证**：改布局后的效果。
 - **status**：`open`
+
+---
+
+## GAP-025 剩余未连只剩两个"孤岛"，都卡在没有过孔空间
+
+- **capability**：把 Connection Error 从 6 降到 0。
+- **evidence**（第 16 轮实测，DRC 扁平输出）：
+  - **5V_IN 孤岛**：`Track (1704.2,1354.8)` + `SMD Pad D2_5 (1740,1360.2)` + `Via (1321.9,1479.7)`
+    + `Via (1535,1305.6)`。D2_5 是**顶层 SMD 焊盘**，要接入的那簇铜在 **L2**，
+    因此必须打孔；但同网走线离它最近的点在 (1705,1365.6)，而该处打孔实测距 D2.4/D2.6 仅 **4.0 mil**
+    （要求 6，见 GAP-022），`route fill` 从 D2.5 出发的两次尝试（→J1.1、→C8.1）均 `incomplete`。
+  - **U0TXD 孤岛**：`U1_37 (70.5,464.8)` 与 `U3_3 (1730.7,1462.7)`，六种参数组合全部 `incomplete`（GAP-019）。
+- **triedTools**：`pcb route fill`、`pcb via-stitch`、`pcb via-hop`、`pcb power-planes`
+- **alternative**：两者都需**布局级**改动（挪 D2 或挪 U1/U3 之间的器件腾出过孔位/走廊），
+  或改用扩展 `PCB Auto Router` 全板重布。**未验证**：挪动后的收敛性。
+- **status**：`open`

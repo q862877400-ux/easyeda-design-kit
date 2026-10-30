@@ -44,3 +44,4 @@
 | 14 | 重跑 power-planes（GND unplaced 4→3）；**推翻**「平面未覆盖」假设（pour-fit 是整板矩形），改记为「铺铜避让隔离」| Connection 14 保持，DFM ERROR 0 保持 | 本轮 |
 | 14 | 新手法：`route fill` 把 GND 焊盘连到已接地焊盘（J2.11 33 段接通）；再次验证「删未连过孔会更糟」（14→16，已恢复）| Connection 14 保持，DFM ERROR 0 保持 | 本轮 |
 | 15 | 系统化「未连焊盘 → 已接地焊盘」走线：GND 两屏蔽盘 + 3V3 C5.1/C7.1 + 5V_IN C8.1 全部接通 | Connection **14→8**（GND 清零），DFM ERROR 0 | 本轮 |
+| 16 | 3V3 清零（U3.4/C7.1 → C5.1 走线）；判定剩余 6 条为两个孤岛（5V_IN D2_5 需过孔无空间、U0TXD 走廊被占）| Connection **8→6**，DFM ERROR 0 | 本轮 |
