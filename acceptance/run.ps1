@@ -218,7 +218,7 @@ if (-not (Test-Path $caseFile)) {
 }
 if (-not $Quiet) {
     Write-Host "===== EasyEDA AI Design Kit acceptance ====="
-    Write-Host "case: $Case   project: $(if ($Project) { $Project } else { '<none>' })"
+    Write-Host "case: $Case   project: $(if ($Project) { $Project } else { '<none>' })   auditRoot: $script:AuditRoot   codeScope: [$script:CodeScope]"
     Write-Host ""
 }
 
@@ -248,6 +248,7 @@ $script:Results | ConvertTo-Json -Depth 5 | Set-Content $report -Encoding UTF8
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0
+
 
 
 

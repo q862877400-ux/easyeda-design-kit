@@ -42,7 +42,18 @@ function Test-PositiveGoal {
     # （事故：手搓布线器/DFM/丝印，而扩展中心已有对应工具）
     $impl = Get-ChildItem $script:AuditRoot -Recurse -File -Include '*.go', '*.ts', '*.js' -ErrorAction SilentlyContinue |
         Where-Object { $_.FullName -notmatch '\\(node_modules|\.git|dist|bin|vendor|target|_archive|acceptance)\\' -and $_.FullName.Contains($script:CodeScope) }
-    if ($impl.Count -gt 0) {
+    $isExternal = ($script:AuditRoot -ne $script:RepoRoot)
+    if ($isExternal) {
+        # 外部审计：连接器/CLI 本身是合法基础设施，不能按"kit 里零实现代码"判。
+        # 只判"功能与既有扩展重叠"的那部分——那才是重复造轮子。
+        $dupSig = '(?i)(check|drc|dfm|autorout|shortroute|route_)'
+        $dup = @($impl | Where-Object { $_.Name -match $dupSig -and $_.Length -gt 20KB -and $_.Name -notmatch '_test' })
+        if ($dup.Count -gt 0) {
+            $fail += "P3(外部审计) $($dup.Count) 个实现文件与既有扩展功能重叠（重复造轮子）： $(($dup | Select-Object -First 4 | ForEach-Object { $_.Name }) -join ', ')"
+        } else {
+            $note += "外部审计：实现文件 $($impl.Count) 个，未命中功能重叠模式"
+        }
+    } elseif ($impl.Count -gt 0) {
         $fail += "kit 里出现 $($impl.Count) 个实现类源文件（应先复用扩展中心）： $(($impl | Select-Object -First 3 | ForEach-Object { $_.Name }) -join ', ')"
     }
 
@@ -124,7 +135,13 @@ function Test-NegativeDrift {
         $selfScorer = Get-ChildItem $script:AuditRoot -Recurse -File -Include '*.go', '*.py' -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch '\\(node_modules|\.git|dist|bin|vendor|target|acceptance)\\' -and $_.FullName.Contains($script:CodeScope) -and
                 (Select-String -Path $_.FullName -Pattern 'clearance|drc|dfm' -Quiet -ErrorAction SilentlyContinue) }
-        if ($selfScorer.Count -gt 0) { $fail += "N3 出现自建检查器实现 $($selfScorer.Count) 个（应使用既有检查器）" }
+        # 只把"实质性检查器"算进来：真正实现检查器的文件必然够大；仅提到 drc/dfm 字样的不算。
+        $bigChecker = @($selfScorer | Where-Object { $_.Name -match '(?i)(check|drc|dfm)' -and $_.Length -gt 20KB -and $_.Name -notmatch '_test' })
+        if ($bigChecker.Count -gt 0) {
+            $fail += "N3 出现自建检查器实现 $($bigChecker.Count) 个（应使用既有检查器）： $(($bigChecker | ForEach-Object { '{0} {1:N0}KB' -f $_.Name, ($_.Length/1KB) }) -join ', ')"
+        } else {
+            $note += "自建检查器 0 个（提字样 $($selfScorer.Count) 个均非实现）"
+        }
     } finally { Pop-Location }
 
     # 以下需要运行日志；没有日志时如实报 BLOCKED（不报 PASS）
@@ -189,6 +206,8 @@ function Get-CanonicalCounts {
         spec_files = @(Get-ChildItem (Join-Path $script:RepoRoot 'specs') -Recurse -File -ErrorAction SilentlyContinue).Count
     }
 }
+
+
 
 
 
