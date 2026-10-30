@@ -300,3 +300,45 @@ function Test-CapabilityBoundary {
     }
 }
 
+
+# ══════════════════════════════════════════════════════════════════════
+# 可移植性：文档里不得出现本机绝对路径
+#
+# 为什么：这个包要能装进任意 harness、换台机器就能用。文档里若写死
+# "D:\Agent-Studio\..." 或 "C:\Users\xxx"，换环境后读者会照着找不到东西，
+# 或以为必须在本机构造才有意义。
+# ══════════════════════════════════════════════════════════════════════
+function Test-KitPortability {
+    $roots = @('docs', 'playbooks', 'specs')
+    $patterns = @(
+        '[A-Za-z]:\\Users\\',
+        'D:\\Agent-Studio',
+        'C:\\Users\\',
+        '/Users/[A-Za-z]',
+        '/home/[A-Za-z]'
+    )
+    $bad = @()
+    foreach ($r in $roots) {
+        $p = Join-Path $script:AuditRoot $r
+        if (-not (Test-Path $p)) { continue }
+        foreach ($f in Get-ChildItem $p -Recurse -File -Include '*.md', '*.json' -ErrorAction SilentlyContinue) {
+            foreach ($pat in $patterns) {
+                if (Select-String -Path $f.FullName -Pattern $pat -Quiet -ErrorAction SilentlyContinue) {
+                    $bad += $f.FullName.Replace($script:RepoRoot + '\', '')
+                    break
+                }
+            }
+        }
+    }
+    $skill = Join-Path $script:AuditRoot 'SKILL.md'
+    if (Test-Path $skill) {
+        foreach ($pat in $patterns) {
+            if (Select-String -Path $skill -Pattern $pat -Quiet -ErrorAction SilentlyContinue) { $bad += 'SKILL.md'; break }
+        }
+    }
+    if ($bad.Count -gt 0) {
+        Add-Result "kit-portability" "FAIL" ("$($bad.Count) 份文档含本机绝对路径： " + (($bad | Select-Object -Unique -First 5) -join ', '))
+    } else {
+        Add-Result "kit-portability" "PASS" "文档无本机绝对路径"
+    }
+}

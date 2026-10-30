@@ -244,6 +244,19 @@ Assert-Case "决策表：CLI 命令名可解析" {
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'tool-decision-table').Status -eq 'PASS'
 }
 
+
+# 断言 22–23：可移植性（kit 自身 PASS / 含本机绝对路径 FAIL）
+Assert-Case "kit-portability → kit 自身 PASS" {
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot) 'kit-portability').Status -eq 'PASS'
+}
+
+Assert-Case "kit-portability → 含 D:\\Agent-Studio 判 FAIL" {
+    $pd = Join-Path $probe "port"
+    New-Item -ItemType Directory -Force -Path (Join-Path $pd "docs") | Out-Null
+    Set-Content (Join-Path $pd "docs\bad.md") -Value "见 D:\Agent-Studio\foo 与 C:\Users\x" -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $pd) 'kit-portability').Status -eq 'FAIL'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

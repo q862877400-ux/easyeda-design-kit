@@ -70,6 +70,7 @@ function Get-FirstJsonNumber {
 function Test-KitIntegrity {
     $required = @(
         "PRODUCT.md",
+        "SKILL.md",
         "specs\004-ai-pcb-design-kit\spec.md",
         "docs\anti-drift.md",
         "docs\tool-decision-table.md",
@@ -336,6 +337,7 @@ if (-not $Quiet) {
 }
 
 Test-KitIntegrity
+Test-KitPortability
 Test-DecisionTable
 Test-CapabilityBoundary
 Test-Environment
