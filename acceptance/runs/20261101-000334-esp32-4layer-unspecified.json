@@ -1,0 +1,104 @@
+{
+  "case": "esp32-4layer",
+  "executor": "unspecified",
+  "finishedAt": "2026-11-01T00:03:34",
+  "exitCode": 1,
+  "pass": 3,
+  "fail": 5,
+  "blocked": 10,
+  "project": "",
+  "doc": "",
+  "schDoc": "",
+  "stages": [
+    {
+      "stage": "kit-integrity",
+      "status": "PASS",
+      "detail": "16 份必需文档齐备"
+    },
+    {
+      "stage": "kit-portability",
+      "status": "PASS",
+      "detail": "文档无本机绝对路径"
+    },
+    {
+      "stage": "tool-decision-table",
+      "status": "BLOCKED",
+      "detail": "决策表不存在，无法校验"
+    },
+    {
+      "stage": "installed-claims",
+      "status": "FAIL",
+      "detail": "缺 docs/installed-extensions.json（装机清单）"
+    },
+    {
+      "stage": "decision-actionability",
+      "status": "BLOCKED",
+      "detail": "决策表不存在"
+    },
+    {
+      "stage": "capability-boundary",
+      "status": "FAIL",
+      "detail": "文件不存在： docs\\capability-boundary.md"
+    },
+    {
+      "stage": "capability-sample",
+      "status": "FAIL",
+      "detail": "；[FAIL] 缺文件： D:\\Agent-Studio\\Deepseek-Harness\\DSH-Oss-Research-and-Deployments\\easyeda-auto\\docs\\capability-boundary.md"
+    },
+    {
+      "stage": "environment",
+      "status": "BLOCKED",
+      "detail": "没有在线的 EDA 窗口（windows 为空）"
+    },
+    {
+      "stage": "schematic-gates",
+      "status": "BLOCKED",
+      "detail": "未指定 -Project"
+    },
+    {
+      "stage": "design-ir",
+      "status": "BLOCKED",
+      "detail": "未指定 -IR（design.ir.json）"
+    },
+    {
+      "stage": "pcb-layout",
+      "status": "BLOCKED",
+      "detail": "未指定 -Project"
+    },
+    {
+      "stage": "pcb-connectivity",
+      "status": "BLOCKED",
+      "detail": "未指定 -Project"
+    },
+    {
+      "stage": "pcb-drc-clean",
+      "status": "BLOCKED",
+      "detail": "未指定 -Project/-Doc"
+    },
+    {
+      "stage": "pcb-dfm",
+      "status": "BLOCKED",
+      "detail": "未指定 -Project"
+    },
+    {
+      "stage": "delivery",
+      "status": "BLOCKED",
+      "detail": "未指定 -DeliveryDir"
+    },
+    {
+      "stage": "no-oneoff-scripts",
+      "status": "PASS",
+      "detail": "无临时脚本调用"
+    },
+    {
+      "stage": "positive-goal",
+      "status": "FAIL",
+      "detail": "P3(外部审计) 6 个实现文件与既有扩展功能重叠（重复造轮子）： cmd_pcb_module_check.go, pcb_check_connector.go, pcb_check.go, pcb_route_critical.go；p1-fix-xtal-load-caps.playbook.json: 步骤 run='sch delete' 在 CLI 里不存在（疑似自编工具）；p1-fix-xtal-load-caps.playbook.json: 步骤 run='sch delete' 在 CLI 里不存在（疑似自编工具）；p2-aux-supply-skeleton.playbook.json: 步骤 run='checkpoint' 在 CLI 里不存在（疑似自编工具）"
+    },
+    {
+      "stage": "negative-drift",
+      "status": "FAIL",
+      "detail": "N1 一次性产物 184 个： autolayout-apply.json, pc-apply.json, pc-apply2.json；N3 出现自建检查器实现 4 个（应使用既有检查器）： cmd_pcb_module_check.go 115KB, pcb_check_connector.go 29KB, pcb_check.go 98KB, check-exam-examples.py 30KB；N5 求解 8 次但只取快照 2 次（存在对着旧快照求解）"
+    }
+  ]
+}

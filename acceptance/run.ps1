@@ -261,12 +261,20 @@ function Test-PcbConnectivity {
 function Test-CapabilitySample {
     $sc = Join-Path $script:AcceptDir "sample-boundaries.ps1"
     if (-not (Test-Path $sc)) { Add-Result "capability-sample" "BLOCKED" "缺 sample-boundaries.ps1"; return }
-    $out = & pwsh -NoProfile -File $sc -KitRoot $script:AuditRoot 2>&1 | Out-String
-    $code = $LASTEXITCODE
-    $summary = (($out -split "`n" | Where-Object { $_ -match "=====" } | Select-Object -Last 1) -replace "=", "").Trim()
-    $fails = @($out -split "`n" | Where-Object { $_ -match "^\s*\[FAIL\]" } | ForEach-Object { $_.Trim() })
-    if ($code -eq 0) { Add-Result "capability-sample" "PASS" $summary }
-    else { Add-Result "capability-sample" "FAIL" ("{0}；{1}" -f $summary, (($fails | Select-Object -First 2) -join " / ")) }
+    # 反例（2026-10-31 自查）：这里第一版把 `$out -split` 的结果直接 .Trim()，——数组没有 Trim，
+    # 在裸 -AuditRoot（没有 docs）的矩阵探针里抛异常，把整条验收流程打断（selftest 33/36、矩阵 2/16）。
+    # 现在：取最后一行转 [string] 再 Trim，并对整个阶段加 try/catch —— 辅助脚本出错只能让本阶段 BLOCKED。
+    try {
+        $out = & pwsh -NoProfile -File $sc -KitRoot $script:AuditRoot 2>&1 | Out-String
+        $code = $LASTEXITCODE
+        $sumLines = @($out -split "`n" | Where-Object { $_ -match "=====" })
+        $summary = if ($sumLines.Count -gt 0) { ([string]$sumLines[-1]).Replace("=", "").Trim() } else { "" }
+        $fails = @($out -split "`n" | Where-Object { $_ -match "^\s*\[FAIL\]" } | ForEach-Object { ([string]$_).Trim() })
+        if ($code -eq 0) { Add-Result "capability-sample" "PASS" $summary }
+        else { Add-Result "capability-sample" "FAIL" ("{0}；{1}" -f $summary, (($fails | Select-Object -First 2) -join " / ")) }
+    } catch {
+        Add-Result "capability-sample" "BLOCKED" ("抽样脚本异常无法判定： " + $_.Exception.Message)
+    }
 }
 
 function Test-PcbDrcClean {

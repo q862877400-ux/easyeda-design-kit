@@ -922,3 +922,23 @@
 - **status**：`open`
 
 
+
+---
+
+## GAP-054 辅助阶段抛异常会**打断整条验收**：数组没有 `.Trim()`，矩阵当场抓到
+
+- **capability**：新增一个门禁阶段（第 18 阶段 `capability-sample`）而不影响其它阶段。
+- **evidence**（2026-10-31 本轮自查，我自己造成的）：
+  1. 新阶段里写了 `(($out -split "`n" | … | Select-Object -Last 1) -replace "=", "").Trim()`。
+     当 `-replace` 作用在**数组**上时返回数组，数组没有 `.Trim()` → 抛
+     `方法调用失败，因为 [System.Object[]] 不包含名为 'Trim' 的方法`。
+  2. 因为 `run.ps1` 是 `$ErrorActionPreference = "Stop"`，这个异常**中止了整个验收流程**：
+     在矩阵的裸探针（`-AuditRoot <空目录>`）里，banner 之后一个阶段都不输出。
+  3. **错误矩阵当场抓到**：`16/16` → **2/16**（大量 `实际 MISSING`），自测 `36/36` → `33/36`。
+     即"门禁自身失效"这件事被另一层门禁发现了——这正是矩阵存在的意义。
+  4. 修法：取最后一行先转 `[string]` 再 `Trim`，并给整个阶段包 `try/catch`——**辅助脚本出错只能让本阶段
+     BLOCKED，不许打断流程**。修后 36/36、16/16 恢复。
+- **triedTools**：`mistake-matrix.ps1`（2/16 报警）、`selftest.ps1`（33/36 报警）、`git show HEAD~1:…` 对照法
+- **alternative**：任何新增阶段的两条硬规矩——① 阶段内的解析/转换要防数组；② 阶段整体 `try/catch` 兜底，
+  异常一律降级为 BLOCKED。
+- **status**：`resolved`
