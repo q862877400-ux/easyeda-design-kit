@@ -287,7 +287,7 @@ function Test-CapabilityBoundary {
             $missing += 'triedTools(格式不可解析，需 `- **triedTools**：...`)'
         }
         # status 必须是三值之一
-        if ($body -match '(?im)^-\s+\*\*status\*\*\s*[::]\s*`?([a-z]+)`?') {
+        if ($body -match '(?im)^-\s+\*\*status\*\*\s*[:：]\s*`?([a-z]+)`?') {
             if ($Matches[1] -notin @('open', 'accepted', 'resolved')) { $missing += "status=$($Matches[1])" }
         }
         if ($missing.Count -gt 0) { $bad += "$($e.id): $($missing -join '/')" }
@@ -423,4 +423,6 @@ function Test-DecisionActionability {
         Add-Result "decision-actionability" "FAIL" ("可执行 $ok/$total = $ratio%（<90%）；问题行示例： " + (($bad | Select-Object -First 3) -join '; '))
     }
 }
+
+
 

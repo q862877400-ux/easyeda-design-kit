@@ -19,6 +19,7 @@ $historyRepo = Join-Path (Split-Path -Parent $KitRoot) 'easyeda-auto'
 $probe = Join-Path $env:TEMP ('kit-selftest-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 
 $script:Pass = 0; $script:Fail = 0
+$script:Skip = 0
 function Assert-Case {
     param([string]$Name, [scriptblock]$Body)
     try {
@@ -76,18 +77,22 @@ Assert-Case "P3 外部审计 → FAIL 并点名文件" {
 }
 
 # 断言 5：-CodeScope 必须真的缩小范围（不存在的范围 → 不报重叠）
+# 对 kit 自身也能跑，不再依赖 easyeda-auto 存在（外部审计 S8：这条以前被整块跳过）
+Assert-Case "-CodeScope 生效（不存在范围 → 无 P3 重叠）" {
+    $r = Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot, '-CodeScope', 'no-such-dir-xyz') 'positive-goal'
+    $r.Detail -notmatch 'P3\(外部审计\)'
+}
+
+# 断言 6：历史回测（需要 easyeda-auto 仓库；缺失时**计入 SKIP**，不再静默）
 if (Test-Path $historyRepo) {
-    Assert-Case "-CodeScope 生效（不存在范围 → 无 P3 重叠）" {
-        $r = Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $historyRepo, '-CodeScope', 'no-such-dir-xyz') 'positive-goal'
-        $r.Detail -notmatch 'P3\(外部审计\)'
-    }
     Assert-Case "历史回测 → 抓到 N1/N5" {
         $r = Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $historyRepo,
             '-CodeScope', 'src\easyeda-agent', '-RunLog', (Join-Path $AcceptDir 'fixtures\runlog-historical.txt')) 'negative-drift'
         ($r.Status -eq 'FAIL') -and ($r.Detail -match 'N1') -and ($r.Detail -match 'N5')
     }
 } else {
-    Write-Host "[SKIP] 历史回测（找不到 easyeda-auto）"
+    $script:Skip++
+    Write-Host "[SKIP] 历史回测（找不到 $historyRepo）"
 }
 
 
@@ -351,16 +356,17 @@ Assert-Case "no-oneoff：.work 中间件（DSN/SES）不算一次性脚本" {
 
 Assert-Case "no-oneoff：.work 下的脚本仍判 FAIL" {
     $lg = Join-Path $probe "log-workscript.log"
-    @("project sc001-ldo-blk", "pwsh .work\scratch-gen.ps1") | Set-Content $lg -Encoding UTF8
+    @("project sc001-ldo-blk", "pcb check --project sc001-ldo-blk --doc x", "sch clusters --project sc001-ldo-blk --doc x --strict", "pwsh .work\scratch-gen.ps1") | Set-Content $lg -Encoding UTF8
     (Stage-Status @('-Case', 'sc001-ldo-typed', '-Cli', $Cli, '-Project', 'sc001-ldo-blk', '-RunLog', $lg) 'no-oneoff-scripts').Status -eq 'FAIL'
 }
 
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
-Write-Host ("===== {0} PASS / {1} FAIL =====" -f $script:Pass, $script:Fail)
+Write-Host ("===== {0} PASS / {1} FAIL / {2} SKIP =====" -f $script:Pass, $script:Fail, $script:Skip)
 if ($script:Fail -gt 0) { exit 1 }
 exit 0
+
 
 
 

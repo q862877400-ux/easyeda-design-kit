@@ -54,3 +54,18 @@
 
 
 
+
+---
+
+## 状态更正（2026-10-31，外部审计后，**必须读**）
+
+此前本文件多处写「五块板 16 PASS / 0 FAIL / 0 BLOCKED」。加入第 17 阶段 `pcb-drc-clean` 后，**真实结果是每块 16 PASS / 1 FAIL**：
+
+| 板 | `pcb drc` 实测 | 结论 |
+|---|---|---|
+| `agent-e2e-esp32s3-board31`（练习板） | passed=False，**27 条**（Clearance 26 + Netlist 1） | 不满足 SC-A 的「DRC 0」 |
+| `sc001-usbc-blk` | passed=False，**3 条**（Clearance 2 + Netlist 1） | 同上 |
+
+**旧口径只验 `Connection Error`（都是 0），所以显示全绿**——那是窄口径，不等于 DRC 干净。
+SC-A 如实标注：**未达成**，待办 = 把板子的 DRC 违规清零（netlist 与 clearance）。
+其余判据（SC-001 五块板端到端跑通、SC-002/003/004/005/006）不受影响。

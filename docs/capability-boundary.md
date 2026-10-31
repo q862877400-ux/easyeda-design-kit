@@ -836,3 +836,43 @@
   `pcb_autorouter`、`pcb check`
 - **alternative**：六件块的通用配方见上；大连接器块**不是不能做**，是要"进框优先、再补网表、再挪单件"。
 - **status**：`resolved`
+
+---
+
+## GAP-050 「PCB 全绿」不等于「DRC 0」：旧口径只认 Connection Error，实测所有板都有其他 DRC 违规
+
+- **capability**：宣称一块板「验收全绿」时，读者会理解为「DRC 干净」。
+- **evidence**（2026-10-31，外部审计 S6 触发，实测）：
+  - 练习板 `agent-e2e-esp32s3-board31`：`pcb drc` → **passed=False，27 条**（Clearance Error **26** + Netlist Error **1**）。
+  - `sc001-usbc-blk`（第 5 块）：**passed=False，3 条**（Clearance Error 2 + Netlist Error 1）。
+  - 而 `pcb-connectivity` 阶段只看 `Connection Error`，两者都是 **0** → 旧口径一律 PASS。
+  - `PRODUCT.md` 的 SC-A 写的是「**DRC 0**」——**旧实现根本没验这条**。
+- **triedTools**：`pcb drc --json`（读 passed/total/counts）、`pcb check`（DFM，只覆盖可制造性）
+- **alternative**：新增第 17 阶段 `pcb-drc-clean`，判据 = `passed=true` 且所有分类计数为 0；
+  解析不到 `passed` 判 BLOCKED（不是 PASS）。**加入后实测：练习板 16 PASS / 1 FAIL，
+  USB-C 板 16 PASS / 1 FAIL** —— 这是真实状态。
+- **status**：`open`（板要真正做到 DRC 0 才算满足 SC-A）
+
+---
+
+## GAP-051 外部审计（零上下文）一次挑出 10 类问题，其中 6 类是真缺陷
+
+- **capability**：门禁自称"自证有效"。
+- **evidence**（2026-10-31 审计报告 + 我逐条复核）：
+
+  | 编号 | 问题 | 复核结果 | 处理 |
+  |---|---|---|---|
+  | S3 | `delivery` 的钻孔证据是**硬编码 true**，从不打开 Gerber 包 | **属实**（export-delivery.ps1 原第 56 行）| 已改为真开 zip、按成员名判定；假 zip 判失败 |
+  | S4 | 空日志 PASS；`acceptance\*.ps1` 前缀可绕过 | 空日志被上轮守卫部分挡住；**前缀绕过属实** | 已加 ≥3 条实质行门槛；豁免改为精确文件名白名单 |
+  | S5 | `schematic-gates` 回退分支 = “没出现 failed 字样就 PASS” | **属实** | 已改为 `sch check --strict` + 解析 floating pin 计数 |
+  | S6 | `pcb-connectivity` 只认 Connection Error，DRC 其他类不看 | **属实** | 已新增 `pcb-drc-clean` 阶段（见 GAP-050）|
+  | S7 | `capability-boundary` 的 status 校验是死代码（字符类 `[::]`）| **属实** | 已改 `[:：]` |
+  | S8 | 自测跳过 2 条仍记 36/36 | **属实**（本机有 easyeda-auto 才 36；安装形态 35+1 SKIP）| 已让汇总如实报 SKIP |
+  | S10 | `sample-boundaries.ps1` 未接入门禁，且当前 3/5 不合格 | **属实**（实测 3 通过 / 2 不合格）| **未修**（待办）|
+  | S1/S2 | 证据层级：五块板是 2–6 件小模块；per-board 报告被 gitignore | **部分属实**（板规模确实小；报告确实未入库）| 已标注；报告入库**待办** |
+
+  审计同时确认**没缺陷**的部分：错误矩阵 16/16 真实、CLI 子命令无编造、DFM 三形态解析正确、
+  退出码三态正确、49 条 GAP 无重号无悬空。
+- **triedTools**：`run.ps1` / `stages-gates.ps1` / `export-delivery.ps1` / `selftest.ps1` 逐行核对 + 反例探针
+- **alternative**：每条修复都配反例（假 zip、空日志、前缀脚本、非法 status、无 historyRepo 形态）。
+- **status**：`resolved`（6 类已修，S10/S1/S2 记 open）

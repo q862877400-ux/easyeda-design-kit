@@ -193,12 +193,19 @@ function Test-SchematicGates {
     $raw = & $Cli $args1 2>&1 | Out-String
     # 实测：部分文档类型 sch drc 返回 "doctype(3) not support check sch drc"（GAP-014）
     if ($raw -match "not support") {
-        $raw2 = & $Cli @("sch", "check", "--project", $Project, "--doc", $SchDoc, "--json") 2>&1 | Out-String
-        if ($raw2 -match "(?i)failed|Cannot verify") {
-            $msg = ($raw2 -split "`n" | Select-Object -First 1)
-            Add-Result "schematic-gates" "BLOCKED" "sch drc 不支持该文档类型，sch check 亦无法验证： $msg"
+        # 反例（2026-10-31 外部审计 S5）：旧判据是「输出里没出现 failed/Cannot verify 就 PASS」，
+        # 而 sch check 默认 exit 0（悬空脚是常态），于是几百个悬空脚也会 PASS。
+        # 改为：带 --strict 跑，用退出码 + floating pin 计数判定；计数解析不到则 BLOCKED。
+        $raw2 = & $Cli @("sch", "check", "--project", $Project, "--doc", $SchDoc, "--strict") 2>&1 | Out-String
+        $exit2 = $LASTEXITCODE
+        $floating = -1
+        if ($raw2 -match '(\d+)\s+floating pin') { $floating = [int]$Matches[1] }
+        if ($floating -lt 0) {
+            Add-Result "schematic-gates" "BLOCKED" "sch drc 不支持该文档类型；回退 sch check 但解析不到 floating pin 计数，无法判定"
+        } elseif ($floating -gt 0 -or $exit2 -ne 0) {
+            Add-Result "schematic-gates" "FAIL" ("回退 sch check --strict：floating pin {0}、exit={1}" -f $floating, $exit2)
         } else {
-            Add-Result "schematic-gates" "PASS" "sch drc 不支持 doctype(3)，回退 sch check 且未报错"
+            Add-Result "schematic-gates" "PASS" "sch drc 不支持 doctype(3)，回退 sch check --strict：floating pin 0、exit=0"
         }
         return
     }
@@ -243,6 +250,25 @@ function Test-PcbConnectivity {
     $pads = @($rows | Where-Object { $_.objType -notmatch "Via" }).Count
     $vias = @($rows | Where-Object { $_.objType -match "Via" }).Count
     Add-Result "pcb-connectivity" "FAIL" ("Connection Error {0} 条（焊盘 {1} / 过孔 {2}）： {3}" -f $connCount, $pads, $vias, ($byNet -join ", "))
+}
+
+# 反例（2026-10-31 外部审计 S6）：pcb-connectivity 只读 Connection Error，而 PRODUCT.md 的 SC-A 写的是「DRC 0」。
+# 实测练习板 pcb drc 是 passed=False / total=27（Clearance 26 + Netlist 1），旧口径照样报 PASS。
+# 这里把 DRC 全分类单独成阶段，让「DRC 0」成为可核对的判据，而不是被窄口径顶替。
+function Test-PcbDrcClean {
+    if ([string]::IsNullOrWhiteSpace($Project) -or [string]::IsNullOrWhiteSpace($Doc)) { Add-Result "pcb-drc-clean" "BLOCKED" "未指定 -Project/-Doc"; return }
+    $raw = & $Cli @("pcb", "drc", "--project", $Project, "--doc", $Doc, "--json") 2>&1 | Out-String
+    if ($raw -match "no connected window|--doc guard") { Add-Result "pcb-drc-clean" "BLOCKED" "没有在线窗口，无法读 DRC"; return }
+    $i = $raw.IndexOf("{")
+    if ($i -lt 0) { Add-Result "pcb-drc-clean" "BLOCKED" "pcb drc 无 JSON 输出"; return }
+    try { $d = $raw.Substring($i) | ConvertFrom-Json } catch { Add-Result "pcb-drc-clean" "BLOCKED" "pcb drc JSON 解析失败"; return }
+    $r = if ($d.result) { $d.result } else { $d }
+    if ($null -eq $r.passed) { Add-Result "pcb-drc-clean" "BLOCKED" "pcb drc 未给出 passed 字段"; return }
+    $classes = @()
+    if ($r.counts) { $classes = @($r.counts.PSObject.Properties | Where-Object { [int]$_.Value -gt 0 } | ForEach-Object { "$($_.Name)=$($_.Value)" }) }
+    if ($r.passed -eq $true -and $classes.Count -eq 0) { Add-Result "pcb-drc-clean" "PASS" "DRC passed=true（0 违规）"; return }
+    $total = if ($r.total) { $r.total } else { 0 }
+    Add-Result "pcb-drc-clean" "FAIL" ("DRC passed={0}，{1} 条违规：{2}" -f $r.passed, $total, ($classes -join ", "))
 }
 
 function Test-PcbDfm {
@@ -335,6 +361,13 @@ function Test-NoOneOffScripts {
     $lines = Get-Content $RunLog
     # 反例（2026-10-31，零上下文执行者指出）：审计阶段曾对**别的工程**的日志判 PASS——
     # -RunLog 里没有任何本工程记录，审计等于审了别人的日志（假保证）。指定 -Project 时必须出现工程名。
+    # 反例（2026-10-31 外部审计 S4）：0 字节日志在未指定 -Project 时会 PASS。
+    # 这里要求日志至少有 3 条非空、非注释行——审不出实质就当 BLOCKED，不当作"没问题"。
+    $subst = @($lines | Where-Object { $_.Trim().Length -gt 0 -and $_ -notmatch '^\s*#' }).Count
+    if ($subst -lt 3) {
+        Add-Result "no-oneoff-scripts" "BLOCKED" "运行日志实质内容不足（非注释行 $subst 条 < 3），无法审计"
+        return
+    }
     if (-not [string]::IsNullOrWhiteSpace($Project)) {
         $probeText = Get-Content $RunLog -Raw -ErrorAction SilentlyContinue
         if ($probeText -and ($probeText -notmatch [regex]::Escape($Project))) {
@@ -345,7 +378,7 @@ function Test-NoOneOffScripts {
     # 反例（2026-10-31，sc001-ldo-blk 实测）：旧规则把**任何** .work 路径都当一次性脚本，
     # 于是文档化的 DSN→SES 管线（中间件写 .work\ldo.dsn / .ses）被误判 FAIL。
     # 判据本意是"别手搓脚本"，因此只看**脚本文件**，并放行 kit 自带的验收/工具脚本。
-    $allow = 'acceptance\\[A-Za-z-]+\.ps1|tools\\ensure_eda_window\.py'
+    $allow = 'acceptance\\(run|selftest|mistake-matrix|export-delivery|stages-gates|dfm-parse|sample-boundaries|compare-runs)\.ps1|tools\\ensure_eda_window\.py'
     $suspects = @($lines | Where-Object {
         ($_ -match '\.(ps1|py|sh|js|mjs|bat|cmd)\b' -and $_ -notmatch $allow) -or
         ($_ -match 'python\s+.*\bgen\w*\.py')
@@ -377,6 +410,7 @@ Test-SchematicGates
 Test-DesignIR
 Test-PcbLayout
 Test-PcbConnectivity
+Test-PcbDrcClean
 Test-PcbDfm
 Test-Delivery
 Test-NoOneOffScripts
@@ -407,6 +441,8 @@ $meta | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $script:AcceptDir "last
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0
+
+
 
 
 

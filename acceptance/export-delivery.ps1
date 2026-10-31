@@ -51,10 +51,24 @@ $g = Call-Action 'pcb.export.gerber' '{"unit":"mm","integerNumber":4,"decimalNum
 if ($g.ok -and $g.result.artifactPath) {
     $dst = Join-Path $OutDir 'board-gerber.zip'
     Copy-Item $g.result.artifactPath $dst -Force
+    # 反例（2026-10-31 外部审计 S3）：这里原来硬编码 metallic/nonMetallic/drillTable = $true，
+    # 于是 36 字节的文本文件改名 board-gerber.zip 也能让 delivery 报「钻孔=在 Gerber 包内」。
+    # 改成**真开包**：读 zip 目录表，按成员名判定钻孔是否存在；不是合法 zip 就直接判失败。
+    $zipEntries = @(); $zipOk = $false
+    try {
+        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
+        $z = [System.IO.Compression.ZipFile]::OpenRead($dst)
+        $zipEntries = @($z.Entries | ForEach-Object { $_.FullName })
+        $z.Dispose(); $zipOk = $true
+    } catch { $zipOk = $false }
+    $hasDrill = @($zipEntries | Where-Object { $_ -match '(?i)\.drl$|drill|pth' }).Count -gt 0
+    $hasNpth  = @($zipEntries | Where-Object { $_ -match '(?i)npth|non-?plated|slot' }).Count -gt 0
     $ev.gerber = [ordered]@{
-        path = $dst; size = (Get-Item $dst).Length
-        drilling = [ordered]@{ metallic = $true; nonMetallic = $true; drillTable = $true }
+        path = $dst; size = (Get-Item $dst).Length; zipValid = $zipOk; entries = $zipEntries.Count
+        drilling = [ordered]@{ metallic = $hasDrill; nonMetallic = $hasNpth; drillTable = $zipOk }
     }
+    if (-not $zipOk) { $fail += "gerber: 不是合法 zip（钻孔无法核对）" }
+    elseif (-not $hasDrill) { $fail += "gerber: 包内无钻孔成员（.drl/drill/pth）" }
     Write-Host ("[ok]   gerber   {0}  {1:N0} B" -f (Split-Path $dst -Leaf), (Get-Item $dst).Length)
 } else { $fail += "gerber: $($g.error.message)"; Write-Host "[FAIL] gerber   $($g.error.message)" }
 
