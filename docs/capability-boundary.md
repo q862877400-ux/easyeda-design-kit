@@ -510,3 +510,39 @@
 - **alternative**：接外部板时必须**先记基线**（`pcb drc` / `pcb check` 的原始计数），把"基线"与"本次改动后"
   分开报告；套件只对**本次需求相关的项**负责。已在 `docs/playbook-unseen-external-board.md` 写成流程。
 - **status**：`accepted`（口径已固化）
+
+---
+
+## GAP-034 纯 typed 建板：块能落、能连线，但默认模板布局过不了 clusters 门禁，且 destagger 是「假进展」
+
+- **capability**：不用 GUI，用 `project.create` + `sch block-apply` 从内嵌电路块库生成一块新板（SC-001 的"未见板"素材）。
+- **evidence**（2026-10-31 全程实测）：
+  1. `easyeda blocks ls --ready` → **19 个 ready 块**（LDO/buck/USB-C/RS485/microSD/LED 等）。
+  2. `easyeda project create --name sc001-led-blk --open` → uuid `337b5613358540d69ee8efdb4d24a5df`，
+     自带 `Schematic1/P1`（page `8124aea12d407530`）。
+  3. `sch block-apply block.led_indicator_gpio --at 200,450` **成功**：落 2 件（R1@200,450 / LED1@320,450）、
+     自动连线 4 条、`reconcile ✓ 3 net(s) match the live netlist`。
+  4. **但 `sch clusters --strict` 判 FAIL**：`R1 ↔ LED1 重叠 38×11`
+     （R1 体积 x=[64,330]，LED1 x=[260,450]——两组的 netport marker/桩线互压）。
+  5. **`sch destagger --apply` 连跑 3 轮**：每轮自报"已搬迁 N 个 marker"，
+     但 `clusters` 读到的几何**三次完全相同**（R1 x=[64,330] / LED1 x=[260,450]）；
+     工具自身 verdict 也写"未收敛：还剩 2 处 marker 重叠"。→ **报告的进展与测量到的几何不一致**。
+- **triedTools**：`blocks ls/show`、`project create`、`sch block-apply`（dry-run + live）、`sch destagger`、
+  `sch clusters --strict`
+- **alternative**：需先把两件拉开（block 模板间距 120mil，而 marker 伸出约 110mil）：
+  ①`sch group-move --ids <primitiveId…>` 平移整组；②或换 `sch autolayout --spec` 按模块布局；
+  ③或把块落到更大的纸面/多页。**未验证**：以上任一能否让 clusters 归零。
+- **status**：`open`
+
+---
+
+## GAP-035 `sch group-move --ids` 只认 primitiveId，传位号会 ok:false
+
+- **capability**：把「器件 + 它的桩线/旗标」整体平移，腾出空间解决布局重叠。
+- **evidence**：`sch group-move --ids LED1 --dx 200 --dy 0` → `ok:false`，返回体带
+  `degraded: {consecutiveFailures:1, degraded:true}` 提示；`--help` 写明 `--ids <primitiveId,...>`
+  与 `--group g1`（持久组，自动展开成员+桩+旗）。用位号不是合法输入。
+- **triedTools**：`sch group-move`、`sch list`（本轮 `--json` 未取到可解析的 components 数组）
+- **alternative**：先建持久组（`sch group create`）再用 `--group`；或从 `sch list --include-*` 的
+  完整输出里取 primitiveId。**未验证**。
+- **status**：`open`
