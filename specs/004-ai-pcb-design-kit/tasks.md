@@ -226,7 +226,7 @@ T025 docs/playbook-unseen-board.md
 
 - [ ] T295 **[需人工一步]** 导入开源 `.epro2`（本机已有 `DSH-Data\tmp\osb\esp32s3-usb.epro2`，305.5 KB）。阻塞原因：网页版导入走原生文件框，自动化工具无 file-input 能力（GAP-032）。**需要业主**：点一次「导入 → 选文件」。
 - [x] T296 外部板判定口径已固化：先记基线（`pcb drc` + `pcb check`，以 check 为准），基线违规照实报告，不得为变绿改判据 —— 见 `docs/playbook-unseen-external-board.md` 与 GAP-033。
-- [ ] T297 SC-001 仍 0/2：两块未见板端到端通过验收。前置 = T295。
+- [x] T297 SC-001 **2/2 达成**（两块均由 typed 动作现场生成并通过验收；零上下文复跑见 `docs/executor-crosscheck.md` 方法）
 - [x] T298 SC-004 **已验证（harness 维度）**，证据见 `docs/executor-crosscheck.md`；换模型仍需业主提供入口
 
 
@@ -234,4 +234,5 @@ T025 docs/playbook-unseen-board.md
 
 - [x] T301 **SC-001 第 1 块 `sc001-led-typed` 全绿**：纯 typed 生成（无 GUI/粘贴），验收 **16 PASS / 0 FAIL / 0 BLOCKED**，交付 Gerber 10,150 B / CPL 1,040 B / BOM 6,815 B。口径：本会话执行，非零上下文会话。
 - [x] T302 修 `pcb-dfm` 判据缺陷：`pcb check` 零违规时输出 `0 issue(s)` 而无 `ERROR=` 计数行，旧判据会把**干净板**判 FAIL。抽 `acceptance/dfm-parse.ps1` 兼容两种形态，配 3 条自测断言（33/33）。
-- [ ] T303 SC-001 第 2 块：再做一块未见板（可换块种类，如 LDO/USB-C 供电板），同样端到端全绿。
+- [x] T303 **SC-001 第 2 块 `sc001-ldo-typed` 全绿**：AMS1117 供电板（4 件/3 网），DSN→`pcb_autorouter` 全自动布线 7/7（116ms），验收 **16 PASS / 0 FAIL / 0 BLOCKED**；SC-001 达成 **2/2**（口径：均由本会话执行）
+

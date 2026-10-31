@@ -64,3 +64,4 @@
 | 32 | 探路「纯 typed 建板」：project.create + block-apply 成功落 2 件并网表一致；但 clusters --strict 判重叠、destagger 假进展 | GAP-034/035；未见板构建 **进行中**（未完成，未计入 SC-001） | 本轮 |
 | 33 | 纯 typed 建板打通到 PCB：新工程 + block-apply + 布局收敛 + 图签 + import-changes（PCB 2 件，imported/verified 均 true）；记录「假失败定律」实测 3 例与 3 处可用性硬约束 | GAP-036/037；sch check 0 悬空、clusters 0 重叠 | 本轮 |
 | 34 | **SC-001 第 1 块全绿**：`sc001-led-typed` 纯 typed 生成（建工程→落块→收敛布局→图签→import-changes→板框→布线→交付），验收 **16/0/0**；同时修 `pcb-dfm` 对零违规输出形态的误判 | 自测 33/33；GAP-038 记录判据修复 | 本轮 |
+| 35 | **SC-001 第 2 块全绿**：AMS1117 LDO 板（4 件/3 网），typed 生成 + PCB Auto Router 全自动布线 7/7（116ms）| 验收 **16/0/0**；SC-001 **2/2** | 本轮 |
