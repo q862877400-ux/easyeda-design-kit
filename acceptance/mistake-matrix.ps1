@@ -102,7 +102,11 @@ Case 'M10' '对着同一份快照求解多对' 'negative-drift' 'FAIL' { param($
 Case 'M11' 'save 后未 reload 就读 DRC' 'negative-drift' 'FAIL' { param($p) } @{ RunLog = $drifted } 'N6'
 
 # ── 四、记账/能力退化 ────────────────────────────────────────────────────
-Case 'M12' '决策表行数缩水' 'negative-drift' 'FAIL' { param($p) } @{ RunLog = $clean; DecisionBaseline = 99 } 'N8'
+# 动态基线：M12 模拟「表比基线少」，基线必须跟着真实表行数走；
+# 否则表长大到超过硬编码数字后 M12 会假通过（2026-10-31 实测：表 97→107 时漏网）。
+$decRows = (Select-String -Path (Join-Path $KitRoot 'docs\tool-decision-table.md') -Pattern '^\|').Count
+$decBaseline = $decRows + 5
+Case 'M12' '决策表行数缩水' 'negative-drift' 'FAIL' { param($p) } @{ RunLog = $clean; DecisionBaseline = $decBaseline } 'N8'
 
 # ── 五、工具自身失效（我犯过）────────────────────────────────────────────
 Case 'M15' '改完源码没重装就跑了旧二进制' 'negative-drift' 'FAIL' {
