@@ -810,3 +810,29 @@
 - **alternative**：接线一律按引脚朝向给 `--direction`；导出前一律 save+reload+重连窗口，
   不把 "no nets" 当结论（先用 `layout-lint` 核实器件与网络数）。
 - **status**：`resolved`
+
+---
+
+## GAP-049 GAP-047 已解：USB-C 六件块**能**在 A4 上全绿；解在多页污染、NC 语法与 destagger 半途失败
+
+- **capability**：把 `usbc_ufp_power_or`（16P 连接器 + ESD + TVS + 肖特基 + 双 CC）做成一块过验收的板。
+- **evidence**（2026-10-31，`sc001-usbc-typed` 实测，验收 **16 PASS / 0 FAIL / 0 BLOCKED**）：
+  最终配方 = `--spacing 220 --per-row 3`（能进框）+ 补 `J:A6 → USB_HOST_DP`（reconcile 7/7 才成立）
+  + 把 ESD 挪到 (350,700) 并给同侧三个标签不同桩长（18/96/174）
+  + `sch no-connect --designator J --pin A8,B8`（SBU 两脚按设计悬空，需显式 NC）。
+  结果：`clusters --strict` **6 组 0 重叠 / 0 出图纸**、0 悬空引脚、布线 **29/29**、DFM **ERROR=0**、
+  交付 Gerber 22,154 B / CPL 2,760 B / BOM 7,124 B。
+  并实测确认：`sch check` 的 `marker-overlap` 是 **WARN**，`schematic-gates` 在仅有 WARN 时 **PASS**
+  （此前 GAP-047 记的三方权衡，缺的正是"补网表 + 挪单件 + 错开桩长"这三步）。
+- **evidence-2（多页污染，代价 30 个器件）**：试验期在 9 个页上反复落块，`pcb import-changes` 一次导入
+  **30 个器件**。正确做法：只留目标页，其余页 `sch clear`（**不要 `sch page-delete`，不可撤销**），
+  再导入 → 6 件。
+- **evidence-3（NC 语法与 connect 不同）**：`sch no-connect --pin J5:A8` **静默 ok:false**；
+  必须 `--designator J5 --pin A8,B8`。
+- **evidence-4（destagger 半途失败的恢复）**：`sch destagger --apply` 搬到一半窗口断开，
+  自动恢复失败，但**打印出待手工恢复的引脚清单**（`D14:1→USB_HOST_DM` …），照单逐脚 `connect` 即复原。
+- **triedTools**：`sch block-apply`、`sch connect`、`sch disconnect`、`sch modify`、`sch no-connect`、
+  `sch destagger`、`sch clusters`、`sch reconcile`、`sch clear`、`pcb import-changes`、`pcb export-dsn`、
+  `pcb_autorouter`、`pcb check`
+- **alternative**：六件块的通用配方见上；大连接器块**不是不能做**，是要"进框优先、再补网表、再挪单件"。
+- **status**：`resolved`
