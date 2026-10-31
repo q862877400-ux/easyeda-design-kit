@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "typed-board-build",
+    "description": "从零造一块板并交付：建工程 → 落电路块 → 布局门禁 → 图签 → 同步 PCB → 板框 → 布线 → 检查 → 落盘。对应 docs/phases/pcb-p0-p10.md 的 P0–P8，全部动作都能被 CLI 重放，不需要 GUI、不需要粘贴坐标。\n\n为什么是这个顺序（每条都是踩出来的，见 docs/capability-boundary.md）：\n1. `project create` 会**自带** Schematic1/P1 与 Board1/PCB1，不需要再 `board.create`；不要把这一步换成手工新建，否则拿不到绑定关系。\n2. `sch block-apply` 一次完成落件 + 内部连线 + 网表对账；但它给的是**估算模板布局**，两个件的 netport marker 会互相压（实测 R1↔LED1 重叠 38×11），所以下一步必须是 `sch clusters --strict`，不能跳。\n3. `sch destagger` 对「整块一起建的组」**不可靠**：实测连跑 3 轮自报搬了 3 个 marker，几何一字未变；真正有效的是把**其中一个件**（不是整组）挪开——`sch group-move --group g1` 移动整组不会改变组内相对间距。\n4. 写操作可能**报失败但已落地**（假失败定律，实测 3 例）：`disconnect`/`modify`/`connect` 回 ok:false 或无输出，而 `sch check` 的 floating pin 与 `sch list` 的坐标证明改动生效。判定只能靠只读复核，不能靠返回值。\n5. 图签必须给**显式显隐**（showTitle/showValue 布尔值）；只给 value 会被拒——宿主默认状态不允许被推断。\n6. `pcb outline-fit` 要在器件落定后跑；没有板框时 DRC/布线都缺少边界。\n7. 布线走现成引擎（`pcb autoroute --router …` 或 DSN→SES 手工三步），不要手搓走线；实测 4 件/3 网的板 7/7 连通耗时 116ms。\n8. 收尾必须 `pcb save` → `doc reload` → 再读；DRC/DFM 读中间态会给出错误数字。\n\n两块实证板：`sc001-led-typed`（LED+R，2 件/1 网）与 `sc001-ldo-typed`（AMS1117+3 电容，4 件/3 网），均 16 PASS / 0 FAIL / 0 BLOCKED。\n\n需要人工先定的两件事（脚本不替你决定）：工程名；以及落块后从 `sch pages` / `board list` 取到的 page/PCB uuid。",
+    "project": "<新建工程名，例如 sc001-xxx>",
+    "doc": "PCB1"
+  },
+  "defaults": { "timeoutSec": 300, "retry": 0, "continueOnError": false },
+  "steps": [
+    {
+      "id": "create-project",
+      "run": "project create",
+      "name": "建工程容器（自带 Schematic1/P1 与 Board1/PCB1）",
+      "flags": { "name": "<工程名>", "open": true }
+    },
+    {
+      "id": "discover-ids",
+      "run": "sch pages",
+      "name": "取页面 uuid；PCB uuid 用 board list 取。后面所有步骤都靠这两个 id 定位",
+      "flags": {}
+    },
+    {
+      "id": "block-apply",
+      "run": "sch block-apply",
+      "name": "落一个内嵌电路块（blocks ls --ready 里选），自动连线并核对网表",
+      "flags": { "block": "<block.id>", "at": "300,400" }
+    },
+    {
+      "id": "clusters-gate",
+      "run": "sch clusters",
+      "name": "虚拟组重叠门禁：必须 0 重叠 / 0 出图纸；不达标就挪单个件，别整组平移",
+      "flags": { "strict": true }
+    },
+    {
+      "id": "titleblock",
+      "run": "sch titleblock",
+      "name": "填图签：Name/Drawed/Description 必须同时给 showTitle 与 showValue 布尔值",
+      "flags": { "data": "{\"Name\":{\"value\":\"…\",\"showTitle\":true,\"showValue\":true}}" }
+    },
+    {
+      "id": "sch-check",
+      "run": "sch check",
+      "name": "只读复核：0 floating pin 才算连线成功（不要相信上一步的返回值）",
+      "flags": {}
+    },
+    {
+      "id": "import-changes",
+      "run": "pcb import-changes",
+      "name": "把器件与网络同步进 PCB；核对 componentsAfter 与 verified",
+      "flags": {}
+    },
+    {
+      "id": "outline-fit",
+      "run": "pcb outline-fit",
+      "name": "器件落定后生成板框（新工程默认没有板框）",
+      "flags": { "margin": 100 }
+    },
+    {
+      "id": "autoroute",
+      "run": "pcb autoroute",
+      "name": "用现成布线引擎跑 DSN→SES→导入→DRC；--router 指向已装引擎（本机 PCB Auto Router 主程序）",
+      "flags": { "router": "\"C:\\Program Files\\PCBAutoRouter\\pcb_autorouter.exe\" -i {in} -a -o {out} --threads 8" }
+    },
+    {
+      "id": "dfm",
+      "run": "pcb check",
+      "name": "DFM 检查：ERROR 必须为 0；WARN 是建议项，不参与验收判据",
+      "flags": {}
+    },
+    {
+      "id": "layout",
+      "run": "pcb layout-lint",
+      "name": "布局质量：0 短路 / 0 重叠 / 0 出框",
+      "flags": {}
+    },
+    {
+      "id": "save",
+      "run": "pcb save",
+      "name": "落盘；之后必须 doc reload 再读，否则 DRC/DFM 是中间态"
+    }
+  ]
+}
+

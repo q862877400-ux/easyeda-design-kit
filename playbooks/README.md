@@ -10,6 +10,7 @@
 | 名称 | 文件 | 用途 | 前置 | 影响面 |
 |---|---|---|---|---|
 | `pcb-rebuild-routed` | `pcb-rebuild-routed.playbook.json` | 把 PCB 重建到"已布线 + 已铺铜"的一致状态：撕铜 → 短线布线 → 电源面 → 两个铺铜 → 保存 | 已有原理图转 PCB；窗口在线 | 破坏性（会 `rip-up` 全部走线），只在需要重建时用 |
+| `typed-board-build` | `typed-board-build.playbook.json` | 从零造一块板并交付：建工程 → 落电路块 → 布局门禁 → 图签 → 同步 PCB → 板框 → 布线 → DFM → 落盘（全部可 CLI 重放，无 GUI/无坐标粘贴） | 空工程即可；需先在 `blocks ls --ready` 选块 | 12 步，两块实证板 16 PASS / 0 FAIL / 0 BLOCKED |
 
 **顺序本身就是知识**（`meta.description` 里也写了）：
 
