@@ -295,7 +295,12 @@ function Test-Delivery {
         return
     }
 
-    if (-not (Test-Path $DeliveryDir)) { Add-Result "delivery" "FAIL" "交付目录不存在： $DeliveryDir"; return }
+    # 反例（2026-10-31，新会话执行者实测）：按文档命令跑但**尚未导出**时，本阶段曾判 FAIL「交付目录不存在」，
+    # 读起来像"这板交付坏了"，实际是前置未做。三态诚实要求：未做 → BLOCKED 并给出下一步命令。
+    # 但"目录存在、文件也在、只是缺某一类"仍判 FAIL（此前那条反例：静默跳过缺失证据必须 FAIL）。
+    if (-not (Test-Path $DeliveryDir)) { Add-Result "delivery" "BLOCKED" "尚未导出交付物（目录不存在）：先跑 acceptance/export-delivery.ps1 -Project … -Doc … -SchDoc … -OutDir $DeliveryDir"; return }
+    $anyFile = @(Get-ChildItem $DeliveryDir -File -Recurse -ErrorAction SilentlyContinue).Count
+    if ($anyFile -eq 0) { Add-Result "delivery" "BLOCKED" "交付目录为空（尚未导出）：先跑 acceptance/export-delivery.ps1 再复跑本阶段"; return }
     $need = [ordered]@{
         "Gerber" = @("*.g*", "*.zip")
         "钻孔"   = @("*.drl", "*.txt")
@@ -304,14 +309,15 @@ function Test-Delivery {
     }
     $missing = @()
     $found = [ordered]@{}
+    $usedFiles = @{}   # 反例：同一个 CSV 曾同时满足"坐标"与"BOM"，导致只出三件也 PASS
     foreach ($k in $need.Keys) {
         $hit = $null
         foreach ($pat in $need[$k]) {
             $cand = Get-ChildItem $DeliveryDir -Filter $pat -File -ErrorAction SilentlyContinue |
-                Where-Object { $_.Length -gt 0 } | Sort-Object Length -Descending | Select-Object -First 1
+                Where-Object { $_.Length -gt 0 -and -not $usedFiles.ContainsKey($_.FullName) } | Sort-Object Length -Descending | Select-Object -First 1
             if ($cand) { $hit = $cand; break }
         }
-        if ($hit) { $found[$k] = "{0} ({1:N0} B)" -f $hit.Name, $hit.Length } else { $found[$k] = $null }
+        if ($hit) { $found[$k] = "{0} ({1:N0} B)" -f $hit.Name, $hit.Length; $usedFiles[$hit.FullName] = $true } else { $found[$k] = $null }   # 缺键必须进表，否则 $missing 永远为空 → 假绿
     }
     $missing = @($found.Keys | Where-Object { -not $found[$_] })
     if ($missing.Count -eq 0) {

@@ -302,6 +302,22 @@ Assert-Case "decision-actionability → 全是空话参数 判 FAIL" {
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'decision-actionability').Status -eq 'FAIL'
 }
 
+
+# 断言 29–30：delivery 三态（未导出→BLOCKED；已导出但缺件→FAIL）
+Assert-Case "delivery → 目录不存在判 BLOCKED（不是 FAIL）" {
+    $d = Join-Path $probe "no-delivery"
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot, '-DeliveryDir', $d) 'delivery').Status -eq 'BLOCKED'
+}
+
+Assert-Case "delivery → 目录有文件但缺 BOM 判 FAIL" {
+    $d = Join-Path $probe "partial-delivery"
+    New-Item -ItemType Directory -Force -Path $d | Out-Null
+    'fake gerber' | Set-Content (Join-Path $d "board.gbr") -Encoding UTF8
+    'fake drill'  | Set-Content (Join-Path $d "board.drl") -Encoding UTF8
+    'a,b'         | Set-Content (Join-Path $d "board-cpl.csv") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot, '-DeliveryDir', $d) 'delivery').Status -eq 'FAIL'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
