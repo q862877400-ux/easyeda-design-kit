@@ -785,3 +785,28 @@
   `sch autoconnect --pin D:<pin> --net <net> --replace --offset-min 18 --offset-max 30`，
   把每个标签的桩长压到最小，理论上能把宽度收进 1146。**未验证**。
 - **status**：`open`
+
+---
+
+## GAP-048 `connect` 的方向必须等于引脚外朝方向；`export-dsn` 的 stale 报错会冒充"板是空的"
+
+- **capability**：给已挪位的器件重新接线；在改动过的 PCB 上导出布线用的 DSN。
+- **evidence**（2026-10-31，`sc001-autodl-blk` 实测）：
+  1. **connect 方向**：R1 的 1 脚在器件**左侧**（外朝 180°）。用
+     `sch connect --pin R1:1 --net USB_DTR --kind netport --direction right` 时被几何守卫拒：
+     `wire segment 0 (290,680)→(320,680) enters component body` +
+     `pin 1 outward rotation 180° requires its first wire segment to leave outward`。
+     四条连接改成「左脚走 `left`、右脚走 `right`」后**一次全过**，`sch check` 从
+     **4 个悬空引脚**归零。
+     更要注意：**先 `disconnect` 后若 `connect` 失败，引脚是悬空的**，而 `clusters` 只会显示
+     `marker 0 / 桩线 0`（看起来"更干净"）——必须用 `sch check` 的 floating-pin 计数复核。
+  2. **export-dsn 的 stale 守卫**：PCB 被 `pcb.component.attrs_backfill` 改过后直接导出，返回
+     `DSN export returned no file — the PCB may be empty or have no nets (run pcb.import_changes first)`。
+     实际板上 **4 个器件、4 条信号网俱在**（`layout-lint` 96/100 可证），报错**与事实相反**。
+     正确顺序：`pcb save` → `doc reload` → 等窗口重连（本机实测要 8–12 s）→ `export-dsn`，
+     之后 DSN 正常导出 3 KB。
+- **triedTools**：`sch connect`、`sch disconnect`、`sch modify`、`sch check`、`pcb export-dsn`、
+  `pcb save`、`doc reload`、`pcb layout-lint`
+- **alternative**：接线一律按引脚朝向给 `--direction`；导出前一律 save+reload+重连窗口，
+  不把 "no nets" 当结论（先用 `layout-lint` 核实器件与网络数）。
+- **status**：`resolved`
