@@ -349,6 +349,7 @@ Test-KitIntegrity
 Test-KitPortability
 Test-DecisionTable
 Test-InstalledClaims
+Test-DecisionActionability
 Test-CapabilityBoundary
 Test-Environment
 Test-SchematicGates

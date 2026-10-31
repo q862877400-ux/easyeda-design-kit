@@ -55,3 +55,4 @@
 | 23 | 装 PCB Auto Router 主程序（v1.4807，`/S` 静默）；发现其**自带无头 CLI**；DSN 导出成功（131 KB，keepout 2 处）；被免费额度挡住（游客 2 层），查明**注册会员免费档 100 网/600 焊盘/4 层足够**，只差登录 | GAP-029；决策表 93 行；自测 26/26；新增 `docs/external-tools.json` | 本轮 |
 | 24 | **登录后用 PCB Auto Router 无头 CLI 打通 DSN→SES**：335/335 连通，Connection **6→0**；查明导入前必须先 `rip-up`（否则叠铜 182 条）；剩 3 条 5.4–5.8mil 微差；发现 `pcb drc` 与 `pcb check` 读数不一致 | DFM ERROR 3；GAP-030 | 本轮 |
 | 25 | 最后 3 条微差用「过孔 24→20mil 原位缩小」清零 | **验收 15 PASS / 0 FAIL / 0 BLOCKED —— 全绿** | 本轮 |
+| 26 | 新增 `decision-actionability` 门禁（SC-005）；两次执行比对（SC-006）；建立 `docs/sc-evidence.md` 台账 | 首跑 77/94=81.9% FAIL → 改写后 **93/94=98.9% PASS**；验收 **16 PASS / 0 FAIL / 0 BLOCKED**；自测 28/28 | 本轮 |

@@ -287,6 +287,21 @@ Assert-Case "决策表：未收录的 exe 仍判 FAIL" {
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'tool-decision-table').Status -eq 'FAIL'
 }
 
+
+# 断言 27–28：决策表可执行率（SC-005）
+Assert-Case "decision-actionability → kit 自身 PASS ≥90%" {
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot) 'decision-actionability').Status -eq 'PASS'
+}
+
+Assert-Case "decision-actionability → 全是空话参数 判 FAIL" {
+    $d = Join-Path $probe "act"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
+    $rows = @("| 情境 | 用哪个 | 参数 |", "|---|---|---|")
+    for ($i = 1; $i -le 30; $i++) { $rows += "| 场景$i | pcb route fill | 短 |" }
+    $rows | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'decision-actionability').Status -eq 'FAIL'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

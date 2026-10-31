@@ -391,3 +391,35 @@ function Test-InstalledClaims {
         Add-Result "installed-claims" "PASS" ("装机清单 $($installed.Count) 项；决策表里所有『首选/已装』宣称均与之一致")
     }
 }
+
+# ══════════════════════════════════════════════════════════════════════
+# 决策表可执行率（SC-005）
+#
+# 「可执行答案」的机械定义（不靠人读）：
+#   1) 有工具名；2) 参数列 ≥10 字符（说明怎么用，不是空话）；
+#   3) 若参数里标了「未装」，必须同时给出替代（替代/改用/命令 之一），否则等于没答案。
+# 要求比例 ≥ 90%。
+# ══════════════════════════════════════════════════════════════════════
+function Test-DecisionActionability {
+    $tablePath = Join-Path $script:AuditRoot 'docs\tool-decision-table.md'
+    if (-not (Test-Path $tablePath)) { Add-Result "decision-actionability" "BLOCKED" "决策表不存在"; return }
+    $rows = @(Get-Content $tablePath | Where-Object { $_ -match '^\|' -and $_ -notmatch '^\|\s*-+' -and $_ -notmatch '情境' })
+    if ($rows.Count -lt 20) { Add-Result "decision-actionability" "FAIL" "只有 $($rows.Count) 行，样本不足 20"; return }
+    $bad = @()
+    foreach ($r in $rows) {
+        $cells = $r.Split('|')
+        if ($cells.Count -lt 4) { $bad += '列数不足'; continue }
+        $situation = $cells[1].Trim(); $tool = $cells[2].Trim(); $params = $cells[3].Trim()
+        if ([string]::IsNullOrWhiteSpace($tool) -or $tool -eq '-') { $bad += "$situation（无工具）"; continue }
+        if ($params.Length -lt 10) { $bad += "$situation（参数过短）"; continue }
+        if ($params -match '未装' -and $params -notmatch '替代|改用|命令|pcb ') { $bad += "$situation（标未装但无替代）"; continue }
+    }
+    $total = $rows.Count
+    $ok = $total - $bad.Count
+    $ratio = [math]::Round(100.0 * $ok / $total, 1)
+    if ($ratio -ge 90.0) {
+        Add-Result "decision-actionability" "PASS" ("可执行 $ok/$total = $ratio%（SC-005 要求 ≥90%）")
+    } else {
+        Add-Result "decision-actionability" "FAIL" ("可执行 $ok/$total = $ratio%（<90%）；问题行示例： " + (($bad | Select-Object -First 3) -join '; '))
+    }
+}
