@@ -959,3 +959,20 @@
 - **alternative**：计数排除 `acceptance/runs/`（运行产物不算能力），基线按新口径重设；并用
   "只给带 `-Project` 的真实运行写报告"从源头止住增长。修后 36/36、16/16、静态 9 PASS / 0 FAIL / 10 BLOCKED。
 - **status**：`resolved`
+
+---
+
+## GAP-057 DRC 清零的第二条路（重建）同样被环境打断：新工程建好了，但接线时窗口反复掉线
+
+- **capability**：绕开"旧板无备份、无走线级编辑"（GAP-053），改为**从头重建一块同样的板**并在布线前把间距条件放宽，从而得到 DRC 干净的板。
+- **evidence**（2026-10-31 本轮实测）：
+  1. 新工程 `sc001-usbc-clean`（`cf8079c6b8654423b8e580868e5f085d`）已建；`260/3` 落块 → 网表 ✓ 但 3 处报错
+     （2 重叠 + J1 右沿 1170 > 1158）。
+  2. 同页改用 `220/3` → **被拒**（GAP-043 的按页缓存第三次复现）；**新建页 P2** 后 `220/3` → 落块成功，
+     6 件（D1 SS34 / D2 USBLC6 / J1 USB3.1-16P / R1 R2 5.1k / D3 SMAJ5.0A）。
+  3. 接着执行已知配方时 **EDA 窗口掉线**：`sch connect --pin J1:A6` 失败、`sch connectivity` 返回非 JSON。
+     因此"补 A6 → 挪 ESD → 标 NC"这一步**没能跑完**，新板停在"块已落、网表未补"的中间态。
+- **triedTools**：`project create`、`sch page-new`、`sch block-apply`（220/3 与 260/3）、`sch connect`、`sch connectivity`
+- **alternative**：窗口稳定时按 GAP-049 的配方继续（补 A6 → 挪 ESD 并给同侧标签错开桩长 18/96/174 → 标 NC ✕
+   → 导入 PCB → 板框 margin 放大到 200 → autoroute → DRC）。**未验证**能否做到 DRC 0。
+- **status**：`open`
