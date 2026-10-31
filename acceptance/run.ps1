@@ -438,6 +438,24 @@ $meta = [ordered]@{
 }
 $meta | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $script:AcceptDir "last-run-meta.json") -Encoding UTF8
 
+# 反例（2026-10-31 外部审计 S2）：「16 阶段全绿」此前唯一的落盘物是 last-report.json，而它被 .gitignore 排除，
+# 于是仓库里没有任何一份 per-board 验收记录——结论无法被第三方核对。
+# 这里再写一份**可入库**的报告：acceptance/runs/<时间>-<case>-<executor>.json（runs/ 不进 gitignore）。
+$runsDir = Join-Path $script:AcceptDir "runs"
+if (-not (Test-Path $runsDir)) { New-Item -ItemType Directory -Force -Path $runsDir | Out-Null }
+$stamp = (Get-Date).ToString("yyyyMMdd-HHmmss")
+$safeCase = ($Case -replace '[^A-Za-z0-9._-]', '_')
+$safeExec = ($Executor -replace '[^A-Za-z0-9._-]', '_')
+$runFile = Join-Path $runsDir ("{0}-{1}-{2}.json" -f $stamp, $safeCase, $safeExec)
+$durable = [ordered]@{
+    case = $Case; executor = $Executor; finishedAt = $meta.finishedAt; exitCode = $meta.exitCode
+    pass = $pass; fail = $fail; blocked = $blocked
+    project = $Project; doc = $Doc; schDoc = $SchDoc
+    stages = @($script:Results | ForEach-Object { [ordered]@{ stage = $_.Stage; status = $_.Status; detail = $_.Detail } })
+}
+$durable | ConvertTo-Json -Depth 6 | Set-Content $runFile -Encoding UTF8
+if (-not $Quiet) { Write-Host "报告已入库: $runFile" }
+
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0

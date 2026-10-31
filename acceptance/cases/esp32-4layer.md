@@ -18,7 +18,7 @@
 
 | 阶段 | 判据 |
 |---|---|
-| kit-integrity | 7 份必需文档齐备 |
+| kit-integrity | 16 份必需文档齐备（2026-10-31 实测） |
 | tool-decision-table | ≥30 个情境，点名工具全部可解析 |
 | environment | EDA 窗口在线 |
 | schematic-gates | sch drc passed |
@@ -35,3 +35,4 @@
 - 板上仍有未连网络 → pcb-connectivity 将 FAIL
 
 这份缺口的价值：它把「产品还差什么」变成一张可执行的清单，而不是我的叙述。
+

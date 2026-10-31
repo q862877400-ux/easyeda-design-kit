@@ -1,5 +1,12 @@
 # 交接说明（HANDOVER）
 
+> **口径更正（2026-10-31，外部审计后）。** 本文件里 2026-10-31 之前出现的「16 PASS / 0 FAIL / 0 BLOCKED」
+> 是**旧 16 阶段口径**的结果——那套判据只验 `Connection Error`，不验 DRC 其他分类。
+> 加入第 17 阶段 `pcb-drc-clean` 后，**五块板实测均为 16 PASS / 1 FAIL**（DRC 非 0）。
+> 历史记录保留原样（它们在当时的口径下是真的），当前真相见 `docs/sc-evidence.md` 的「状态更正」一节
+> 与 `acceptance/runs/` 下入库的 per-board 报告。
+
+
 **写于**：2026-10-31，第 20 轮
 **状态**：产品侧完成；板子侧剩 6 条未连，卡在需要业主授权的两项操作。
 
@@ -23,11 +30,11 @@
 | 文档完整且可移植 | `kit-integrity` 13/13、`kit-portability` PASS | `pwsh -File acceptance/run.ps1 -Case esp32-4layer` |
 | 决策表 92 行全部可解析 | `tool-decision-table` PASS | 同上 |
 | 能力边界 25 条结构合规 | `capability-boundary` PASS | 同上 |
-| 门禁自身可信 | `selftest` 23/23（每分支正例+反例） | `pwsh -File acceptance/selftest.ps1` |
+| 门禁自身可信 | `selftest` 36 PASS / 0 FAIL（每分支正例+反例） | `pwsh -File acceptance/selftest.ps1` |
 | 抓得住历史错误 | `mistake-matrix` 16/16 | `pwsh -File acceptance/mistake-matrix.ps1` |
 | 交付四类齐备 | Gerber 74,869 B（钻孔在包内）+ 坐标 13,358 B + BOM 8,379 B | `pwsh -File acceptance/export-delivery.ps1 -Project … -SchDoc … -Doc … -OutDir …` |
 | Design IR 可离线自检 | 上游样例 PASS / 破坏后 FAIL | `pwsh -File acceptance/run.ps1 -IR <file>` |
-| **整套包搬走仍能跑** | 复制到临时目录后同 7 PASS / 0 FAIL / 7 BLOCKED | 见下方 §6 |
+| **整套包搬走仍能跑** | 复制到临时目录后同 8 PASS / 0 FAIL / 9 BLOCKED | 见下方 §6 |
 
 ---
 
@@ -81,7 +88,7 @@
 
 ```powershell
 # 1) 门禁自测（不需要 EDA 窗口）
-pwsh -NoProfile -File acceptance/selftest.ps1          # 期望 23/23
+pwsh -NoProfile -File acceptance/selftest.ps1          # 期望 36 PASS / 0 FAIL
 pwsh -NoProfile -File acceptance/mistake-matrix.ps1    # 期望 16/16
 
 # 2) 静态验收（不需要工程）
@@ -108,3 +115,5 @@ pwsh -NoProfile -File $env:TEMP\kit-copy\acceptance\run.ps1 -Case esp32-4layer
 3. **改完必须 `pour-rebuild` → `save` → `doc reload` → 再测**，否则读中间态。
 4. **`pcb drc --json` 坐标是 mil，嵌套输出是 mm** —— 混用会把孔打到空地（实测 19→22）。
 5. **判据不能为了让状态变绿而改**；判据有缺陷时，先写出反例证明它会误判，再改。
+
+

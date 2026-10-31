@@ -55,7 +55,7 @@ BLOCKED 表示缺前置条件（没有工程、没有窗口、未提供审计日
 
 ## 4. 当前状态（诚实记录）
 
-`acceptance/run.ps1` 现在的结果是 **0 PASS / 1 FAIL / 8 BLOCKED**，失败点已由脚本点名：
+`acceptance/run.ps1` 现在的结果是 **8 PASS / 0 FAIL / 9 BLOCKED**（BLOCKED = 需要在线板子的阶段），失败点已由脚本点名：
 
 ```
 [FAIL] kit-integrity      缺 5/7 份：
@@ -113,7 +113,7 @@ pwsh -NoProfile -File acceptance/selftest.ps1
 
 它逐条验证**每个分支的正例与反例**：kit 自身必须 PASS；反例日志必须 FAIL；
 `N3` 对"仅提及关键词"不判死、对"实质实现（>20KB）"必判死并报体积；
-`-CodeScope` 必须真的缩小范围；历史回测必须抓到 N1/N5。当前 **8/8 通过**。
+`-CodeScope` 必须真的缩小范围；历史回测必须抓到 N1/N5。当前 **36 PASS / 0 FAIL**（`acceptance/selftest.ps1`）。
 ---
 
 ## 9. 历史错误矩阵（把每个犯过的错都试一遍）
@@ -147,3 +147,5 @@ pwsh -NoProfile -File acceptance/mistake-matrix.ps1
 | 验证它真的能工作 | [specs/004-ai-pcb-design-kit/quickstart.md](specs/004-ai-pcb-design-kit/quickstart.md) |
 | 看还有哪些没做完 | [specs/004-ai-pcb-design-kit/tasks.md](specs/004-ai-pcb-design-kit/tasks.md) |
 | 理解为什么有这些门禁 | [docs/anti-drift.md](docs/anti-drift.md) · [docs/retro-audit.md](docs/retro-audit.md) |
+
+

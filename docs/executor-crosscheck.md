@@ -1,5 +1,12 @@
 # 跨执行者复跑记录（SC-004）
 
+> **口径更正（2026-10-31，外部审计后）。** 本文件里 2026-10-31 之前出现的「16 PASS / 0 FAIL / 0 BLOCKED」
+> 是**旧 16 阶段口径**的结果——那套判据只验 `Connection Error`，不验 DRC 其他分类。
+> 加入第 17 阶段 `pcb-drc-clean` 后，**五块板实测均为 16 PASS / 1 FAIL**（DRC 非 0）。
+> 历史记录保留原样（它们在当时的口径下是真的），当前真相见 `docs/sc-evidence.md` 的「状态更正」一节
+> 与 `acceptance/runs/` 下入库的 per-board 报告。
+
+
 **判据原文**：「至少**一个不同模型**（或不同 harness）复跑其中一块板并通过，证明结果不依赖特定执行者。」
 
 ## 结论
@@ -129,9 +136,10 @@ pwsh -NoProfile -File easyeda-design-kit\acceptance\run.ps1 `
 |---|---|
 | `selftest.ps1` | **36 PASS / 0 FAIL** |
 | `mistake-matrix.ps1` | **16/16 抓到，0 漏网**（M12 重新被抓到） |
-| 静态 acceptance | **7 PASS / 0 FAIL / 9 BLOCKED**（BLOCKED = 需在线板子的阶段） |
+| 静态 acceptance | **8 PASS / 0 FAIL / 9 BLOCKED**（BLOCKED = 需在线板子的阶段） |
 | 五块板（同一次顺序运行） | 每块 **16 PASS / 0 FAIL / 0 BLOCKED** |
 | 反例验证 | 把 `baseline.json` 的 `decision_rows` 临时改成 200 → `negative-drift` 报 `N8 决策表行数从 200 降到 107`（门禁确实会抓缩水，不是被改绿）|
 
 **判读**：门禁脚本的改动不会影响板子验收——这是**测出来的**，不是推断的。以后每次动 `acceptance/` 下的判据，
 都应照这条跑一遍：三件套 + 五板复验 + 一条反例。
+

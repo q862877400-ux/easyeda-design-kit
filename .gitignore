@@ -1,6 +1,5 @@
 acceptance/last-report.json
 *.tmp
 
-acceptance/runs/
 acceptance/last-run-meta.json
 
