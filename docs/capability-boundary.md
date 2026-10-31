@@ -899,3 +899,24 @@
   ② 用 `pcb autoroute` 带更高间距规则重跑整板（会把现有 29/29 连通重算）；
   ③ Netlist 差异需要从 GUI 的 Import Changes 面板读出具体条目，或找 CLI 侧的等价诊断命令。
 - **status**：`open`
+
+---
+
+## GAP-053 修 DRC 几何问题缺两件工具：PCB 备份导出在本项目上失败、无走线级编辑命令
+
+- **capability**：把 PCB 上「走线离焊盘 5.1 mil」这类几何违规**定点修掉**，而不重排整板。
+- **evidence**（2026-10-31，`sc001-usbc-blk` 实测）：
+  1. **备份失败**：`project export-source --project … --payload {"uuid":…}` 与
+     `project export --project … --out …` **都返回空结果、不产出 `.epro2` 文件**
+     （`easyeda-auto\.work\usbc-backup.epro2` 不存在）。→ **没有回滚手段**。
+  2. **无走线级编辑**：`pcb --help` 里没有 track 级 move/modify 命令；与走线有关的只有
+     `route`（一次落一跳）、`rip-up`（按网撕）、`import-autoroute`、`bezier`/`beautify`。
+     因此「把这条线挪开 1 mil」没有对应动作，只能**撕掉整条网重布**或**重跑整板 autoroute**。
+  3. 焊盘级网表差异也读不到：`pcb nets` 只给网名与长度，`pcb list` 只给器件属性，**无焊盘→网络** 的查询；
+     Netlist Error 的具体差异条目只在 GUI 的 `Import Changes` 面板里。
+- **triedTools**：`project export-source`、`project export`、`pcb nets`、`pcb list`、`pcb net-path`（未跑）、
+  `pcb --help` 全量检索
+- **alternative**：① 用 GUI 的 `Import Changes` 面板读出网表差异再决定改哪边；② 在**有备份**的前提下
+  `rip-up --net` + `route` 重布；③ `drc-rules-set` 提高设计规则后**重跑 autoroute**（属于"整板重算"，非定点修复）。
+  三条都**未验证**。
+- **status**：`open`
