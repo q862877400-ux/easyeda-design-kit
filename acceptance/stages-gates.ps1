@@ -21,7 +21,7 @@ function Test-PositiveGoal {
                 $fail += "$k 从 $($b.$k) 降到 $($now[$k])（能力退化）"
             }
         }
-        $note += "规范产物 $($now.docs_files)/$($now.playbooks)/$($now.acceptance)/$($now.spec_files)"
+        $note += "规范产物 文档 $($now.docs_files) 个/playbooks 目录 $($now.playbooks) 个文件/acceptance $($now.acceptance) 个/specs $($now.spec_files) 个"
     }
 
     # P2 playbook 必须是**可执行的**，不能是"写段说明就叫 playbook"
@@ -423,3 +423,4 @@ function Test-DecisionActionability {
         Add-Result "decision-actionability" "FAIL" ("可执行 $ok/$total = $ratio%（<90%）；问题行示例： " + (($bad | Select-Object -First 3) -join '; '))
     }
 }
+
