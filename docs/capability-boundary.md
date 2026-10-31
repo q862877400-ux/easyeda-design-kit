@@ -757,3 +757,31 @@
   或 `260/3`（网表对齐）后整组左移 ~20 mil 收掉右侧 12 mil 越界。
   两条都还没实跑完，**未验证**能否一次做到 0 重叠 0 出图。
 - **status**：`open`
+
+---
+
+## GAP-047 六件 USBC 块的**三方权衡**：进框 / 网表对齐 / 无重叠，A4 上未能同时满足
+
+- **capability**：让 `usbc_ufp_power_or`（含 16P 连接器 13 marker、USBLC6 ESD 6 marker）在一页 A4 内
+  同时满足：0 出图纸、0 组重叠、网表 `reconcile ✓`。
+- **evidence**（2026-10-31，逐页实测，每轮新建页 + `sch clear`）：
+
+  | 配置 | 落块 | 网表 | clusters |
+  |---|---|---|---|
+  | `220/3` | 成功 | **✗ 未对齐** | 0 出图框，**2 处重叠**（24×1、96×11）|
+  | `245/3` | 成功 | ✗ | 左沿 **-10 < 12**，2 处重叠 |
+  | `255/3` | 成功 | ✗ | 左沿 **0 < 12**，2 处重叠 |
+  | `260/3` | 成功 | **✓** | 右沿 **1200 > 1158**（超 42），2 处重叠 |
+  | `220/2`、`240/3`、`250/3` | **拒绝** | — | — |
+
+  块在 245–260 间距下总宽约 **1160–1204**，而 A4 可用宽度只有 **1146**（x 12→1158）：
+  够宽就对齐不了网表，对齐了网表就超宽 ~14–58 mil。
+- **another dead end（负结果）**：`sch group ungroup` + `sch autoplace-free --all --apply` 虽然消掉了重叠，
+  但把 **26 支 marker 从导线上扯脱**（`sch clusters` 报"既不沾任何导线、离谁都远"），
+  J4 仍出界 10 mil。**结论：对已连线的块不要用"解组后整页重排"**，会静默破坏连通性。
+- **triedTools**：`sch block-apply`（8 组参数）、`sch clusters --strict`、`sch group-move`、
+  `sch group ungroup`、`sch autoplace-free --all --apply`、`sch page-new`
+- **alternative**：只剩**按引脚缩短 marker**：对 USBLC6 的 6 个引脚
+  `sch autoconnect --pin D:<pin> --net <net> --replace --offset-min 18 --offset-max 30`，
+  把每个标签的桩长压到最小，理论上能把宽度收进 1146。**未验证**。
+- **status**：`open`
