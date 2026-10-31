@@ -4,7 +4,7 @@
 
 | 判据 | 状态 | 证据 | 复跑方式 |
 |---|---|---|---|
-| **SC-001** 两块未见板 2/2 | **未验证（0/2 已完成 1 块）** | 本会话完成的是 `agent-e2e-esp32s3-board31`（练习板，非"未见板"）；未见板素材需 GUI 导入开源 `.epro2`（T052） | 见 T052 |
+| **SC-001** 两块未见板 2/2 | **1/2（第 1 块已全绿）** | 第 1 块 `sc001-led-typed`：**由 typed 动作现场生成**（此会话第 7 轮才出现，此前不存在），`project.create` → `sch block-apply` → 布局收敛 → `pcb import-changes` → `outline-fit` → `route fill` → 导出交付，验收 **16 PASS / 0 FAIL / 0 BLOCKED**。**口径限制**：由本会话执行，非零上下文会话（零上下文复跑见 executor-crosscheck 方法） | `run.ps1 -Case sc001-led-typed -Project sc001-led-blk -SchDoc 8124aea12d407530 -Doc 1e56ec91cd0bad4b -DeliveryDir …`；第 2 块待做 |
 | **SC-002** 四项同时成立 | **已验证** | `acceptance/run.ps1` 16 PASS / 0 FAIL / 0 BLOCKED：`schematic-gates` PASS + `pcb-connectivity` Connection Error 0 + `pcb-dfm` DFM ERROR 0 + `delivery` 三件齐备（Gerber 74,869 B / 坐标 13,358 B / BOM 8,379 B） | `pwsh -File acceptance/run.ps1 -Case esp32-4layer -Project … -SchDoc … -Doc … -DeliveryDir …` |
 | **SC-003** 一次性脚本 = 0 | **已验证** | `no-oneoff-scripts` PASS（审计 `-RunLog`，无临时脚本调用） | 同上（带 `-RunLog`） |
 | **SC-004** 换模型/换 harness 复跑通过 | **已验证（harness 维度）** | 两个全新会话、零上下文的子 agent 复跑：运行 C 得 **16 PASS / 0 FAIL / 0 BLOCKED（退出码 0）**，与运行 A **逐阶段 0 处不同**；selftest 30/30、matrix 16/16 亦一致。**模型维度未验证**（三次都是 deepseek-v4.1） | 见 `docs/executor-crosscheck.md`；换模型仍需业主入口 |
@@ -25,4 +25,5 @@
 
 一次性看似的"两次一致"可能被环境骗过：第一次实测时 EDA 窗口中途掉线，两次都返回 BLOCKED —— 那不是"一致"，是**两次都失败**。
 因此 SC-006 的比较必须建立在**两次都无 BLOCKED**的前提上，本次已满足（15 PASS 各两次）。
+
 

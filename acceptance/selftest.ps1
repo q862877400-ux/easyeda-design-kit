@@ -318,6 +318,23 @@ Assert-Case "delivery → 目录有文件但缺 BOM 判 FAIL" {
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot, '-DeliveryDir', $d) 'delivery').Status -eq 'FAIL'
 }
 
+
+# 断言：DFM 计数解析必须同时认「有违规」与「零违规」两种输出形态
+Assert-Case "DFM 解析：零违规形态 0 issue(s) → 0（不得判未给出计数）" {
+    . (Join-Path $AcceptDir "dfm-parse.ps1")
+    (Parse-DfmErrorCount "PCB check (DFM): 7 track(s), 0 via(s), 4 pad(s) — 0 issue(s)") -eq 0
+}
+
+Assert-Case "DFM 解析：ERROR=3 形态 → 3" {
+    . (Join-Path $AcceptDir "dfm-parse.ps1")
+    (Parse-DfmErrorCount "ERROR=3 WARN=245  | dangling=2") -eq 3
+}
+
+Assert-Case "DFM 解析：无法判定 → -1（不得当 0）" {
+    . (Join-Path $AcceptDir "dfm-parse.ps1")
+    (Parse-DfmErrorCount "hello") -eq -1
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

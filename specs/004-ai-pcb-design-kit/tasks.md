@@ -229,3 +229,9 @@ T025 docs/playbook-unseen-board.md
 - [ ] T297 SC-001 仍 0/2：两块未见板端到端通过验收。前置 = T295。
 - [x] T298 SC-004 **已验证（harness 维度）**，证据见 `docs/executor-crosscheck.md`；换模型仍需业主提供入口
 
+
+## Phase 14: SC-001 第 1 块（typed 生成）
+
+- [x] T301 **SC-001 第 1 块 `sc001-led-typed` 全绿**：纯 typed 生成（无 GUI/粘贴），验收 **16 PASS / 0 FAIL / 0 BLOCKED**，交付 Gerber 10,150 B / CPL 1,040 B / BOM 6,815 B。口径：本会话执行，非零上下文会话。
+- [x] T302 修 `pcb-dfm` 判据缺陷：`pcb check` 零违规时输出 `0 issue(s)` 而无 `ERROR=` 计数行，旧判据会把**干净板**判 FAIL。抽 `acceptance/dfm-parse.ps1` 兼容两种形态，配 3 条自测断言（33/33）。
+- [ ] T303 SC-001 第 2 块：再做一块未见板（可换块种类，如 LDO/USB-C 供电板），同样端到端全绿。

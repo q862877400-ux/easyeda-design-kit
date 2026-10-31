@@ -586,3 +586,19 @@
   `sch block-apply` → `sch clusters --strict` / `layout-lint` 收敛布局 →
   `sch titleblock`（显式显隐）→ `pcb import-changes` → PCB 布局/布线 → 验收。
 - **status**：`accepted`
+
+---
+
+## GAP-038 `pcb check` 零违规时输出形态不同，旧判据会把干净板判 FAIL
+
+- **capability**：用 `pcb-dfm` 阶段判断 PCB 有没有 DFM 错误。
+- **evidence**：实测两种输出形态——
+  - 有违规：`ERROR=3 WARN=245  | dangling=2 …`（含 `ERROR=` 计数行）
+  - **零违规**：`PCB check (DFM): 7 track(s), 0 via(s), 4 pad(s) — 0 issue(s)` + `✓ no DFM issues found`
+    （**不含** `ERROR=`）
+  旧判据只 `[regex]::Match($out,'ERROR=(\d+)')`，于是 `sc001-led-typed`（7 走线 / 4 焊盘 / 0 违规）
+  被判「未给出 ERROR 计数」→ **假 FAIL**。反例成立：板子是干净的，判据却报失败。
+- **triedTools**：`pcb check`、`pcb drc --json`
+- **alternative**：把解析抽成 `acceptance/dfm-parse.ps1` 的 `Parse-DfmErrorCount`，同时认两种形态；
+  无法判定时返回 **-1（报 FAIL，不当 0）**。已配 3 条自测断言（零违规形态→0、`ERROR=3`→3、垃圾→-1）。
+- **status**：`resolved`

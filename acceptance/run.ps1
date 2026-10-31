@@ -29,6 +29,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$dfmParse = Join-Path $PSScriptRoot "dfm-parse.ps1"
+if (Test-Path $dfmParse) { . $dfmParse }
 $script:DtHelpCache = @{}
 $script:AcceptDir = Split-Path -Parent $PSCommandPath
 $script:RepoRoot = Split-Path -Parent $script:AcceptDir
@@ -249,9 +251,8 @@ function Test-PcbDfm {
     if ($Doc) { $args += @("--doc", $Doc) }
     $out = & $Cli $args 2>&1 | Out-String
     if ($out -match "no connected window|daemon health") { Add-Result "pcb-dfm" "BLOCKED" "没有在线窗口，无法读 DFM"; return }
-    $m = [regex]::Match($out, 'ERROR=(\d+)')
-    if (-not $m.Success) { Add-Result "pcb-dfm" "FAIL" "pcb check 未给出 ERROR 计数"; return }
-    $err = [int]$m.Groups[1].Value
+    $err = if (Get-Command Parse-DfmErrorCount -ErrorAction SilentlyContinue) { Parse-DfmErrorCount $out } else { -1 }
+    if ($err -lt 0) { Add-Result "pcb-dfm" "FAIL" "pcb check 未给出可解析的违规计数"; return }
     if ($err -eq 0) { Add-Result "pcb-dfm" "PASS" "DFM ERROR 0" }
     else { Add-Result "pcb-dfm" "FAIL" "DFM ERROR $err" }
 }
