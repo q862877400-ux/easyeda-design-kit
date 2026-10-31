@@ -942,3 +942,20 @@
 - **alternative**：任何新增阶段的两条硬规矩——① 阶段内的解析/转换要防数组；② 阶段整体 `try/catch` 兜底，
   异常一律降级为 BLOCKED。
 - **status**：`resolved`
+
+---
+
+## GAP-056 「能力计数」把运行产出物也算进去：清理垃圾反被判成退化
+
+- **capability**：`positive-goal` 用 `docs/playbooks/acceptance/specs` 四个计数做「能力只增不减」的棘轮。
+- **evidence**（2026-11-01 自查）：
+  1. 上一轮加"per-run 报告入库"时，**静态跑也会写报告**（未限定 `-Project`）→ 一夜之间
+     `acceptance/` 从 ~27 个文件涨到 **274** 个，其中 225 份是无板子静态跑的产物。
+  2. 我修掉"只给真实运行写报告"并清理那 225 份后，`positive-goal` 立刻报
+     **`acceptance 从 274 降到 58（能力退化）`**，连带矩阵的 M14/M16 对照用例由 PASS 变 FAIL
+     （14/16）、自测 35/36。
+  3. 即：**这个口径把"运行产物"当成"能力"**，于是"清理垃圾"被判成退化、而"堆积垃圾"被当成增长。
+- **triedTools**：`positive-goal`（计数）、`mistake-matrix`（M14/M16 对照）、`selftest`（kit 自身断言）
+- **alternative**：计数排除 `acceptance/runs/`（运行产物不算能力），基线按新口径重设；并用
+  "只给带 `-Project` 的真实运行写报告"从源头止住增长。修后 36/36、16/16、静态 9 PASS / 0 FAIL / 10 BLOCKED。
+- **status**：`resolved`

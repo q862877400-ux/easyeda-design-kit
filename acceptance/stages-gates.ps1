@@ -226,7 +226,11 @@ function Get-CanonicalCounts {
     return [ordered]@{
         docs_files = @(Get-ChildItem (Join-Path $script:RepoRoot 'docs') -Recurse -File -ErrorAction SilentlyContinue).Count
         playbooks  = @(Get-ChildItem (Join-Path $script:RepoRoot 'playbooks') -Recurse -File -ErrorAction SilentlyContinue).Count
-        acceptance = @(Get-ChildItem (Join-Path $script:RepoRoot 'acceptance') -Recurse -File -ErrorAction SilentlyContinue).Count
+        # 反例（2026-11-01 自查）：这一项原来统计 `acceptance/` 下**所有**文件，于是把「运行产出物」也算成能力：
+        # 我修 bug 前每次静态跑都写一份报告，一夜之间涨到 274 个；清理这些垃圾又被判「能力退化」。
+        # 正确口径：只数**代码与测试**（.ps1/.md/fixtures），排除 acceptance/runs/ 这类运行产物。
+        acceptance = @(Get-ChildItem (Join-Path $script:RepoRoot 'acceptance') -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\acceptance\\runs\\' }).Count
         spec_files = @(Get-ChildItem (Join-Path $script:RepoRoot 'specs') -Recurse -File -ErrorAction SilentlyContinue).Count
     }
 }

@@ -89,3 +89,4 @@
 | 56 | 把边界抽样接成第 18 阶段 `capability-sample`（接入即暴露 3/5 不合格），修解析器三缺陷（多行 alternative/括号注释/bsk_* 等形式）+ 修 GAP-031 triedTools | 阶段 **17→18**；`capability-sample` PASS（5 通过/0 不合格）；静态 8 PASS / 0 FAIL / 10 BLOCKED；自测 36/36、矩阵 16/16 | 本轮 |
 | 57 | 自查并修复：新阶段对数组调 `.Trim()` 抛异常→整条验收被打断（矩阵 2/16、自测 33/36）；加 try/catch 与类型守卫后恢复 | 自测 36/36、矩阵 16/16、静态 8/0/10（capability-sample PASS）| 本轮 |
 | 59 | `run-consistency` 收紧为「只比完整运行」后 PASS：两次完整运行 18 阶段一致（pass=17/fail=1 各一次）；SC-006 结论修正为"仅对完整运行成立" | 阶段 19；静态 10 PASS / 0 FAIL / 9 BLOCKED；自测 36/36、矩阵 16/16 | 本轮 |
+| 60 | T327 运行中检测窗口丢失（PARTIAL + exit 2）；自查修两处新缺陷：静态跑不该写报告、能力计数不该含运行产物 | 完整运行 18 PASS / 1 FAIL / 0 BLOCKED 无 PARTIAL；三件套 **36/36、16/16、9/0/10** | 本轮 |

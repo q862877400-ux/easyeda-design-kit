@@ -148,6 +148,19 @@ $tablePath = Join-Path $script:AuditRoot "docs\tool-decision-table.md"
 }
 
 # ── 阶段 3：环境 ──────────────────────────────────────────────────────────
+# 连接器存活探测（2026-10-31，GAP-055）：验收跑一半窗口掉线时，前面的阶段 PASS、后面的 BLOCKED，
+# 这种"混合结论"既不能当通过、也不能当一致证据。运行前后各测一次，变了就整次标 partial。
+function Get-ConnectorWindowCount {
+    try {
+        $raw = & $Cli @("daemon", "health") 2>$null | Out-String
+        $i = $raw.IndexOf("{")
+        if ($i -lt 0) { return -1 }
+        $d = $raw.Substring($i) | ConvertFrom-Json
+        if ($null -eq $d.found -or $null -eq $d.found.raw) { return 0 }
+        return @($d.found.raw.windows).Count
+    } catch { return -1 }
+}
+
 function Test-Environment {
     if (-not (Test-Path $Cli)) {
         Add-Result "environment" "BLOCKED" "CLI 不存在： $Cli"
@@ -466,6 +479,9 @@ if (-not $Quiet) {
     Write-Host ""
 }
 
+# 反例（2026-10-31 GAP-055）：跑一半窗口掉线时，前面的阶段 PASS、后面的 BLOCKED，
+# 这种混合结论会被当成"一次正常运行"。起跑前记一次窗口数，收尾再记一次，掉了就整次标 partial。
+$connStart = Get-ConnectorWindowCount
 Test-KitIntegrity
 Test-KitPortability
 Test-DecisionTable
@@ -487,11 +503,16 @@ Test-PositiveGoal
 Test-NegativeDrift
 
 $fail = @($script:Results | Where-Object Status -eq "FAIL").Count
+$connEnd = Get-ConnectorWindowCount
+$partial = ($connStart -gt 0 -and $connEnd -eq 0)
+if ($partial) {
+    Write-Host ("[WARN]    运行期间 EDA 窗口消失（起跑 {0} → 收尾 {1}）：本次运行不完整，结论一律按 BLOCKED 处理" -f $connStart, $connEnd)
+}
 $blocked = @($script:Results | Where-Object Status -eq "BLOCKED").Count
 $pass = @($script:Results | Where-Object Status -eq "PASS").Count
 if (-not $Quiet) {
     Write-Host ""
-    Write-Host "===== $pass PASS / $fail FAIL / $blocked BLOCKED ====="
+    Write-Host "===== $pass PASS / $fail FAIL / $blocked BLOCKED$(if ($partial) { ' [PARTIAL: 窗口中途掉线' } else { '' }) ====="
 }
 
 $report = Join-Path $script:AcceptDir "last-report.json"
@@ -517,17 +538,23 @@ $safeCase = ($Case -replace '[^A-Za-z0-9._-]', '_')
 $safeExec = ($Executor -replace '[^A-Za-z0-9._-]', '_')
 $runFile = Join-Path $runsDir ("{0}-{1}-{2}.json" -f $stamp, $safeCase, $safeExec)
 $durable = [ordered]@{
-    case = $Case; executor = $Executor; finishedAt = $meta.finishedAt; exitCode = $meta.exitCode
+    case = $Case; executor = $Executor; finishedAt = $meta.finishedAt; exitCode = $meta.exitCode; partial = $partial
     pass = $pass; fail = $fail; blocked = $blocked
     project = $Project; doc = $Doc; schDoc = $SchDoc
     stages = @($script:Results | ForEach-Object { [ordered]@{ stage = $_.Stage; status = $_.Status; detail = $_.Detail } })
 }
-$durable | ConvertTo-Json -Depth 6 | Set-Content $runFile -Encoding UTF8
-if (-not $Quiet) { Write-Host "报告已入库: $runFile" }
+# 只有「带 -Project 的真实板子运行」才入库存档；静态跑不写（否则 acceptance/runs/ 会被静态运行淹没）
+if (-not [string]::IsNullOrWhiteSpace($Project)) {
+    $durable | ConvertTo-Json -Depth 6 | Set-Content $runFile -Encoding UTF8
+    if (-not $Quiet) { Write-Host "报告已入库: $runFile" }
+}
 
+if ($partial) { exit 2 }
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0
+
+
 
 
 
