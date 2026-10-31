@@ -30,6 +30,12 @@ foreach ($p in @($boundary, $decision)) {
 }
 $corpus = (Get-Content $decision -Raw)
 if (Test-Path $extIndex) { $corpus += (Get-Content $extIndex -Raw) }
+# 反例（2026-10-31 外部审计 S10）：原 corpus 只含决策表/扩展索引/actions 输出，
+# 于是装机清单里的扩展名与外部工具名一律"解析不到"。把两份 JSON 也纳入语料。
+foreach ($jf in @('docs\installed-extensions.json', 'docs\external-tools.json')) {
+    $jp = Join-Path $KitRoot $jf
+    if (Test-Path $jp) { $corpus += (Get-Content $jp -Raw) }
+}
 $actionsRaw = (& $Cli actions 2>$null | Out-String); if ($actionsRaw) { $corpus += $actionsRaw }
 
 # 解析条目
@@ -62,26 +68,28 @@ foreach ($e in $sample) {
         if ($body -notmatch "(?i)\*\*$field\*\*") { $problems += "缺 $field" }
     }
 
-    # 2) triedTools 可解析
+    # 2) triedTools 可解析（解析器修复：2026-10-31 审计 S10）
     $tools = @()
     if ($body -match '(?im)^-\s+\*\*triedTools\*\*\s*[:：]\s*(.*)$') {
-        $tools = ($Matches[1] -split '[、,，/]') | ForEach-Object { $_.Trim().Trim('`', '*') } | Where-Object { $_ }
+        $raw = $Matches[1]
+        $raw = $raw -replace '（[^）]*）', '' -replace '\([^)]*\)', ''
+        $tools = ($raw -split '[、,，;；]') | ForEach-Object { $_.Trim().Trim('`', '*') } |
+            ForEach-Object { $_ -replace '`', '' } |
+            ForEach-Object { $_ -replace '^(扩展|extension)\s+', '' } |
+            ForEach-Object { $_ -replace '^(CLI|cli)\s+', '' } | Where-Object { $_ }
     }
     if ($tools.Count -eq 0) { $problems += 'triedTools 为空' }
-    # 解析规则（与决策表一致，另加 CLI 命令面）：
-    #  a) 出现在决策表 / 扩展索引 / actions 输出里；或
-    #  b) 形如 "<组> <子命令>" 且 `easyeda <组> --help` 里能查到该子命令。
     $unresolved = @()
     foreach ($t in $tools) {
         $hit = ($corpus -match [regex]::Escape($t))
-        if (-not $hit -and $t -match '^([a-z][a-z0-9-]*)\s+(\S+)') {
+        if (-not $hit -and $t -match '^--[a-z-]+$') { $hit = $true }
+        if (-not $hit -and $t -match '^(bsk_[a-z_]+)') { if ($corpus -match [regex]::Escape($Matches[1])) { $hit = $true } }
+        if (-not $hit -and $t -match '^([a-z][a-z0-9_-]*)\s+(\S+)') {
             $grp = $Matches[1]; $sub = $Matches[2]
-            if (-not $script:HelpCache.ContainsKey($grp)) {
-                $script:HelpCache[$grp] = (& $Cli @($grp, '--help') 2>$null | Out-String)
-            }
+            if (-not $script:HelpCache.ContainsKey($grp)) { $script:HelpCache[$grp] = (& $Cli @($grp, '--help') 2>$null | Out-String) }
             if ($script:HelpCache[$grp] -match [regex]::Escape($sub)) { $hit = $true }
         }
-        if (-not $hit -and $t -match '^([a-z][a-z0-9-]*)$') {
+        if (-not $hit -and $t -match '^([a-z][a-z0-9_-]*)$') {
             if (-not $script:HelpCache.ContainsKey($t)) { $script:HelpCache[$t] = (& $Cli @($t, '--help') 2>$null | Out-String) }
             if (-not [string]::IsNullOrWhiteSpace($script:HelpCache[$t])) { $hit = $true }
         }
@@ -89,11 +97,17 @@ foreach ($e in $sample) {
     }
     foreach ($u in $unresolved) { $problems += "工具解析不到：$u" }
 
-    # 3) alternative 不是占位
-    $alt = ''
-    if ($body -match '(?im)^-\s+\*\*alternative\*\*\s*[:：]\s*(.*)$') { $alt = $Matches[1].Trim() }
-    if ($alt.Length -lt 10) { $problems += 'alternative 过短或缺失' }
+    # 3) alternative 不是占位（多行取整段：原实现只取首行，导致多行 alternative 被误判过短）
+    $altLines = @()
+    $inAlt = $false
+    foreach ($bl in ($body -split "`n")) {
+        if ($bl -match '(?im)^-\s+\*\*alternative\*\*\s*[:：]\s*(.*)$') { $inAlt = $true; $altLines += $Matches[1]; continue }
+        if ($inAlt) { if ($bl -match '^\s*-\s+\*\*') { break }; $altLines += $bl }
+    }
+    $alt = ($altLines -join ' ').Trim()
+    if ($alt.Length -lt 10) { $problems += "alternative 过短或缺失（$($alt.Length) 字符）" }
     if ($alt -match '(?i)另行处理|待定|以后再说|TODO') { $problems += 'alternative 是占位话术' }
+
 
     if ($problems.Count -eq 0) {
         Write-Host ("[PASS] {0}" -f $e.Id)

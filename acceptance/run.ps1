@@ -255,6 +255,20 @@ function Test-PcbConnectivity {
 # 反例（2026-10-31 外部审计 S6）：pcb-connectivity 只读 Connection Error，而 PRODUCT.md 的 SC-A 写的是「DRC 0」。
 # 实测练习板 pcb drc 是 passed=False / total=27（Clearance 26 + Netlist 1），旧口径照样报 PASS。
 # 这里把 DRC 全分类单独成阶段，让「DRC 0」成为可核对的判据，而不是被窄口径顶替。
+# 反例（2026-10-31 外部审计 S10）：`sample-boundaries.ps1`（SC-D 边界诚实的执行者）此前**没有被任何门禁调用**，
+# 而它本身跑起来是 3/5 不合格。判据写了、脚本写了、却不在链路里 —— 等于这条成功判据从来没被验过。
+# 这里把它接成独立阶段：脚本 exit 0 → PASS；exit 1 → FAIL（附不合格条目）；脚本缺失 → BLOCKED。
+function Test-CapabilitySample {
+    $sc = Join-Path $script:AcceptDir "sample-boundaries.ps1"
+    if (-not (Test-Path $sc)) { Add-Result "capability-sample" "BLOCKED" "缺 sample-boundaries.ps1"; return }
+    $out = & pwsh -NoProfile -File $sc -KitRoot $script:AuditRoot 2>&1 | Out-String
+    $code = $LASTEXITCODE
+    $summary = (($out -split "`n" | Where-Object { $_ -match "=====" } | Select-Object -Last 1) -replace "=", "").Trim()
+    $fails = @($out -split "`n" | Where-Object { $_ -match "^\s*\[FAIL\]" } | ForEach-Object { $_.Trim() })
+    if ($code -eq 0) { Add-Result "capability-sample" "PASS" $summary }
+    else { Add-Result "capability-sample" "FAIL" ("{0}；{1}" -f $summary, (($fails | Select-Object -First 2) -join " / ")) }
+}
+
 function Test-PcbDrcClean {
     if ([string]::IsNullOrWhiteSpace($Project) -or [string]::IsNullOrWhiteSpace($Doc)) { Add-Result "pcb-drc-clean" "BLOCKED" "未指定 -Project/-Doc"; return }
     $raw = & $Cli @("pcb", "drc", "--project", $Project, "--doc", $Doc, "--json") 2>&1 | Out-String
@@ -405,6 +419,7 @@ Test-DecisionTable
 Test-InstalledClaims
 Test-DecisionActionability
 Test-CapabilityBoundary
+Test-CapabilitySample
 Test-Environment
 Test-SchematicGates
 Test-DesignIR

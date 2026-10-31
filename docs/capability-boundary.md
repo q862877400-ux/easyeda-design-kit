@@ -474,7 +474,7 @@
      `原始信息：Error: 错误：非客户端环境无法调用本接口！`
      `at g_.saveFileToFileSystem (https://modules.lceda.cn/pro-api/0.3.53.…/api.js)`
   4. 先手动建好该目录后重试，同样失败——**不是权限/路径问题**，是 API 在网页环境不可用。
-- **triedTools**：扩展 `PCB 交付`（GUI）、手动预建目录、CLI `pcb.export.gerber` / `pcb.export.pick_place` /
+- **triedTools**：扩展 `PCB 交付`（GUI）、`pcb.export.gerber`（类型化动作）、CLI `pcb.export.gerber` / `pcb.export.pick_place` /
   `schematic.export.bom`（**这三条 CLI 路径可用**，实测 74,869 B / 13,358 B / 8,379 B）
 - **alternative**：网页版走 CLI 类型化动作 + `acceptance/export-delivery.ps1`；
   需要扩展的富交付（STEP/交互 BOM/工程源）时，改用 **EasyEDA 桌面客户端**打开同一工程再导出。
@@ -920,3 +920,5 @@
   `rip-up --net` + `route` 重布；③ `drc-rules-set` 提高设计规则后**重跑 autoroute**（属于"整板重算"，非定点修复）。
   三条都**未验证**。
 - **status**：`open`
+
+

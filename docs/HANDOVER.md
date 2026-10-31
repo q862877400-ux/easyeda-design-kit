@@ -34,7 +34,7 @@
 | 抓得住历史错误 | `mistake-matrix` 16/16 | `pwsh -File acceptance/mistake-matrix.ps1` |
 | 交付四类齐备 | Gerber 74,869 B（钻孔在包内）+ 坐标 13,358 B + BOM 8,379 B | `pwsh -File acceptance/export-delivery.ps1 -Project … -SchDoc … -Doc … -OutDir …` |
 | Design IR 可离线自检 | 上游样例 PASS / 破坏后 FAIL | `pwsh -File acceptance/run.ps1 -IR <file>` |
-| **整套包搬走仍能跑** | 复制到临时目录后同 8 PASS / 0 FAIL / 9 BLOCKED | 见下方 §6 |
+| **整套包搬走仍能跑** | 复制到临时目录后同 8 PASS / 0 FAIL / 10 BLOCKED | 见下方 §6 |
 
 ---
 
@@ -115,5 +115,6 @@ pwsh -NoProfile -File $env:TEMP\kit-copy\acceptance\run.ps1 -Case esp32-4layer
 3. **改完必须 `pour-rebuild` → `save` → `doc reload` → 再测**，否则读中间态。
 4. **`pcb drc --json` 坐标是 mil，嵌套输出是 mm** —— 混用会把孔打到空地（实测 19→22）。
 5. **判据不能为了让状态变绿而改**；判据有缺陷时，先写出反例证明它会误判，再改。
+
 
 

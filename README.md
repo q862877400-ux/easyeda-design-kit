@@ -55,7 +55,7 @@ BLOCKED 表示缺前置条件（没有工程、没有窗口、未提供审计日
 
 ## 4. 当前状态（诚实记录）
 
-`acceptance/run.ps1` 现在的结果是 **8 PASS / 0 FAIL / 9 BLOCKED**（BLOCKED = 需要在线板子的阶段），失败点已由脚本点名：
+`acceptance/run.ps1` 现在的结果是 **8 PASS / 0 FAIL / 10 BLOCKED**（BLOCKED = 需要在线板子的阶段），失败点已由脚本点名：
 
 ```
 [FAIL] kit-integrity      缺 5/7 份：
@@ -147,5 +147,6 @@ pwsh -NoProfile -File acceptance/mistake-matrix.ps1
 | 验证它真的能工作 | [specs/004-ai-pcb-design-kit/quickstart.md](specs/004-ai-pcb-design-kit/quickstart.md) |
 | 看还有哪些没做完 | [specs/004-ai-pcb-design-kit/tasks.md](specs/004-ai-pcb-design-kit/tasks.md) |
 | 理解为什么有这些门禁 | [docs/anti-drift.md](docs/anti-drift.md) · [docs/retro-audit.md](docs/retro-audit.md) |
+
 
 
