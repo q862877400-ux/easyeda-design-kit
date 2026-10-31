@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "big-block-fit",
+    "description": "把**大块**（6 件以上、含多脚连接器）塞进一页 A4 并过布局门禁。对应 docs/capability-boundary.md 的 GAP-042/043/046/047/049。\n\n为什么是这个顺序（每一句都是实测反例换来的）：\n1. **先在全新页上落块**：同一页对同一块会**缓存「放不下」的判定**，`sch clear` 清不掉，只有 `sch page-new` 能重置（GAP-043）。所以每次换参数都要新页。\n2. **参数只调 `--spacing` 与 `--per-row`，而且要来回试**：判定**非单调** —— 实测 `220/3` 与 `260/3` 被接受，`240/3`、`250/3` 反而被拒（GAP-046）。别用「间距越大越安全」的直觉。\n3. **进框之后一定先查 reconcile，别急着搬件**：`block-apply` 自己的 autoconnect 可能**漏脚**（实测 USB-C 块的 `J:A6` 没连上），于是任何「能进框」的间距都报 `reconcile ✗`。漏脚要先补，否则后面全是白工（GAP-049）。\n4. **消重叠靠挪单件 + 桩长错开，不靠 destagger**：`destagger --apply` 对同组/大组常常「自报搬了、几何没变」，且**半途掉线会留半成品**（它会打印待手工恢复的引脚清单，照单 `connect` 能复原）。同侧多个标签重叠时，给它们不同 `--offset`（实测 18/96/174）比换方向有效。\n5. **挪件必须按引脚外朝方向重连**：左脚 `--direction left`、右脚 `right`；反了会被几何守卫拒（`wire segment enters component body`），而且**失败后引脚是悬空的，而 clusters 只会显示 marker 0，看起来更干净**——只有 `sch check` 的 floating-pin 计数能揭穿（GAP-048）。\n6. **设计上不用的脚要显式打 NC**：`sch no-connect --designator <REF> --pin A8,B8`；写成 `--pin REF:A8` 会**静默 ok:false**（GAP-049）。\n7. **导入 PCB 前清掉试验页**：`pcb import-changes` 会把**所有页**的块都导进来（实测 9 页 → 30 个器件）。清法用 `sch clear`（**不要 `sch page-delete`，无撤销**），再导入才是正确件数。\n8. **DSN 导出前必须 save + reload + 等窗口重连**：否则返回 `DSN export returned no file — the PCB may be empty or have no nets`，而板上器件与网络都在（GAP-048 的假错误）。\n\n实证：`sc001-usbc-blk`（16P 连接器 + ESD + TVS + 肖特基 + 双 CC，6 件/7 网）用本配方一次跑通：\n`clusters` 0 重叠 / 0 出图，布线 29/29，DFM ERROR=0，验收 16 PASS / 0 FAIL / 0 BLOCKED。",
+    "project": "<新建工程名>",
+    "doc": "PCB1"
+  },
+  "defaults": { "timeoutSec": 300, "retry": 0, "continueOnError": false },
+  "steps": [
+    {
+      "id": "new-page",
+      "run": "sch page-new",
+      "name": "每次换参数先开新页——同页会缓存“放不下”的判定，clear 清不掉",
+      "flags": { "schematic": "<父原理图 uuid>" }
+    },
+    {
+      "id": "block-apply",
+      "run": "sch block-apply",
+      "name": "落块；先试 220/3，再试 260/3（判定非单调，240/250 可能被拒）",
+      "flags": { "block": "<block.id>", "at": "250,300", "spacing": 220, "per-row": 3 }
+    },
+    {
+      "id": "reconcile",
+      "run": "sch reconcile",
+      "name": "进框后第一件事：对账。漏脚（如 J:A6）必须先补，否则任何能进框的参数都报 ✗",
+      "flags": {}
+    },
+    {
+      "id": "clusters",
+      "run": "sch clusters",
+      "name": "组包络门禁：0 重叠 / 0 出图；重叠靠挪单件，不靠 destagger",
+      "flags": { "strict": true }
+    },
+    {
+      "id": "sch-check",
+      "run": "sch check",
+      "name": "唯一可信的连线判据：0 floating pin（clusters 的 marker 0 是假干净）",
+      "flags": {}
+    },
+    {
+      "id": "no-connect",
+      "run": "sch no-connect",
+      "name": "设计上不用的脚显式打 NC（语法是 --designator X --pin a,b，不是 --pin X:a）",
+      "flags": { "designator": "<REF>", "pin": "A8,B8" }
+    },
+    {
+      "id": "titleblock",
+      "run": "sch titleblock",
+      "name": "图签必须给显式显隐（showTitle/showValue 布尔值）",
+      "flags": { "data": "{\"Name\":{\"value\":\"…\",\"showTitle\":true,\"showValue\":true}}" }
+    },
+    {
+      "id": "clear-stale-pages",
+      "run": "sch clear",
+      "name": "导入前把试验页清空（不要 page-delete，无撤销），否则 import 会把所有页的块都导进来",
+      "flags": {}
+    },
+    {
+      "id": "import-changes",
+      "run": "pcb import-changes",
+      "name": "核对 componentsAfter 等于本块件数；对不上说明还有页没清",
+      "flags": {}
+    },
+    {
+      "id": "outline-fit",
+      "run": "pcb outline-fit",
+      "name": "器件落定后出板框",
+      "flags": { "margin": 100 }
+    },
+    {
+      "id": "save",
+      "run": "pcb save",
+      "name": "落盘（DSN 导出前必须的 save → reload 序列前半）"
+    },
+    {
+      "id": "export-dsn",
+      "run": "pcb export-dsn",
+      "name": "导出布线输入；若报「no file / no nets」，先 doc reload 等窗口重连再试，不要相信那句报错",
+      "flags": {}
+    },
+    {
+      "id": "autoroute",
+      "run": "pcb autoroute",
+      "name": "现成引擎布线（实测 29/29）",
+      "flags": { "router": "\"C:\\Program Files\\PCBAutoRouter\\pcb_autorouter.exe\" -i {in} -a -o {out} --threads 8" }
+    },
+    {
+      "id": "dfm",
+      "run": "pcb check",
+      "name": "DFM：ERROR 必须 0；WARN 不参与验收",
+      "flags": {}
+    }
+  ]
+}
+
