@@ -58,3 +58,4 @@
 | 26 | 新增 `decision-actionability` 门禁（SC-005）；两次执行比对（SC-006）；建立 `docs/sc-evidence.md` 台账 | 首跑 77/94=81.9% FAIL → 改写后 **93/94=98.9% PASS**；验收 **16 PASS / 0 FAIL / 0 BLOCKED**；自测 28/28 | 本轮 |
 | 27 | T048：GUI 实测扩展 `PCB 交付 → 一键导出` —— **网页版必然失败**（`非客户端环境无法调用本接口`，saveFileToFileSystem 仅桌面客户端可用）；对话框能力已记录 | GAP-031；决策表 95 行；可执行 94/95 | 本轮 |
 | 28 | T052 查明受阻（无 import 动作/命令；网页版导入需原生文件框，工具无 file-input）；新增「接外部板」流程文档 + GAP-032/033；任务收敛出 T295–T298 | kit-integrity 15/15、决策表 97 行 | 本轮 |
+| 29 | SC-004 方法学落地：写清「不同 harness ≠ 不同模型」的口径，并向全新会话子 agent 派发复跑（零上下文）；新增 `docs/executor-crosscheck.md` 并纳入必需清单 | kit-integrity 16/16；结果栏待子 agent 回报后填写 | 本轮 |

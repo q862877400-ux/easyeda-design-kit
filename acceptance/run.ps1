@@ -81,6 +81,7 @@ function Test-KitIntegrity {
         "playbooks\README.md"
         "docs\playbook-unseen-board.md"
         "docs\playbook-unseen-external-board.md"
+        "docs\executor-crosscheck.md"
         "docs\phases\pcb-connectivity-recovery.md"
         "docs\publish-extension.md"
         "docs\prior-art-map.md"
