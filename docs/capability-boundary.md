@@ -656,3 +656,29 @@
   ③**改 marker 朝向把组收小**（`sch disconnect` + `sch connect --direction left|right`，
   竖排标签能把组高从 134 压到 58）。**未验证**：③ 对本块是否足以把 919×672 压进 456×615。
 - **status**：`open`
+
+---
+
+## GAP-042 A4 是硬约束：可用高度 627 vs 六件块 672，差 45 mil；且没有改图纸尺寸的 API
+
+- **capability**：让六件以上的块（如 `usbc_ufp_power_or`）在一页 A4 上落块并通过布局门禁。
+- **evidence**（2026-10-31 实测，逐项数量化）：
+  1. `sch sheet-geometry` 给出图纸真相：
+     `template "a-series-landscape", bbox [0,0 → 1170,825]`，
+     `titleBlock (visible) bbox [468,0 → 1170,198]`，且为 **hard keepout**。
+     → **可用区是 L 形**：整幅上方（y>198）为 **1170×627**；左侧（x<468）为 **468×825**。
+  2. USB-C 六件块实测尺寸 **919×672**：宽 919 > 468（左侧放不下），高 672 > 627（上方放不下）→ 两路都不行。
+     差距只有 **45 mil**（672 − 627）。
+  3. 四种排布全部试过：
+     `--per-row 2 --spacing 300` → 落块成功但 4 个组出图框（out-of-sheet）；
+     `--spacing 300/per-row 2` 之外的 `260/3`、`260/2`、`200/3` → **工具直接拒绝落块**（预测放不下）。
+  4. **改图纸尺寸的入口不存在**：`easyeda` 全局与 `sch` 子命令里都没有 paper/sheet-size 相关命令；
+     动作目录里 `schematic.page.*` 只有 open/create/rename/delete/clear，**没有改纸张**。
+     A4 是宿主模板给的硬边界。
+- **triedTools**：`sch sheet-geometry`、`sch block-apply`（4 组 spacing/per-row）、`sch clusters`、
+  `easyeda --help` / `sch --help` / 动作目录检索
+- **alternative**：只剩两条——
+  ①**缩短 marker**（`sch disconnect` + `sch connect --direction left|right` 让标签横排）把块高压到 ≤615；
+    **未验证**能否省下 45 mil；
+  ②分页承载（把一个块拆成两页不现实，但可换成更小的块组合）。
+- **status**：`open`
