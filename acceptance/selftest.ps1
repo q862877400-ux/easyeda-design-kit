@@ -335,6 +335,26 @@ Assert-Case "DFM 解析：无法判定 → -1（不得当 0）" {
     (Parse-DfmErrorCount "hello") -eq -1
 }
 
+
+# 断言：一次性脚本判据的三态（错日志→BLOCKED、.work 中间件→PASS、.work 脚本→FAIL）
+Assert-Case "no-oneoff：日志与工程不匹配判 BLOCKED" {
+    $lg = Join-Path $probe "log-wrongproject.log"
+    @("# other board", "pcb route fill --net A --from X.1 --to Y.1") | Set-Content $lg -Encoding UTF8
+    (Stage-Status @('-Case', 'sc001-ldo-typed', '-Cli', $Cli, '-Project', 'sc001-ldo-blk', '-RunLog', $lg) 'no-oneoff-scripts').Status -eq 'BLOCKED'
+}
+
+Assert-Case "no-oneoff：.work 中间件（DSN/SES）不算一次性脚本" {
+    $lg = Join-Path $probe "log-workfiles.log"
+    @("project sc001-ldo-blk", "pcb export-dsn --project sc001-ldo-blk --doc x", "pcb_autorouter -i .work\ldo.dsn -a -o .work\ldo.ses") | Set-Content $lg -Encoding UTF8
+    (Stage-Status @('-Case', 'sc001-ldo-typed', '-Cli', $Cli, '-Project', 'sc001-ldo-blk', '-RunLog', $lg) 'no-oneoff-scripts').Status -eq 'PASS'
+}
+
+Assert-Case "no-oneoff：.work 下的脚本仍判 FAIL" {
+    $lg = Join-Path $probe "log-workscript.log"
+    @("project sc001-ldo-blk", "pwsh .work\scratch-gen.ps1") | Set-Content $lg -Encoding UTF8
+    (Stage-Status @('-Case', 'sc001-ldo-typed', '-Cli', $Cli, '-Project', 'sc001-ldo-blk', '-RunLog', $lg) 'no-oneoff-scripts').Status -eq 'FAIL'
+}
+
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

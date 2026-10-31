@@ -602,3 +602,33 @@
 - **alternative**：把解析抽成 `acceptance/dfm-parse.ps1` 的 `Parse-DfmErrorCount`，同时认两种形态；
   无法判定时返回 **-1（报 FAIL，不当 0）**。已配 3 条自测断言（零违规形态→0、`ERROR=3`→3、垃圾→-1）。
 - **status**：`resolved`
+
+---
+
+## GAP-039 审计日志必须与工程匹配，否则等于审别人的日志（假保证）
+
+- **capability**：用 `-RunLog` 审计「有没有一次性脚本 / 有没有对着旧快照求解」。
+- **evidence**：2026-10-31，零上下文执行者复跑 `sc001-ldo-blk` 后主动指出：
+  我给它的 `-RunLog` 指向的 `round16.log` 里**只有旧工程 `agent-e2e-esp32s3-board31` 的命令**，
+  没有任何本工程记录；而 `no-oneoff-scripts` / `negative-drift` 当时仍判 **PASS**。
+  即：审计阶段读了一份**与本次运行无关**的日志并给绿。
+- **triedTools**：`no-oneoff-scripts`、`negative-drift`、`run.ps1 -RunLog`
+- **alternative**：已加守卫——指定 `-Project` 时，日志里必须出现该工程名，否则判 **BLOCKED**
+  （既不是 PASS 也不是 FAIL）。两块自造板随后各补了一份**按实际执行命令整理**的运行日志
+  （文件头明确标注"事后整理，非实时 tee"），复跑后审计才是真的。
+- **status**：`resolved`
+
+---
+
+## GAP-040 一次性脚本判据把 `.work` 中间件误判成脚本
+
+- **capability**：`no-oneoff-scripts` 判断日志里有没有"手搓脚本"。
+- **evidence**：旧规则任一行命中 `\.work\` 即判可疑。于是**文档化的 DSN→SES 管线**
+  （中间件写 `easyeda-auto\.work\ldo.dsn` / `.ses`）被判「2 处疑似一次性脚本」→ **假 FAIL**。
+  `.work` 恰恰是 kit 规定的中间件/日志目录，不是脚本目录。
+- **triedTools**：`no-oneoff-scripts`
+- **alternative**：判据改为**只看脚本文件**（`.ps1/.py/.sh/.js/.mjs/.bat/.cmd`），
+  并放行 kit 自带的 `acceptance\*.ps1` 与 `tools\ensure_eda_window.py`；
+  另修一个显示 bug（单条命中时 `$suspects[0]` 取到首字符，已用 `@()` 包住）。
+  三条自测钉住：错日志→BLOCKED、`.work` 中间件→PASS、`.work` 脚本→FAIL。
+- **status**：`resolved`

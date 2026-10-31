@@ -333,11 +333,23 @@ function Test-NoOneOffScripts {
     if ([string]::IsNullOrWhiteSpace($RunLog)) { Add-Result "no-oneoff-scripts" "BLOCKED" "未指定 -RunLog（无法审计）"; return }
     if (-not (Test-Path $RunLog)) { Add-Result "no-oneoff-scripts" "FAIL" "审计日志不存在： $RunLog"; return }
     $lines = Get-Content $RunLog
-    $suspects = $lines | Where-Object {
-        $_ -match '\\\.work\\' -or
-        $_ -match 'python\s+.*\bgen\w*\.py' -or
-        $_ -match 'pwsh\s+.*\.ps1' -and $_ -notmatch 'acceptance\\run\.ps1'
+    # 反例（2026-10-31，零上下文执行者指出）：审计阶段曾对**别的工程**的日志判 PASS——
+    # -RunLog 里没有任何本工程记录，审计等于审了别人的日志（假保证）。指定 -Project 时必须出现工程名。
+    if (-not [string]::IsNullOrWhiteSpace($Project)) {
+        $probeText = Get-Content $RunLog -Raw -ErrorAction SilentlyContinue
+        if ($probeText -and ($probeText -notmatch [regex]::Escape($Project))) {
+            Add-Result "no-oneoff-scripts" "BLOCKED" "运行日志与工程不匹配：日志里没有出现工程名 ""$Project""`（先核对 -RunLog 是否属于本次运行）"
+            return
+        }
     }
+    # 反例（2026-10-31，sc001-ldo-blk 实测）：旧规则把**任何** .work 路径都当一次性脚本，
+    # 于是文档化的 DSN→SES 管线（中间件写 .work\ldo.dsn / .ses）被误判 FAIL。
+    # 判据本意是"别手搓脚本"，因此只看**脚本文件**，并放行 kit 自带的验收/工具脚本。
+    $allow = 'acceptance\\[A-Za-z-]+\.ps1|tools\\ensure_eda_window\.py'
+    $suspects = @($lines | Where-Object {
+        ($_ -match '\.(ps1|py|sh|js|mjs|bat|cmd)\b' -and $_ -notmatch $allow) -or
+        ($_ -match 'python\s+.*\bgen\w*\.py')
+    })
     if ($suspects.Count -eq 0) { Add-Result "no-oneoff-scripts" "PASS" "无临时脚本调用" }
     else { Add-Result "no-oneoff-scripts" "FAIL" "$($suspects.Count) 处疑似一次性脚本，首条： $($suspects[0])" }
 }

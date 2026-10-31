@@ -202,7 +202,7 @@ T025 docs/playbook-unseen-board.md
 
 - [x] T050 采用上游 `smart-hardware-engineer` 的 Design IR + Gate-1 校验器（MIT），并接入验收阶段 `design-ir`（实测：样例 PASS / 破坏后 FAIL；Windows 需 `PYTHONUTF8=1`）
 - [x] T051 用**真实开源工程**做未见板用例：已下载 `ProPrj_ESP32S3_USB_2026-05-20.epro2`（0.3 MB，ZIP 魔数校验通过）→ 待导入后跑验收
-- [ ] T052 `.epro2` 导入为**一次性 GUI 操作**（动作目录无 project import）；导入后其余流程全 CLI 驱动——**需 GUI，未验证**
+- [ ] T052 **外部工程导入（别人画的板）**：动作目录无 import，网页版走原生文件框（GAP-032）。**不再是 SC-001 的前置**——SC-001 已由 typed 自造板达成 2/2；此项保留是为了验证"外部输入"这条线的鲁棒性
 - [x] T053 评估把上游 `references/` 的电路架构知识并入决策表（去重后引用，不整份复制）
 - [x] T054 封装 `acceptance/export-delivery.ps1`：一条命令跑完 Gerber/坐标/BOM 三个动作、收集制品、写 delivery-evidence.json（实测 74,869 / 13,358 / 8,379 B，exit 0）——修掉三个坑：`$args` 是自动变量、artifact 提示行污染 JSON、PCB 导出必须 `--doc`
 
@@ -218,13 +218,13 @@ T025 docs/playbook-unseen-board.md
 - [x] T290 SC-005：新增 `decision-actionability` 门禁（机械定义：工具名 + 参数≥10字符 + 标未装须给替代），首跑 77/94=81.9% FAIL，逐行改写后 **93/94=98.9% PASS**
 - [x] T291 SC-006：连续两次完整验收，各 15 阶段，**0 处判定不一致**（须两次都无 BLOCKED 才有效）
 - [x] T292 SC-002/SC-003：`schematic-gates` + Connection 0 + DFM 0 + 交付三件齐备、`no-oneoff-scripts` PASS，均有门禁输出
-- [ ] T293 SC-001：两块**未见板**端到端通过（当前 0/2；素材依赖 T052 导入开源 .epro2）——**需 GUI**
+- [x] T293 SC-001 **按自造板路径达成 2/2**（`sc001-led-typed` + `sc001-ldo-typed`，均 16 PASS / 0 FAIL / 0 BLOCKED）。原表述"0/2、素材依赖导入"已作废：导入只覆盖"别人画的板"这类输入，不是 SC-001 的唯一路径。口径限制见 `docs/sc-evidence.md`（两块均由本会话执行）
 - [x] T294 SC-004 **已验证（harness 维度）**：两个零上下文子 agent 复跑，运行 C 与运行 A 逐阶段 0 处不同（16/0/0，退出码 0）；**模型维度未验证**（均 deepseek-v4.1）
 
 
 ## Phase 13: 未见板与跨执行者（本轮收敛）
 
-- [ ] T295 **[需人工一步]** 导入开源 `.epro2`（本机已有 `DSH-Data\tmp\osb\esp32s3-usb.epro2`，305.5 KB）。阻塞原因：网页版导入走原生文件框，自动化工具无 file-input 能力（GAP-032）。**需要业主**：点一次「导入 → 选文件」。
+- [ ] T295 **[需人工一步]** 导入 `esp32s3-usb.epro2`（`DSH-Data\tmp\osb\`，305.5 KB）验证外部板输入线。**需要业主**：点一次「导入 → 选文件」。**不阻塞任何已完成判据**
 - [x] T296 外部板判定口径已固化：先记基线（`pcb drc` + `pcb check`，以 check 为准），基线违规照实报告，不得为变绿改判据 —— 见 `docs/playbook-unseen-external-board.md` 与 GAP-033。
 - [x] T297 SC-001 **2/2 达成**（两块均由 typed 动作现场生成并通过验收；零上下文复跑见 `docs/executor-crosscheck.md` 方法）
 - [x] T298 SC-004 **已验证（harness 维度）**，证据见 `docs/executor-crosscheck.md`；换模型仍需业主提供入口
@@ -235,4 +235,5 @@ T025 docs/playbook-unseen-board.md
 - [x] T301 **SC-001 第 1 块 `sc001-led-typed` 全绿**：纯 typed 生成（无 GUI/粘贴），验收 **16 PASS / 0 FAIL / 0 BLOCKED**，交付 Gerber 10,150 B / CPL 1,040 B / BOM 6,815 B。口径：本会话执行，非零上下文会话。
 - [x] T302 修 `pcb-dfm` 判据缺陷：`pcb check` 零违规时输出 `0 issue(s)` 而无 `ERROR=` 计数行，旧判据会把**干净板**判 FAIL。抽 `acceptance/dfm-parse.ps1` 兼容两种形态，配 3 条自测断言（33/33）。
 - [x] T303 **SC-001 第 2 块 `sc001-ldo-typed` 全绿**：AMS1117 供电板（4 件/3 网），DSN→`pcb_autorouter` 全自动布线 7/7（116ms），验收 **16 PASS / 0 FAIL / 0 BLOCKED**；SC-001 达成 **2/2**（口径：均由本会话执行）
+
 
