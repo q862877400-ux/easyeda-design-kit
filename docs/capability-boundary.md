@@ -876,3 +876,26 @@
 - **triedTools**：`run.ps1` / `stages-gates.ps1` / `export-delivery.ps1` / `selftest.ps1` 逐行核对 + 反例探针
 - **alternative**：每条修复都配反例（假 zip、空日志、前缀脚本、非法 status、无 historyRepo 形态）。
 - **status**：`resolved`（6 类已修，S10/S1/S2 记 open）
+
+---
+
+## GAP-052 DRC 清零实测受阻：两条间距差 0.1/0.9 mil，Netlist Error 同步+重载后仍在
+
+- **capability**：把 `sc001-usbc-blk` 的 `pcb drc` 从 passed=False 清到 passed=True（SC-A 的前置）。
+- **evidence**（2026-10-31 实测，全部有命令与返回）：
+  1. 初始：`passed=False total=3` —— `Clearance Error`(Slot Region to Track, `D13_N4`, **11.7 / 11.8 mil`)
+     + `Clearance Error`(SMD Pad to Track, `USB_HOST_DM` 走线距 `J5_A6` 焊盘 **5.1 / 6 mil**) + `Netlist Error`。
+  2. 试 **同步网表**：`pcb import-changes` → `componentsAfter=6, imported=true, verified=true`；
+     `pcb save` → `doc reload` → 等窗口重连 → 重查：**三条原样不动**。
+  3. 试 **改原理图桩长**：把 `J5:A6` 的 netport 桩从 offset 174 改到 30（`sch check` 仍 0 悬空），
+     再 `import-changes` + save + reload + 重查：**`USB_HOST_DM` 那条仍 5.1 mil 不变**。
+     → 结论：这两条**不是原理图桩的问题，是 PCB 里已布好的走线几何**（DLR 读的是铜皮距离，不随原理图桩变）。
+  4. `Netlist Error` 在 import-changes（verified=true）+ save + reload **之后仍然存在**，
+     说明它不是"没同步"，而是**确实存在差异**（PCB 与原理图在某个网络/焊盘上不一致），
+     需要更细的 diff（`Import Changes` 的差异面板在 GUI 里，CLI 侧暂无对应命令）。
+- **triedTools**：`pcb drc --json`、`pcb import-changes`、`pcb save`、`doc reload`、`sch connect`（改桩长）
+- **alternative**（下一步，均**未验证**）：
+  ① 对 `USB_HOST_DM` 走 `pcb rip-up --net` 后按显式层/宽度重布（有打断连通性的风险，须先备份）；
+  ② 用 `pcb autoroute` 带更高间距规则重跑整板（会把现有 29/29 连通重算）；
+  ③ Netlist 差异需要从 GUI 的 Import Changes 面板读出具体条目，或找 CLI 侧的等价诊断命令。
+- **status**：`open`
