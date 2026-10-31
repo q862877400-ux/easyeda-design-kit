@@ -479,3 +479,34 @@
 - **alternative**：网页版走 CLI 类型化动作 + `acceptance/export-delivery.ps1`；
   需要扩展的富交付（STEP/交互 BOM/工程源）时，改用 **EasyEDA 桌面客户端**打开同一工程再导出。
 - **status**：`resolved`（结论明确：网页版不可用，路径已给出）
+
+---
+
+## GAP-032 网页版无法自动化导入 `.epro2`：缺 file-input 能力，连接器也无 import 动作
+
+- **capability**：把本机 `.epro2` 工程文件导入 EasyEDA 网页版，作为「未见板」素材。
+- **evidence**（2026-10-31 实测）：
+  1. 动作目录里与工程相关的只有 `project.create`（**只建空容器**，原文："This creates only the project
+     container — create schematic/Board/PCB documents separately"）、`project.open`（按 uuid 打开已存在的）、
+     `project.export_source`（导出）、`project.find`。**没有任何 import/upload 动作**。
+  2. CLI `easyeda project` 的子命令同样只有 create / doc / export / export-source / find / info / open。
+  3. 网页版的导入入口是原生**文件选择框**，而当前自动化工具（bsk_*）提供 click / hover / wheel /
+     scroll-to / focus / blur / fill / select / press，**没有设置 file input 的能力**
+     （chrome-devtools MCP 的 upload_file 在本机不可用：它指向不存在的 Edge 路径）。
+- **triedTools**：`project.create`、`project.open`、`easyeda project --help`、`easyeda actions`、bsk GUI
+- **alternative**：① **人工一次性导入**（点一次文件框，成本最低）；② 用 `project.create` 建空容器 +
+  逐页 API 重建（**未验证**，且对开源板等于重新画一遍）；③ 改用 **EasyEDA 桌面客户端**（其 API 可用，
+  但本机未装）。
+- **status**：`open`（拦在工具能力，不是判断；需要人工一步或补 file-input 能力）
+
+---
+
+## GAP-033 外部板自带违规时，验收会「如实 FAIL」——这不是套件失败
+
+- **capability**：拿别人的开源板跑我们的验收，并解释结果。
+- **evidence**：本会话全部判据都是**绝对阈值**（Connection Error=0、DFM ERROR=0、交付三件非空），
+  不含"相对改善"口径。因此一块**本来就带违规**的外部板，跑完验收必定 FAIL，即使套件工作完全正常。
+- **triedTools**：（口径分析，未做外部板实测——导入受阻见 GAP-032）
+- **alternative**：接外部板时必须**先记基线**（`pcb drc` / `pcb check` 的原始计数），把"基线"与"本次改动后"
+  分开报告；套件只对**本次需求相关的项**负责。已在 `docs/playbook-unseen-external-board.md` 写成流程。
+- **status**：`accepted`（口径已固化）

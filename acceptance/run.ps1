@@ -80,6 +80,7 @@ function Test-KitIntegrity {
         "docs\phases\pcb-p0-p10.md",
         "playbooks\README.md"
         "docs\playbook-unseen-board.md"
+        "docs\playbook-unseen-external-board.md"
         "docs\phases\pcb-connectivity-recovery.md"
         "docs\publish-extension.md"
         "docs\prior-art-map.md"

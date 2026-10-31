@@ -1,7 +1,7 @@
 {
-  "docs_files": 19,
+  "docs_files": 20,
   "playbooks": 3,
   "acceptance": 22,
   "spec_files": 9,
-  "decision_rows": 95
+  "decision_rows": 97
 }
