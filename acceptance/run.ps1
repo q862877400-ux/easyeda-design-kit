@@ -277,6 +277,51 @@ function Test-CapabilitySample {
     }
 }
 
+# SC-006 的执行者（2026-10-31 接入）：同一需求连续两次执行，阶段结论必须一致。
+# 反例（外部审计 S10）：此前 compare-runs.ps1 没有被任何门禁调用，且能拿出来的"一致"是两次 3 PASS / 8 BLOCKED
+# ——两次都不完整，按 SC-006 自己的口径不算证据。
+function Test-RunConsistency {
+    $runsDir = Join-Path $script:AcceptDir "runs"
+    if (-not (Test-Path $runsDir)) { Add-Result "run-consistency" "BLOCKED" "还没有入库报告（acceptance/runs/ 为空）"; return }
+    # 只挑「完整运行」作为证据：除 run-consistency 自身外没有 BLOCKED（半途掉线的运行不算）
+    $all = @(Get-ChildItem $runsDir -File -Filter "*.json" | Where-Object { $_.Name -like "*-$Case-*" } | Sort-Object Name)
+    $complete = @()
+    foreach ($r in $all) {
+        try { $rj = Get-Content $r.FullName -Raw | ConvertFrom-Json } catch { continue }
+        $st = @($rj.stages)
+        if ($st.Count -eq 0) { continue }
+        $bad = @($st | Where-Object { $_.stage -ne "run-consistency" -and $_.status -eq "BLOCKED" }).Count
+        if ($bad -eq 0) { $complete += $r }
+    }
+    if ($complete.Count -lt 2) {
+        Add-Result "run-consistency" "BLOCKED" ("完整运行只有 {0} 次（需 2 次；共 {1} 份报告，其余含 BLOCKED）" -f $complete.Count, $all.Count)
+        return
+    }
+    $reports = $complete
+    $a = $reports[-2]; $b = $reports[-1]
+    $ja = Get-Content $a.FullName -Raw | ConvertFrom-Json
+    $jb = Get-Content $b.FullName -Raw | ConvertFrom-Json
+    $sa = @($ja.stages); $sb = @($jb.stages)
+    # 自指排除：run-consistency 自己不能作为被比较对象（否则永远"不一致"）
+    $na = @($sa | ForEach-Object { $_.stage } | Where-Object { $_ -ne "run-consistency" } | Sort-Object)
+    $nb = @($sb | ForEach-Object { $_.stage } | Where-Object { $_ -ne "run-consistency" } | Sort-Object)
+    if (($na -join ",") -ne ($nb -join ",")) {
+        Add-Result "run-consistency" "BLOCKED" ("两次运行的阶段集不同（门禁改过：{0} vs {1} 个阶段），跨版本不可比；请在同一版本下连跑两次" -f $na.Count, $nb.Count)
+        return
+    }
+    $diff = @(); foreach ($st in $na) {
+        $va = ($sa | Where-Object { $_.stage -eq $st } | Select-Object -First 1).status
+        $vb = ($sb | Where-Object { $_.stage -eq $st } | Select-Object -First 1).status
+        if ($va -ne $vb) { $diff += ("{0}: {1} → {2}" -f $st, $va, $vb) }
+    }
+    if ($diff.Count -gt 0) { Add-Result "run-consistency" "FAIL" ("{0} 处阶段结论不一致： {1}" -f $diff.Count, ($diff -join ", ")); return }
+    # 同口径复核：BLOCKED 只数非自身阶段（前面已按此筛过报告，这里再断言一次）
+    $ba = @($sa | Where-Object { $_.stage -ne "run-consistency" -and $_.status -eq "BLOCKED" }).Count
+    $bb = @($sb | Where-Object { $_.stage -ne "run-consistency" -and $_.status -eq "BLOCKED" }).Count
+    if ($ba -gt 0 -or $bb -gt 0) { Add-Result "run-consistency" "BLOCKED" ("两次结论一致，但含 BLOCKED（{0}/{1}）——不完整的两次不算一致证据" -f $ba, $bb); return }
+    Add-Result "run-consistency" "PASS" ("{0} 个阶段结论一致（{1} 与 {2}）；两次均 0 BLOCKED，pass={3}/fail={4}" -f $na.Count, $a.Name, $b.Name, $ja.pass, $ja.fail)
+}
+
 function Test-PcbDrcClean {
     if ([string]::IsNullOrWhiteSpace($Project) -or [string]::IsNullOrWhiteSpace($Doc)) { Add-Result "pcb-drc-clean" "BLOCKED" "未指定 -Project/-Doc"; return }
     $raw = & $Cli @("pcb", "drc", "--project", $Project, "--doc", $Doc, "--json") 2>&1 | Out-String
@@ -437,6 +482,7 @@ Test-PcbDrcClean
 Test-PcbDfm
 Test-Delivery
 Test-NoOneOffScripts
+Test-RunConsistency
 Test-PositiveGoal
 Test-NegativeDrift
 
@@ -482,6 +528,9 @@ if (-not $Quiet) { Write-Host "报告已入库: $runFile" }
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0
+
+
+
 
 
 

@@ -25,6 +25,9 @@ function Read-Report {
     if (-not (Test-Path $Path)) { throw "找不到报告： $Path" }
     $raw = Get-Content $Path -Raw
     $json = $raw | ConvertFrom-Json
+        # 兼容第三种形态（2026-10-31 起 run.ps1 入库的 per-run 报告）：
+        # { case, executor, pass/fail/blocked, stages: [{stage,status,detail}] }
+        if ($json.PSObject.Properties.Name -contains "stages") { $json = $json.stages }
     # 兼容：单对象（个别脚本会写成一个对象而非数组）
     $items = if ($json -is [array]) { $json } else { @($json) }
     $map = [ordered]@{}
