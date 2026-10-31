@@ -2,72 +2,102 @@
 
 **判据原文**：「至少**一个不同模型**（或不同 harness）复跑其中一块板并通过，证明结果不依赖特定执行者。」
 
-**本文件的口径**（先写清楚，避免事后凑解释）：
+## 结论
 
-| 变更项 | 本记录是否满足 | 说明 |
+**SC-004 已满足（走"不同 harness"这一支）**：全新会话、零上下文的执行者，用同一条命令得到**逐阶段完全一致**的结果。
+
+**但它只能证明"不依赖特定会话上下文"，不能证明"不依赖特定模型"** —— 两次运行都是 deepseek-v4.1。
+这一句必须留着，否则就是把结论说过头了。
+
+---
+
+## 口径（先写清楚，避免事后凑解释）
+
+| 变更项 | 是否满足 | 说明 |
 |---|---|---|
-| 不同 **harness**（会话上下文） | ✅ | 全新子 agent 会话，零先前上下文，只给命令与回报格式 |
-| 不同 **模型** | ❌ | 仍是 deepseek-v4.1；同一模型家族 |
-| 不同 **机器/工作目录** | ❌ | 同一台机、同一工程 |
-
-**因此本记录只能支撑「不依赖特定会话上下文」，不能支撑「不依赖特定模型」。**
+| 不同 **harness**（会话上下文） | ✅ 运行 C | 全新子 agent，零先前上下文，只给命令与回报格式 |
+| 不同 **模型** | ❌ | 仍是 deepseek-v4.1 |
+| 不同 **机器/工作目录** | ❌ | 同机同工程 |
 
 ---
 
-## 复跑方式（可重复）
+## 三次运行
 
-给一个全新会话的执行者三条命令，不提供任何工程背景：`selftest.ps1` → `mistake-matrix.ps1` → `run.ps1`（参数见下）。
-
-```powershell
-pwsh -NoProfile -File easyeda-design-kit\acceptance\run.ps1 `
-  -Case esp32-4layer -Cli "$env:USERPROFILE\.local\bin\easyeda.exe" `
-  -Project agent-e2e-esp32s3-board31 -SchDoc b49d862ac5104b22 -Doc e8c8b7cb5507b5e2 `
-  -DeliveryDir "$env:TEMP\kit-delivery-auto5" `
-  -IR "…\easyeda-design-kit\vendor\prior-art\smart-hardware-engineer\ir\examples\blinky_usb_mcu.ir.json" `
-  -RunLog "…\easyeda-auto\.work\round16.log" `
-  -Executor "subagent/fresh-session-N/deepseek-v4.1"
-```
-
-**判读规则**：只有两次运行的**逐阶段结论一致**才算通过；新会话若出现大面积 BLOCKED，属窗口掉线（环境问题），须先 `ensure_eda_window.py` 恢复再重跑，**不得**把环境缺失算成"结果不同"。
-
----
-
-## 运行 A：Lead（本会话，全参数）
+### 运行 A：Lead（本会话）
 
 | 项 | 结果 |
 |---|---|
-| selftest | **30 PASS / 0 FAIL**（本轮修复后） |
-| mistake-matrix | **16/16** |
+| selftest | 30 PASS / 0 FAIL |
+| mistake-matrix | 16/16 |
 | acceptance | **16 PASS / 0 FAIL / 0 BLOCKED**，退出码 0 |
 
-## 运行 B：全新会话子 agent #1（我给的命令漏了 `-IR`，交付目录也未预建）
+### 运行 B：全新会话 #1（**参数不同**：漏 `-IR`、交付目录未预建）
 
 | 项 | 结果 |
 |---|---|
 | selftest | 28 PASS / 0 FAIL（当时断言数 28） |
-| mistake-matrix | 16/16 |
 | acceptance | **14 PASS / 1 FAIL / 1 BLOCKED**，退出码 1 |
-| 差异项 | `design-ir` BLOCKED（未指定 `-IR`）；`delivery` FAIL（交付目录不存在） |
+| 差异 | `design-ir` BLOCKED（无 `-IR`）、`delivery` FAIL（目录不存在） |
 
-**判读**：两处差异**都不是执行者差异**，是**调用参数差异**——它拿到的命令里没有 `-IR`，也没人替它先导出交付物。
+**判读**：差异来自**调用参数**，不是执行者。但这轮**暴露了两个真缺陷**（见下节），价值高于一致性本身。
 
-**但它因此暴露了两个真缺陷（这是本记录最有价值的部分）**：
+### 运行 C：全新会话 #2（参数与运行 A 完全一致）
 
-1. **`delivery` 把"目录不存在"判成 FAIL**。读到的是"这板交付坏了"，实际是**前置未做**。三态诚实要求：未做 → `BLOCKED` 并给出下一步命令。已改。
-2. **`delivery` 的缺件记账有 bug**：未命中的键根本不会被写进 `$found`，导致 `$missing` 永远为空 —— **任何缺件都判 PASS（假绿）**。是本轮新增的 fixture 断言把它拦下来的（`缺钻孔` 与 `零字节` 两条旧断言同时变红，才暴露出这是代码 bug 而不是断言错）。已改。
+| 项 | 结果 |
+|---|---|
+| selftest | **30 PASS / 0 FAIL** |
+| mistake-matrix | **16/16** |
+| acceptance | **16 PASS / 0 FAIL / 0 BLOCKED**，退出码 0 |
+| BLOCKED | 无 |
+| 前置 | `ensure_eda_window.py` 成功（窗口活跃） |
 
-两条修复都配了自测断言（自测从 28 → **30 条**）：
-- `delivery → 目录不存在判 BLOCKED（不是 FAIL）`
-- `delivery → 目录有文件但缺 BOM 判 FAIL`
+**逐阶段比对（A vs C）**：16 个阶段，**0 处不同**。
 
-## 运行 C：全新会话子 agent #2（参数与运行 A 完全一致）
-
-结果：**待回报**。回报后填此表，并与运行 A 逐阶段比对。
-在填完之前，本文件**不构成 SC-004 证据**。
+| 阶段 | A | C |
+|---|---|---|
+| kit-integrity / kit-portability / tool-decision-table / installed-claims / decision-actionability / capability-boundary | PASS | PASS |
+| environment / schematic-gates / design-ir | PASS | PASS |
+| pcb-layout / pcb-connectivity / pcb-dfm / delivery | PASS | PASS |
+| no-oneoff-scripts / positive-goal / negative-drift | PASS | PASS |
 
 ---
 
-## 结论（待填）
+## 运行 B 暴露的两个真缺陷（已修，附反例）
 
-- 若运行 C 与运行 A 逐阶段一致 → SC-004 的 **harness 维度**成立，「结果不依赖特定会话上下文」有证据。
-- 模型维度仍缺，需业主另给模型入口。
+1. **`delivery` 把"目录不存在"判 FAIL**。什么都没导出，就报"交付坏了" = 误指控。
+   三态诚实：未做 → `BLOCKED` 并给出下一步命令。已改。
+2. **`delivery` 缺件记账 bug**：未命中的键不写入 `$found`，`$missing` 永远为空 → **任何缺件都 PASS（假绿）**。
+   由已有的两条 fixture（`缺钻孔 FAIL`、`零字节文件 FAIL`）同时变红暴露——两条旧断言一起翻才说明是代码 bug。
+   另修：**同一文件不得同时充当两个键**（一个 `cpl.csv` 曾同时满足"坐标"与"BOM"）。
+
+自测因此从 28 → **30 条**，双向钉住：
+- `delivery → 目录不存在判 BLOCKED（不是 FAIL）`
+- `delivery → 目录有文件但缺 BOM 判 FAIL`
+
+---
+
+## 复跑方法（可重复）
+
+```powershell
+# 0 先保证窗口在线（否则整片 BLOCKED 属环境问题）
+cd easyeda-auto
+python tools/ensure_eda_window.py --url "https://pro.lceda.cn/editor#id=<工程uuid>,tab=*<pcb>@<工程uuid>" --project <工程> --timeout 90
+
+# 1 门禁自测 / 2 错误矩阵 / 3 完整验收
+pwsh -NoProfile -File easyeda-design-kit\acceptance\selftest.ps1
+pwsh -NoProfile -File easyeda-design-kit\acceptance\mistake-matrix.ps1
+pwsh -NoProfile -File easyeda-design-kit\acceptance\run.ps1 `
+  -Case esp32-4layer -Cli "$env:USERPROFILE\.local\bin\easyeda.exe" `
+  -Project agent-e2e-esp32s3-board31 -SchDoc b49d862ac5104b22 -Doc e8c8b7cb5507b5e2 `
+  -DeliveryDir "$env:TEMP\kit-delivery-auto5" `
+  -IR "…\vendor\prior-art\smart-hardware-engineer\ir\examples\blinky_usb_mcu.ir.json" `
+  -RunLog "…\easyeda-auto\.work\round16.log" `
+  -Executor "subagent/fresh-session-N/deepseek-v4.1"
+```
+
+**判读规则**：逐阶段一致才算通过；大面积 BLOCKED 属窗口掉线，先恢复再重跑，**不得**算作"结果不同"。
+
+## 尚未覆盖
+
+- **不同模型**：需业主提供第二个模型入口。
+- **另一块板**（SC-001 的第二块）：需导入开源 `.epro2`（T295）。

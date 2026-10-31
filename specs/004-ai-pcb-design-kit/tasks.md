@@ -219,7 +219,7 @@ T025 docs/playbook-unseen-board.md
 - [x] T291 SC-006：连续两次完整验收，各 15 阶段，**0 处判定不一致**（须两次都无 BLOCKED 才有效）
 - [x] T292 SC-002/SC-003：`schematic-gates` + Connection 0 + DFM 0 + 交付三件齐备、`no-oneoff-scripts` PASS，均有门禁输出
 - [ ] T293 SC-001：两块**未见板**端到端通过（当前 0/2；素材依赖 T052 导入开源 .epro2）——**需 GUI**
-- [ ] T294 SC-004：换模型/换 harness 复跑通过（当前只有一份执行记录）——**需业主提供第二模型或另起会话**
+- [x] T294 SC-004 **已验证（harness 维度）**：两个零上下文子 agent 复跑，运行 C 与运行 A 逐阶段 0 处不同（16/0/0，退出码 0）；**模型维度未验证**（均 deepseek-v4.1）
 
 
 ## Phase 13: 未见板与跨执行者（本轮收敛）
@@ -227,4 +227,5 @@ T025 docs/playbook-unseen-board.md
 - [ ] T295 **[需人工一步]** 导入开源 `.epro2`（本机已有 `DSH-Data\tmp\osb\esp32s3-usb.epro2`，305.5 KB）。阻塞原因：网页版导入走原生文件框，自动化工具无 file-input 能力（GAP-032）。**需要业主**：点一次「导入 → 选文件」。
 - [x] T296 外部板判定口径已固化：先记基线（`pcb drc` + `pcb check`，以 check 为准），基线违规照实报告，不得为变绿改判据 —— 见 `docs/playbook-unseen-external-board.md` 与 GAP-033。
 - [ ] T297 SC-001 仍 0/2：两块未见板端到端通过验收。前置 = T295。
-- [ ] T298 SC-004 仍 0/1：换模型/换 harness 复跑通过。**需要业主**指定第二模型或另起会话。
+- [x] T298 SC-004 **已验证（harness 维度）**，证据见 `docs/executor-crosscheck.md`；换模型仍需业主提供入口
+
