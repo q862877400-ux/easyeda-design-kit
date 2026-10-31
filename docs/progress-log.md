@@ -56,3 +56,4 @@
 | 24 | **登录后用 PCB Auto Router 无头 CLI 打通 DSN→SES**：335/335 连通，Connection **6→0**；查明导入前必须先 `rip-up`（否则叠铜 182 条）；剩 3 条 5.4–5.8mil 微差；发现 `pcb drc` 与 `pcb check` 读数不一致 | DFM ERROR 3；GAP-030 | 本轮 |
 | 25 | 最后 3 条微差用「过孔 24→20mil 原位缩小」清零 | **验收 15 PASS / 0 FAIL / 0 BLOCKED —— 全绿** | 本轮 |
 | 26 | 新增 `decision-actionability` 门禁（SC-005）；两次执行比对（SC-006）；建立 `docs/sc-evidence.md` 台账 | 首跑 77/94=81.9% FAIL → 改写后 **93/94=98.9% PASS**；验收 **16 PASS / 0 FAIL / 0 BLOCKED**；自测 28/28 | 本轮 |
+| 27 | T048：GUI 实测扩展 `PCB 交付 → 一键导出` —— **网页版必然失败**（`非客户端环境无法调用本接口`，saveFileToFileSystem 仅桌面客户端可用）；对话框能力已记录 | GAP-031；决策表 95 行；可执行 94/95 | 本轮 |

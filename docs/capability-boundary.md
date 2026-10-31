@@ -456,3 +456,26 @@
 - **alternative**：这 3 条需**局部微调**（挪过孔 3mil 或删除该段重走）；或用
   `pcb drc-rules-set` 提高该类间距让布线器重跑（**未验证**）。
 - **status**：`open`（连通性已达标；间距差 3 条）
+
+---
+
+## GAP-031 扩展 `PCB 交付` 的导出只能在桌面客户端跑，网页版会失败
+
+- **capability**：在**网页版**编辑器里用扩展 `PCB 交付 → 一键导出` 直接产出 Gerber/BOM/CPL 到本地目录。
+- **evidence**（2026-10-31 GUI 实测，完整可复现）：
+  1. 菜单路径：顶部「更多」→ `PCB 交付` → `一键导出`，弹出真实对话框
+     「PCB Delivery Export — 导出设置」。
+  2. 对话框内容（可用于判断能力边界）：**必选** Gerber · BOM · CPL；
+     可选 原理图 PDF / STEP 3D / 交互式 BOM(HTML) / 工程源 V3(.epro2) / V2(.epro) / 导出前跑 DRC；
+     制造要求（板厚 1.6、阻焊、字符 White、表面处理、阻抗控制）；输出目录可填或「浏览」。
+  3. 填 `…\.work\gui-delivery` 后点「开始导出 / Export」→ 失败，原文：
+     `ExportStepError: 无法写入输出目录：…\gui-delivery`
+     `最后一次尝试的目录：…\gui-delivery\Board1_20261031`
+     `原始信息：Error: 错误：非客户端环境无法调用本接口！`
+     `at g_.saveFileToFileSystem (https://modules.lceda.cn/pro-api/0.3.53.…/api.js)`
+  4. 先手动建好该目录后重试，同样失败——**不是权限/路径问题**，是 API 在网页环境不可用。
+- **triedTools**：扩展 `PCB 交付`（GUI）、手动预建目录、CLI `pcb.export.gerber` / `pcb.export.pick_place` /
+  `schematic.export.bom`（**这三条 CLI 路径可用**，实测 74,869 B / 13,358 B / 8,379 B）
+- **alternative**：网页版走 CLI 类型化动作 + `acceptance/export-delivery.ps1`；
+  需要扩展的富交付（STEP/交互 BOM/工程源）时，改用 **EasyEDA 桌面客户端**打开同一工程再导出。
+- **status**：`resolved`（结论明确：网页版不可用，路径已给出）

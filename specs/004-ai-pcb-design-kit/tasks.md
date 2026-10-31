@@ -195,7 +195,7 @@ T025 docs/playbook-unseen-board.md
 
 ## Phase 9: 交付链路补全（converge 新增）
 
-- [ ] T048 [US4] 验证扩展 `PCB Delivery Export` 的 GUI 导出路径（类型化动作面已打通：`pcb.export.gerber` 74,863 B、`pcb.export.pick_place` 13,358 B、`schematic.export.bom` 8,378 B 需 `--doc`）——**需 GUI 点击，未验证**
+- [x] T048 **[已完成：结论=网页版不可用]** [US4] 验证扩展 `PCB Delivery Export` 的 GUI 导出路径（类型化动作面已打通：`pcb.export.gerber` 74,863 B、`pcb.export.pick_place` 13,358 B、`schematic.export.bom` 8,378 B 需 `--doc`）——**需 GUI 点击，未验证**
 - [x] T049 [US4] BOM 导出：排查 `schematic.export.bom` 的 no-file（是否需模板/文档上下文），或改用 `PCB Delivery Export` 扩展
 
 ## Phase 10: 生态复用（按业主指示，避免重复造轮子）
@@ -220,3 +220,4 @@ T025 docs/playbook-unseen-board.md
 - [x] T292 SC-002/SC-003：`schematic-gates` + Connection 0 + DFM 0 + 交付三件齐备、`no-oneoff-scripts` PASS，均有门禁输出
 - [ ] T293 SC-001：两块**未见板**端到端通过（当前 0/2；素材依赖 T052 导入开源 .epro2）——**需 GUI**
 - [ ] T294 SC-004：换模型/换 harness 复跑通过（当前只有一份执行记录）——**需业主提供第二模型或另起会话**
+
