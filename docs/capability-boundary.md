@@ -1087,3 +1087,48 @@
 - **status**：`open`
 
 
+
+
+---
+
+## GAP-061 续：绑定失效的解法 = **必须通过 UI 点工程名**，CLI 无法自举
+
+- **capability**：在没有已绑定窗口的情况下，找到并打开一个已存在的工程。
+- **evidence**（2026-11-01 本轮实测成功）：
+  1. `easyeda project find --name ESP32S3_USB` 返回 `enumeration.complete=false / reason=empty_uuid_list / matches=[]`
+     —— **没有已绑定窗口就枚举不出工程 uuid**（鸡生蛋）。
+  2. 用 bsk 在开始页点列表里的 `ESP32S3_USB`（按钮 `@e78`）后，标签 URL 变为
+     `https://pro.lceda.cn/editor#id=8b44c9657a31444ebde70b635c3899ba` —— **工程 uuid 只在 URL 里才拿得到**。
+  3. 随后 `daemon health` 显示 `project=ESP32S3_USB / uuid=8b44c9657a31444ebde70b635c3899ba`，
+     `board list` 正常返回 `PCB2 / 87d68529660f4a39`。**绑定恢复。**
+- **triedTools**：`project find`、`project open`、bsk 点击工程名、`daemon health`、`board list`
+- **alternative**：外部工程的第一跳只能走 UI（点工程名或在地址栏填 `#id=<projectUuid>`）；
+  `project open --project-uuid` 需要先有 uuid，而 uuid 又要先绑定——除非 uuid 从别处已知。
+- **status**：`resolved`
+
+---
+
+## GAP-063 绑定恢复后 `pcb export-dsn` 在该外部板上**仍失败**：文档未激活（`doc=` 为空）
+
+- **capability**：对导入的外部板执行 DSN 导出，供外部布线器使用。
+- **evidence**（2026-11-01）：
+  1. 绑定恢复后按 `#id=<proj>,tab=*<pcb>@<proj>` 打开 PCB 文档，`daemon health` 仍是
+     `project=ESP32S3_USB` 但 **`documentType= / documentUuid=` 全为空** —— 连接器没有"当前文档"。
+  2. 此时 `pcb export-dsn --doc 87d68529660f4a39` 仍返回
+     `DSN export returned no file — the PCB may be empty or have no nets`。
+  3. 对照：五块自造板在同样流程下（同样的 URL 形式）`doc` 有值且 DSN 正常导出
+     ⇒ 差异在**该外部板的文档激活状态**，不在 URL 形式。
+- **triedTools**：`ensure_eda_window`（带 `tab=*<pcb>@<proj>`）、`daemon health`、`pcb export-dsn`
+- **alternative**：① 在 EDA 界面里手动双击打开 PCB2 使其成为活动文档（bsk 可点）；② 用 `doc ls`/`project info`
+  确认当前文档；③ 直接在 GUI 里「PCB → 导出 DSN」验证板本身是否可导出（**均未验证**）。
+- **status**：`open`（T332 仍未解）
+
+### 续：已排除"文档未激活"这一假设
+2026-11-01 补测：在工程树里**双击 PCB2** 后，`daemon health` 变为
+`project=ESP32S3_USB / documentType=pcb / documentUuid=87d68529660f4a39`（正是该板），
+**文档已激活**；此时 `pcb export-dsn` 与一体化的 `pcb autoroute` **仍报同一条**
+`DSN export returned no file — the PCB may be empty or have no nets`。
+⇒ 原因不在文档激活，而在**这块外部板自身的数据**（首要嫌疑仍是 DFM 报的那个缺源形状/宽高的焊盘）。
+**可复用的操作知识**：工程树里**单击只选中、双击才打开**成活动文档（`docType` 才会变成 `pcb`）。
+
+
