@@ -714,3 +714,23 @@
 - **alternative**：只剩"缩短 marker"这条路（`disconnect` + `connect --direction left|right`），
   目标是在**行距不变**的前提下把每组纵向包络压到能塞进 627。**本轮未做，未验证**。
 - **status**：`open`
+
+---
+
+## GAP-045 更正 GAP-042/044：「六件块放不进 A4」是**块相关**，不是普遍结论
+
+- **capability**：把六件块放进一页 A4 并通过布局门禁。
+- **evidence**（2026-10-31 实测，反例推翻旧结论）：
+  `block.pmos_highside_softstart`（6 件：100nF + S8050 + SI2301 + 10k/100k/10k）
+  在默认 grid 下确有 **3 处重叠**（31×11 / 21×11 / 17×11）；
+  但改用 **`--spacing 220 --per-row 3`** 后：`sch clusters --strict` → **6 组 0 重叠 / 0 出图纸**，
+  网表 `reconcile ✓`，随后 `pcb import-changes` 6 件 verified、DSN→`pcb_autorouter` **15/15 连通**、
+  DFM **ERROR=0**、验收 **16 PASS / 0 FAIL / 0 BLOCKED**。
+  → 同样是 6 件，USB-C 块（含 12 marker 的 16P 连接器）放不下，而全小封装的块放得下。
+  **因此 GAP-042 的「919×672 vs 1170×627 差 45 mil」只能代表 `usbc_ufp_power_or` 这一种块**；
+  并且当时多次重试被拒还叠加了 GAP-043（按页缓存的"放不下"判定）。
+- **triedTools**：`sch block-apply`（带 `--spacing/--per-row`）、`sch clusters --strict`、
+  `pcb import-changes`、`pcb_autorouter`、`pcb check`
+- **alternative**：六件块先试默认 grid；有重叠就**加大 `--spacing` 并调 `--per-row`**（本块 220/3 即通过），
+  而不是直接判定放不下。只有带大连接器（marker 极多）的块才需要缩短 marker 或分页。
+- **status**：`resolved`
