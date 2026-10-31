@@ -162,7 +162,7 @@
   `result.fileName` 为传入值，但实际 `artifactPath` 为
   `<repo>\.easyeda\artifacts\20261031-010915-pcb_gerber-7af89560.zip`（74,863 B）；
   `pcb.export.pick_place` 同理（13,358 B csv）。
-- **triedTools**：`pcb.export.gerber`、`pcb.export.pick_place`、`pcb.export.bom`
+- **triedTools**：`pcb.export.gerber`、`pcb.export.pick_place`、`schematic.export.bom`
 - **alternative**：以 `artifactPath` 为准收集文件，再复制到交付目录；验收读
   `delivery-evidence.json`（记录 artifactPath/size/drilling），不靠文件名猜。
 - **status**：`accepted`
@@ -1046,4 +1046,44 @@
 - **alternative**：① 定位并修复那个畸形焊盘（需焊盘级查询，CLI 目前没有——同 GAP-053）；② 在 GUI 里手动
   「PCB → 导出 DSN」绕过 CLI（未验证）；③ 改用 `pcb autoroute` 的一体化路径（同样依赖 DSN 导出，未验证）。
 - **status**：`open`
+
+
+---
+
+## GAP-060 「窗口反复掉线」的根因：**bsk 会话空闲约 5 分钟自动关闭，EDA 窗口随之消失**
+
+- **capability**：让一条长时间验收/布线流程稳定跑完，不被"窗口消失"打断。
+- **evidence**（2026-11-01，本轮实证）：
+  1. 之前多轮出现"跑到一半窗口没了"（GAP-055 记录的连跑两次 10 处不一致、GAP-057 的重建中断），
+     当时只归因为"窗口不稳定"。
+  2. 本轮复现出一条明确因果：先前 bsk 会话（`hffp`）在导入完成后约 5 分钟未使用即失效，返回
+     `session not registered or already stopped (hint: start a new session; run the daemon with a larger --session-idle (default 5m) …)`，
+     **它打开的 Agent Window 与其中标签一并关闭**——EDA 页面随之消失，`daemon health` 里窗口数归零。
+  3. 即：**掉线不是 EDA 或连接器的问题，是自动化会话的空闲回收**。
+- **triedTools**：`bsk_session start`（新会话恢复窗口）、`bsk_tabs list`（暴露 session 已停止）、
+  `easyeda daemon health`（窗口数 0/2 但上下文为空）
+- **alternative**：① 长流程前先开 bsk 会话并**在流程中周期性使用它**（保持不空闲）；
+  ② 给 bsk daemon 加 `--session-idle` 更大值（需改启动参数，**未验证**）；
+  ③ 用 `ensure_eda_window` 在每步前重连（已实现，但会话被回收时也会失败）。
+- **status**：`resolved`（机制已查明）
+
+---
+
+## GAP-061 导入板 `ESP32S3_USB` 的连接器绑不上：窗口在、上下文为空
+
+- **capability**：对导入工程执行任何 `--project ESP32S3_USB` 的 CLI 动作。
+- **evidence**（2026-11-01 本轮）：
+  1. 新建 bsk 会话打开 `pro.lceda.cn/editor`，点击工程列表里的 `ESP32S3_USB` 后，
+     `daemon health` 报 **窗口数 2，但两个窗口的 `project/projectUuid/doc` 全为空**；
+  2. 于是 `easyeda board list --project ESP32S3_USB` 返回
+     `no connected window for project "ESP32S3_USB"`，`pcb autoroute` 同样被 `--doc guard` 拒绝。
+  3. 后果：这条外部板的 DSN/布线链路（T332）**在当前窗口状态下不可执行**。
+- **triedTools**：`bsk_session start`、`bsk_interact click`（工程链接）、`easyeda daemon health`、
+  `easyeda board list`、`easyeda pcb autoroute`
+- **alternative**：① 直接在浏览器地址栏打开
+  `https://pro.lceda.cn/editor#id=<projectUuid>,tab=<docUuid>@<projectUuid>`（需要 projectUuid——
+  本轮未取到，因为工程打开后上下文仍为空）；② 在 GUI 里先打开**编辑器内的 PCB 文档**再让连接器绑定；
+  ③ 用 bsk 观察页面确认工程是否真的进入编辑器（本轮未见）。**三条都未验证。**
+- **status**：`open`
+
 

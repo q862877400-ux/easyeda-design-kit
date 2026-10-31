@@ -73,7 +73,7 @@ foreach ($e in $sample) {
     if ($body -match '(?im)^-\s+\*\*triedTools\*\*\s*[:：]\s*(.*)$') {
         $raw = $Matches[1]
         $raw = $raw -replace '（[^）]*）', '' -replace '\([^)]*\)', ''
-        $tools = ($raw -split '[、,，;；]') | ForEach-Object { $_.Trim().Trim('`', '*') } |
+        $tools = ($raw -split '、|,|，|;|；| \+ ') | ForEach-Object { $_.Trim().Trim('`', '*') } |
             ForEach-Object { $_ -replace '`', '' } |
             ForEach-Object { $_ -replace '^(扩展|extension)\s+', '' } |
             ForEach-Object { $_ -replace '^(CLI|cli)\s+', '' } | Where-Object { $_ }
