@@ -506,7 +506,7 @@
 - **capability**：拿别人的开源板跑我们的验收，并解释结果。
 - **evidence**：本会话全部判据都是**绝对阈值**（Connection Error=0、DFM ERROR=0、交付三件非空），
   不含"相对改善"口径。因此一块**本来就带违规**的外部板，跑完验收必定 FAIL，即使套件工作完全正常。
-- **triedTools**：（口径分析，未做外部板实测——导入受阻见 GAP-032）
+- **triedTools**：`pcb layout-lint`、`pcb drc`、`pcb check`（2026-11-01 已在导入的 `ESP32S3_USB` 上实跑记基线：45 器件 / 29 网 / ratsnest 9816 mil / DRC 1 条 / DFM 215 条）
 - **alternative**：接外部板时必须**先记基线**（`pcb drc` / `pcb check` 的原始计数），把"基线"与"本次改动后"
   分开报告；套件只对**本次需求相关的项**负责。已在 `docs/playbook-unseen-external-board.md` 写成流程。
 - **status**：`accepted`（口径已固化）
@@ -1026,3 +1026,24 @@
   `upload_file`，但本机 MCP 的 `--executablePath=C:\Program Files(x86)\...` 少一个空格，浏览器起不来；
   该参数在启动时固化，改文件需重启宿主）。
 - **status**：`resolved`（导入可行；**验收尚未跑**，见 T331）
+
+---
+
+## GAP-059 外部板 `ESP32S3_USB` 的 DSN 导出持续失败：报"没有网络"，但板上有 45 器件 / 29 网
+
+- **capability**：对**导入的外部板**走 DSN → 外部布线器这条线（自造板上一直正常）。
+- **evidence**（2026-11-01 实测）：
+  1. 板子事实：`layout-lint` → **45 器件**（bottom 12 / top 33）、**29 信号网**、ratsnest **9816 mil**、60 crossings（未布线）。
+  2. `pcb export-dsn` 连续两次返回
+     `DSN export returned no file — the PCB may be empty or have no nets (run pcb.import_changes first)`。
+  3. 已按 GAP-048 的严格序列重试：`pcb save` → `doc reload` → 等 15 s → `ensure_eda_window` → 等 12 s → 再导出，
+     **仍然失败**。所以这一次不是 stale 守卫。
+  4. **首要嫌疑（未验证）**：该板 DFM 报 `LIMIT 1 pad(s) lack both source shape and readable width/height;
+     only center coincidence can anchor them` —— 可能是这个畸形焊盘让 DSN 生成器放弃输出。
+     次嫌疑：导入板的 PCB 文档在导出时不是前台文档（本例板名 `PCB2`）。
+- **triedTools**：`pcb export-dsn`（两次、不同状态）、`pcb save`、`doc reload`、`ensure_eda_window`、
+  `pcb layout-lint`、`pcb check`
+- **alternative**：① 定位并修复那个畸形焊盘（需焊盘级查询，CLI 目前没有——同 GAP-053）；② 在 GUI 里手动
+  「PCB → 导出 DSN」绕过 CLI（未验证）；③ 改用 `pcb autoroute` 的一体化路径（同样依赖 DSN 导出，未验证）。
+- **status**：`open`
+
