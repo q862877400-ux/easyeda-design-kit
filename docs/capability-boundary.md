@@ -632,3 +632,27 @@
   另修一个显示 bug（单条命中时 `$suspects[0]` 取到首字符，已用 `@()` 包住）。
   三条自测钉住：错日志→BLOCKED、`.work` 中间件→PASS、`.work` 脚本→FAIL。
 - **status**：`resolved`
+
+---
+
+## GAP-041 六件以上的块可能**放不进 A4**：工具会拒绝，而 `destagger` 仍不收敛
+
+- **capability**：把更大的内嵌块（USB-C 输入前端 / 自动下载电路）直接放进新建工程的一页并过布局门禁。
+- **evidence**（2026-10-31 实测，三个块）：
+  1. `block.usbc_ufp_power_or`（6 件：USB-C 16P + ESD + TVS + 双 CC 电阻 + 肖特基）
+     - 默认 grid 布局：28 条 autoconnect，但 **reconcile 失败 2 项**（`USB_HOST_DP: missing J1.A6`、
+       `GND: missing J1.B1A12`），且有 **4 处组重叠**（33×11 / 66×11 / 38×11 / 31×11）。
+     - 改 `--spacing 300 --per-row 2` 后 **7 网全部对齐**（reconcile ✓），但器件**跑出 A4 图框**。
+     - 再收紧到 `--spacing 200 --per-row 3` 时，工具**主动拒绝落块**并给出实测依据：
+       `usbc_ufp_power_or 实测 919×672`，而图签把可用区切成 L 形（宽 ≤456 / 高 ≤615），
+       两条都不满足，并明确写"这不是摆放问题：再挪、再压 --per-row、再调 margin/gutter 都不会让它变小"。
+  2. `block.esp32_autodownload`（4 件：双三极管 + 双 4k7）：10 条 autoconnect、**6 网 reconcile ✓**，
+     但仍有 **3 处极小重叠**（6×1 / 1×6 / 6×1）。
+  3. 对上述重叠跑 `sch destagger --apply --max-rounds 2`：**无输出、几何未变**，与 GAP-034 同现象。
+- **triedTools**：`sch block-apply`（三种 spacing/per-row 组合）、`sch clusters --strict`、
+  `sch destagger --apply`
+- **alternative**：按工具自陈的三条出路——
+  ①换更大的图纸/独占整页（A4 之外，需确认宿主是否支持改纸张）；②分页承载；
+  ③**改 marker 朝向把组收小**（`sch disconnect` + `sch connect --direction left|right`，
+  竖排标签能把组高从 134 压到 58）。**未验证**：③ 对本块是否足以把 919×672 压进 456×615。
+- **status**：`open`
