@@ -178,6 +178,16 @@
 | PCB 线圈 | 线圈生成器 | 只服务 PCB 线圈（无线充/变压器）；当前未装，需现装后用 |
 | 番茄钟/待办/项目管理 | EE Workbench | 只服务番茄钟/待办/项目管理类工作流，不参与画板 |
 | 物料库存 | PartLab 元器件库存管理 | 只服务物料库存查询；画板流程不依赖它 |
+| 六件以上的块放不进 A4 | `sch block-apply` | 先试 `--spacing 220 --per-row 3`，再试 260/3；**判定非单调**（实测 220/260 接受，240/250 被拒） |
+| 同一页反复重试都被拒（说放不下） | `sch page-new` | 「放不下」判定**按页缓存**，`sch clear` 清不掉；换参数必须开新页（GAP-043） |
+| 块落好了，想知道连线对不对 | `sch reconcile` | 从块库重推应有连接逐条对账；块自带 autoconnect 会**漏脚**（实测漏 `J:A6`），漏了先补再谈布局 |
+| 器件组（本体+marker+桩线）互相压 | `sch clusters` | 加 `--strict`；看「体积 vs 本体」；消重叠靠挪单件或同侧标签错开 `--offset`（实测 18/96/174），不靠 `sch destagger` |
+| 怀疑有引脚没连上 | `sch check` | 只看 floating pin 计数；`connect` 失败时 `clusters` 会显示 `marker 0`（假干净），只有这里能揭穿（GAP-048） |
+| 有些脚设计上就不接 | `sch no-connect` | `--designator J5 --pin A8,B8`；写成 `--pin J5:A8` 会**静默 ok:false** 且脚仍算悬空（GAP-049） |
+| 挪完器件要重新接线 | `sch connect` | `--direction` 必须等于**引脚外朝方向**（左脚 left/右脚 right），反了被几何守卫拒（`wire segment enters component body`） |
+| 导入 PCB 时件数明显偏多 | `pcb import-changes` | 它会把**所有页**的块都导进来（实测 9 页→30 器件）；导入前对试验页 `sch clear`（**不要 `sch page-delete`，无撤销**） |
+| 导出 DSN 报「板是空的、没有网络」 | `pcb export-dsn` | 这句是**假错误**（实测 4 器件 4 网、layout-lint 96/100 时仍报）；先 `pcb save` → `doc reload` → 等 8–12s 再导出（GAP-048） |
+| `sch destagger` 跑到一半出错 | `sch connect` | destagger 会打印「待手工恢复」的每只脚期望网，照单逐脚 `sch connect --pin <REF>:<n> --net <net>` 即可复原（GAP-049） |
 
 ---
 
