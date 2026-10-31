@@ -62,3 +62,4 @@
 | 30 | 新会话复跑暴露并修复 **delivery 两个缺陷**：①缺目录误判 FAIL→改 BLOCKED；②缺件记账 bug 导致**任何缺件都 PASS（假绿）**；自测 28→30 | 验收 16 PASS / 0 FAIL / 0 BLOCKED；自测 **30/30**；矩阵 16/16 | 本轮 |
 | 31 | 运行 C（第二新会话，同参数）回报：**16 PASS / 0 FAIL / 0 BLOCKED，退出码 0，与运行 A 逐阶段 0 处不同** | SC-004 **harness 维度已验证**（模型维度仍缺）；验收 16/0/0 | 本轮 |
 | 32 | 探路「纯 typed 建板」：project.create + block-apply 成功落 2 件并网表一致；但 clusters --strict 判重叠、destagger 假进展 | GAP-034/035；未见板构建 **进行中**（未完成，未计入 SC-001） | 本轮 |
+| 33 | 纯 typed 建板打通到 PCB：新工程 + block-apply + 布局收敛 + 图签 + import-changes（PCB 2 件，imported/verified 均 true）；记录「假失败定律」实测 3 例与 3 处可用性硬约束 | GAP-036/037；sch check 0 悬空、clusters 0 重叠 | 本轮 |

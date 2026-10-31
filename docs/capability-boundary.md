@@ -546,3 +546,43 @@
 - **alternative**：先建持久组（`sch group create`）再用 `--group`；或从 `sch list --include-*` 的
   完整输出里取 primitiveId。**未验证**。
 - **status**：`open`
+
+---
+
+## GAP-036 写操作返回 ok:false 但**实际已落地**——必须以只读复核为准（实测三次）
+
+- **capability**：判断 `sch disconnect / modify / connect` 这类写操作到底成没成。
+- **evidence**（2026-10-31，sc001-led-blk 实测）：
+  1. `sch disconnect --pin LED1:+`、`--pin LED1:-` 均回 **not-ok**，
+     但随后 `sch check` 显示两脚变悬空 → **断开确实生效了**。
+  2. `sch modify --id 076db22e194dbb7a --x 560` 回 `"ok": false`，
+     但 `save + reload` 后重读 LED1 坐标 = **560** → **移动确实生效了**。
+  3. `sch connect --pin LED1:2 …` 当时无任何输出，随后 `sch check` 的
+     `floating pin(s)` 由 1 归 0 → **连接确实生效了**。
+  工具自身也提示过 "connector looks DEGRADED under load … this write may have LANDED despite the failure（假失败定律）"。
+- **triedTools**：`sch disconnect`、`sch modify`、`sch connect`、`sch check`、`schematic.save` + `doc reload`
+- **alternative**：**判据只能是只读复核**——`sch check` 的 `floating pin(s)`、`sch list` 的坐标、
+  `sch clusters` 的几何。失败即重发会重复写入（例如重复 flag）。本轮的判定顺序：
+  **写 → save → reload → 只读复核 → 才决定是否重试**。
+- **status**：`accepted`（已写入流程纪律）
+
+---
+
+## GAP-037 建板路径上的三处「可用性硬约束」（都曾卡住，现已知道怎么过）
+
+- **capability**：纯 typed 从 0 造一块板并让它过门禁。
+- **evidence**（同上，sc001-led-blk）：
+  1. **`sch titleblock` 拒绝从 null 推断显隐**：只给 `{"Name":{"value":"…"}}` 会被拒，
+     原文要求补 `Name.showTitle / Name.showValue / Description.showTitle / Description.showValue`，
+     且"不能从 null、缺失或非布尔值推断宿主默认状态"。补齐后 `ok:true`，`missing-titleblock` 归零。
+  2. **`sch group-move --group` 对"整块一起建的组"无效**：`g1` 同时含 R1 与 LED1，
+     整体平移后两者**相对重叠不变**（实测几何同步 +200，重叠仍 38×11）。
+     要解决的是**组内相对间距**，不是整组位置。
+  3. **`sch connect --direction down` 会静默不生效**：`down` 方向连接后仍报 1 个 floating pin；
+     换回 `left` 立即归零。**方向要按引脚朝向选**，选错不会报错、只会不连。
+- **triedTools**：`sch titleblock`、`sch group-move`、`sch connect`（4 个方向）、`sch clusters`、`sch check`
+- **alternative**：建板顺序已跑通为：
+  `project.create` →（自带 Schematic1/P1 与 Board1/PCB1，**无需 board.create**）→
+  `sch block-apply` → `sch clusters --strict` / `layout-lint` 收敛布局 →
+  `sch titleblock`（显式显隐）→ `pcb import-changes` → PCB 布局/布线 → 验收。
+- **status**：`accepted`
