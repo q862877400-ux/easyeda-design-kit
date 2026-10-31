@@ -682,3 +682,35 @@
     **未验证**能否省下 45 mil；
   ②分页承载（把一个块拆成两页不现实，但可换成更小的块组合）。
 - **status**：`open`
+
+---
+
+## GAP-043 「这一块在本页放不下」的判定**按页缓存**，`sch clear` 清不掉，换新页才重置
+
+- **capability**：在被判过"放不下"的页面上重试落块（哪怕已经清空该页）。
+- **evidence**（2026-10-31 实测，同一命令对照）：
+  1. 首次在新页 P1 上 `sch block-apply usbc_ufp_power_or --at 300,700 --spacing 300 --per-row 2`
+     → **落块成功**（28 autoconnect、7 网对齐），但 4 组出图框。
+  2. 之后在同一页反复 `sch clear` + 用**完全相同**的参数重试 → **一律拒绝**，
+     理由是"上一轮已**实测**量过这一块在本页放不下（919×672 …）"。
+  3. 对同一工程**新建页 P2**（`sch page-new --schematic <uuid>`）后，**同样参数立即落块成功**
+     （网表 7/7 对齐）——说明拒绝结论是**按页缓存**的，不是每次现算。
+  4. 把原点下移到 `--at 300,180`（想避出图框）→ 拒绝；即换了原点也仍按页判定。
+- **triedTools**：`sch block-apply`（多组参数）、`sch clear`、`sch page-new`、`sch clusters`
+- **alternative**：需要重置该判定时**换新页**（已验证可行）；否则视为该页对该块已封板。
+- **status**：`resolved`（机制已查明，绕过方式已验证）
+
+---
+
+## GAP-044 六件块在 A4 上的最终实测：可落但必出图框；四组越界位置已量化
+
+- **capability**：让 `usbc_ufp_power_or` 在 A4 一页内完成布局门禁。
+- **evidence**（新页 P2、`--at 300,700 --spacing 300 --per-row 2`、网表 7/7 对齐）：
+  `clusters --strict` 报 **4 处 out-of-sheet**：
+  `J1 左沿 -50 < 12、上沿 1142 > 813`；`R2 上沿 1352`；`D3 上沿 1352`；`R1 上沿 1032`（限 813）。
+  它们全部是**纵向越界**，因为 3 行 × 300 间距把最上一行推到 y≈1340，而图签把可用高度压到 627。
+  把原点下移到 180 想整体下压 → 工具拒绝（预测撞图签 keepout）。
+- **triedTools**：`sch block-apply`、`sch clusters`、`sch sheet-geometry`
+- **alternative**：只剩"缩短 marker"这条路（`disconnect` + `connect --direction left|right`），
+  目标是在**行距不变**的前提下把每组纵向包络压到能塞进 627。**本轮未做，未验证**。
+- **status**：`open`
