@@ -976,3 +976,53 @@
 - **alternative**：窗口稳定时按 GAP-049 的配方继续（补 A6 → 挪 ESD 并给同侧标签错开桩长 18/96/174 → 标 NC ✕
    → 导入 PCB → 板框 margin 放大到 200 → autoroute → DRC）。**未验证**能否做到 DRC 0。
 - **status**：`open`
+
+---
+
+## GAP-058 DRC 0 在当前工具链下**不可达**：两次独立重建得到**逐条相同**的 3 条违规
+
+- **capability**：满足 PRODUCT.md 的 SC-A「DRC 0」。
+- **evidence**（2026-10-31/11-01，**两次独立构建**对照，这是关键）：
+
+  | 项 | 旧板 `sc001-usbc-blk` | 新板 `sc001-usbc-clean`（重建） |
+  |---|---|---|
+  | 布局 | `220/3` + 挪 ESD | `220/3` + 挪 ESD（同配方）|
+  | 布线 | autoroute 29/29 | autoroute **29/29** |
+  | `pcb drc` | passed=False，**3 条** | passed=False，**3 条** |
+  | 违规 1 | `Slot Region to Track` 11.7 / 11.8（net `D13_N4`）| **同一条**：`Slot Region to Track` 11.7 / 11.8（net `D1_N4`）|
+  | 违规 2 | `SMD Pad to Track` 5.1 / 6（`USB_HOST_DM` 对 `J5_A6`）| **同一条**：`USB_HOST_DM` 对 `J1_A6` 5.1 / 6 |
+  | 违规 3 | `Netlist Error` | **同一条** |
+
+  → 两块板、两个工程、两次独立布线，违规**逐条对应**。这说明它们不是"这次没摆好"，而是：
+  - 违规 1、2 是 **autorouter 的间距模型与 EasyEDA DRC 的判定口径不一致**（布线器认为合规，DRC 认为差 0.1–0.9 mil）；
+  - 违规 3 是 **网表记账差异**，在 `import-changes`(verified=true) + save + reload 之后依然存在。
+- **triedTools**：`pcb drc`、`pcb import-changes`、`pcb outline-fit`（margin 200）、`pcb export-dsn`、`pcb_autorouter -a`、
+  `sch connect`/`no-connect`（两次构建都做了）
+- **alternative**：要让 DRC 0，需要三者之一——① 布线器侧支持 **slot/pad 级 clearance**（当前无参数）；
+  ② CLI 侧的**走线级编辑**（GAP-053：无此命令）；③ GUI 手工改线（**原生/网页 GUI 均不可自动化**）。
+  三条都**不可得**，因此**结论是"当前工具链不可达"，不是"再试几次"**。
+- **status**：`open`（已判定为工具能力边界，不再作为可执行任务重试）
+
+---
+
+## GAP-032 结案：外部 `.epro2` **可以**导入，代价是"两次确认 + 一次原生文件框"
+
+- **capability**：把别人画的 `.epro2` 工程导进本机编辑器，作为「未见板」素材。
+- **evidence**（2026-11-01 实测成功）：
+  1. 起点：开始页「快速开始 → **导入专业版**」打开的是**页面内模态框**（不是原生框）：
+     含「文件类型 / **文件名** / `···` 选择按钮 / 导入文档·提取库文件·两者」。
+  2. 点 `···` 才弹出 **Windows 原生「打开」对话框**（类名 `#32770`）。**必须先在框里进到目标目录**
+     （直接往文件名框塞完整路径不行），再填文件名回车——这一步用户帮我点了一次「导入」。
+  3. 随后出现**第二次确认框**「导入文档」：可选「新建工程 / 保存至已有工程」，填工程名与简介
+     （本次默认 `ESP32S3_USB` / "一个ESP32FN8 S3芯片的开发板"），点「导入」后落库。
+  4. 结果：CLI 立即可见 `ESP32S3_USB` 工程——**8 张原理图页**
+     （Power_In & Regulation / ESP32S3_Core / Boot_Reset / Clock / RF_WiFi_Antenna / HMI_Keys_LED /
+     Pin_Config / PSRAM）+ **1 块 PCB2**（`87d68529660f4a39`）。
+  5. 自动化程度：`···` 打开的原生框可用 SendKeys/UIA 驱动（我做到了定位与填名），
+     但**最终两次「导入」按钮点击**需要人确认（本次由业主点了一次，第二次我点 `@e63` 完成）。
+- **triedTools**：bsk 会话点击「导入专业版」、`SetForegroundWindow`+`SendKeys`、UI Automation 枚举、
+  `easyeda sch pages --project ESP32S3_USB`、`easyeda board list --project ESP32S3_USB`
+- **alternative**：要全自动，需要给 bsk 加 `upload_file`/`setInputFiles` 能力（chrome-devtools MCP 有
+  `upload_file`，但本机 MCP 的 `--executablePath=C:\Program Files(x86)\...` 少一个空格，浏览器起不来；
+  该参数在启动时固化，改文件需重启宿主）。
+- **status**：`resolved`（导入可行；**验收尚未跑**，见 T331）
