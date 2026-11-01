@@ -191,6 +191,7 @@
 | CLI 报 `no connected window` | `daemon health` | 看窗口数：0 表示"守护在但没窗口"——通常是浏览器没连或 bsk 会话被空闲回收（GAP-060/064） |
 | 动作报 `no easyeda-agent daemon found` | `daemon start` | 前台常驻命令（会自动转后台任务才继续）；启动后再 `daemon health` 确认 status=found |
 | 要在网页版里点 GUI（导入/导出/菜单） | `daemon health` | 三前置缺一不可：① 浏览器+扩展 connected（`bsk_session start` 会直接报 no browser is currently connected）② 会话每 ≤4 分钟一次 bsk 调用保活 ③ daemon 在线 |
+| 焊盘内打过孔仍不连通 | `pcb via-bond` | 先 `--dry-run` 看计划、`--component U1` 限定器件；注意平台限制：赋值**不能跨 doc reload 存活**（#118），改完立刻 `pcb net-path` 复核 |
 
 ---
 

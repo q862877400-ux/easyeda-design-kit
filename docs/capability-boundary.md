@@ -322,7 +322,7 @@
 
 ---
 
-## GAP-024 焊盘内打过孔仍不连通，原因是铺铜避让隔离（不是平面缺覆盖）
+## GAP-024 焊盘内打过孔仍不连通，原因是铺铜避让隔离（不是平面缺覆盖）（**更正：未试专用工具 `pcb via-bond`，见 GAP-066**）
 
 - **capability**：给 J2_11（GND，中心 1025.4,1710.3）在焊盘内打孔以接入内层地。
 - **evidence**：三种尝试均不改善（Connection 保持 14、GND 保持 4）：
@@ -1185,3 +1185,23 @@
 - **alternative**：**以后判断"工具能不能做某事"时，先查 `easyeda actions` 的 169 条动作，再查 `--help` 子命令**——
   两者不是一回事；把 `call` 当通用入口用。仍**未验证**的是：这些动作在真实板子上返回的数据是否够用于诊断。
 - **status**：`resolved`
+
+
+---
+
+## GAP-066 「这个做不到」之前必须先扫 169 条动作目录：`pcb via-bond` 从未被试过
+
+- **capability**：给焊盘内（EPAD 散热孔等）的无网过孔赋上该焊盘的网络，使"打过孔仍不连通"变为连通。
+- **evidence**（2026-11-01 清扫动作目录时发现）：
+  1. `pcb via-bond` 存在且**正是为这件事设计的**：帮助原文 = assign netless footprint-embedded vias the net of
+     the pad they sit in；带 `--dry-run` 可先看计划、`--component U1` 可限定器件。
+  2. 而 `capability-boundary.md` 里 **`via-bond` 出现 0 次**——`GAP-024`（焊盘内打过孔仍不连通）是**没有试过这个专用命令**
+     就下了"原因是铺铜避让隔离"的结论。这条结论目前只能算**未验证**。
+  3. 该命令自身还标了一条平台限制（live-verified，#118）：**赋值不能跨 `doc reload` 存活** ——
+     所以 GAP-024 的结论**可能仍然成立**，但理由需要用这个工具实测后重写，而不是靠排除法。
+  4. 同一轮核对中：`pcb route fill`（含跳孔布线）与 `pcb power-planes` 在 GAP-008/019/021/022/025 里**都试过**，
+     那 4 条不改判；**只有 GAP-024 这一条属于"没试专用工具"**。
+- **triedTools**：`actions`（169 条目录）、`pcb route --help`、`pcb via-bond --help`、历史 `pcb route fill` / `pcb power-planes` 记录比对
+- **alternative**：**规矩**——下"做不到"结论前，先在 `easyeda actions` 里按语义搜一遍（`silk`/`via`/`pad`/`designator`/`drc`/`dsn`），
+  确认没有专用动作再用排除法。这条已写进 `docs/boundary-root-causes.md` 的"这张图怎么用"。
+- **status**：`open`（GAP-024 需用 `pcb via-bond --dry-run` → 实跑 → `pcb net-path` 复核后重写）
