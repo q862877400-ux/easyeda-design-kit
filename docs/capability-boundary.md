@@ -1146,3 +1146,22 @@
 - **alternative**：① 长流程期间保持 bsk 会话活跃（周期性 `bsk_inspect`）；② 给 bsk daemon 调大
   `--session-idle`（**未验证**如何改，需查插件配置）；③ 每个动作前用 `ensure_eda_window` + `daemon health` 双检。
 - **status**：`resolved`（依赖关系已查明）
+
+---
+
+## GAP-064 网页版 GUI 自动化的三条**前置条件**（缺任一，GUI 路线不可用）
+
+- **capability**：用 bsk（浏览器自动化）驱动嘉立创 EDA 网页版做导入/打开文档/手工导出等 GUI 操作。
+- **evidence**（2026-11-01 逐条实测）：
+  1. **浏览器必须连着扩展**：本轮 `bsk_session start` 直接失败 —
+     `no browser is currently connected (hint: open the browser-skill extension in your browser and wait for the popup to show "connected")`。
+     即"打开浏览器"本身是**人的动作**，不是自动化能做的。
+  2. **会话必须保活**：bsk 会话空闲约 5 分钟自动回收，连带关闭它打开的 Agent Window 与 EDA 标签
+     （GAP-060）。因此长流程里**每隔 ≤4 分钟要发一次 bsk 调用**（哪怕只是 `bsk_tabs list`）才不会被回收。
+  3. **守护进程必须在线**：`easyeda daemon start` 是前台常驻命令；没有它任何 `--project/--doc` 动作报
+     `no easyeda-agent daemon found`。
+  ⇒ **可用性 = 浏览器+扩展已连 ∧ 会话保活 ∧ 守护进程在线**，三者缺一即不可用。
+- **triedTools**：`bsk_session start`、`bsk_tabs list`、`easyeda daemon start`、`easyeda daemon health`
+- **alternative**：① 需要 GUI 的回合，先请业主确认浏览器与扩展处于 connected 状态；
+  ② 把 idle 调大（扩展侧设置，**未验证**具体入口）；③ 纯 CLI 路径（不需要浏览器窗口，但仍需守护进程）。
+- **status**：`resolved`（前置条件已查明；能否执行取决于这三条是否在线）
