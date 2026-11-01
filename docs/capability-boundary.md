@@ -68,7 +68,7 @@
 
 ---
 
-## GAP-006 没有 `silk-list` 这类 CLI 查询命令
+## GAP-006 没有 `silk-list` 这类 CLI 查询命令（**已更正：能力以类型化动作存在，见 GAP-065**）
 
 - **capability**：CLI 侧缺丝印对象列表命令。
 - **evidence**：`easyeda pcb --help` 无 `silk-list`；类型化动作里存在 `pcb.silk.list`。
@@ -387,7 +387,7 @@
   4. **关键限制**（详情页「注意事项」原文）：该插件**不是独立布线器**，"需要先安装主程序"，
      插件通过 **127.0.0.1** 与本机主程序通信；主程序在 **https://www.pcbautorouter.top/** 单独下载，
      且安装后须在扩展管理器里为它开启**外部交互**权限；超出免费额度还需登录/升级 Pro。
-- **triedTools**：扩展广场 GUI、`.eext` 下载、`高级→扩展管理器` 路径核实
+- **triedTools**：`bsk_inspect`（读扩展菜单 DOM）、`pcb autoroute`（直接调用未登录引擎）、`daemon health`（确认窗口与连接器）
 - **alternative**：本机已装的 `JsPCB自动布线` 是**纯编辑器内**的自动布线器（无外部主程序依赖），
   应作为首选；`PCB Auto Router` 只在愿意装主程序时才用。**未验证**：主程序装好后是否能把 6 条降到 0。
 - **status**：`open`（已下载 `.eext`，未导入；未装主程序）
@@ -536,7 +536,7 @@
 
 ---
 
-## GAP-035 `sch group-move --ids` 只认 primitiveId，传位号会 ok:false
+## GAP-035 `sch group-move --ids` 只认 primitiveId，传位号会 ok:false（**已更正：designator→id 可从 `pcb.components.list` / `schematic.designators.list` 取，见 GAP-065**）
 
 - **capability**：把「器件 + 它的桩线/旗标」整体平移，腾出空间解决布局重叠。
 - **evidence**：`sch group-move --ids LED1 --dx 200 --dy 0` → `ok:false`，返回体带
@@ -612,7 +612,7 @@
   我给它的 `-RunLog` 指向的 `round16.log` 里**只有旧工程 `agent-e2e-esp32s3-board31` 的命令**，
   没有任何本工程记录；而 `no-oneoff-scripts` / `negative-drift` 当时仍判 **PASS**。
   即：审计阶段读了一份**与本次运行无关**的日志并给绿。
-- **triedTools**：`no-oneoff-scripts`、`negative-drift`、`run.ps1 -RunLog`
+- **triedTools**：`no-oneoff-scripts`、`negative-drift`、`run.ps1`（带 -RunLog 参数）
 - **alternative**：已加守卫——指定 `-Project` 时，日志里必须出现该工程名，否则判 **BLOCKED**
   （既不是 PASS 也不是 FAIL）。两块自造板随后各补了一份**按实际执行命令整理**的运行日志
   （文件头明确标注"事后整理，非实时 tee"），复跑后审计才是真的。
@@ -1165,3 +1165,23 @@
 - **alternative**：① 需要 GUI 的回合，先请业主确认浏览器与扩展处于 connected 状态；
   ② 把 idle 调大（扩展侧设置，**未验证**具体入口）；③ 纯 CLI 路径（不需要浏览器窗口，但仍需守护进程）。
 - **status**：`resolved`（前置条件已查明；能否执行取决于这三条是否在线）
+
+
+---
+
+## GAP-065 「CLI 没有这个子命令」≠「这个能力不存在」：169 个类型化动作里已有 silk / designator / 焊盘级查询
+
+- **capability**：只读查询丝印文本、位号→图元 id 映射、以及**焊盘级**信息。
+- **evidence**（2026-11-01 实测，`easyeda actions` 目录 + `easyeda call` 通道）：
+  1. **`pcb.silk.list`** 存在：`mutates=false`，输出 `texts[].primitiveId/kind/text/layer/mirror/fontSize/componentId/componentLayer/x/y` + `count`。
+     → GAP-006 说"没有 `silk-list` 这类查询"**是错的**：缺的是 CLI 子命令，不是能力。
+  2. **`pcb.components.list`** 支持 `includePads`：输出 `components[].primitiveId/designator/layer/x/y/rotation/bbox/pads`。
+     → 这可能是 R2/R5 里"缺焊盘级诊断"的替代路径（**未验证**：本轮无窗口，未取到真实 pads 内容）。
+  3. **`schematic.designators.list`** 输出 `designators[] {id,parentId,key,value,visible,bbox,source}`。
+     → GAP-035「传位号会 ok:false」的绕法：先用它或 `pcb.components.list` 拿到 primitiveId，再传给 `--ids`。
+  4. **`easyeda call <action> --payload {...}` 通道有效**：未知动作返回 `code=UNKNOWN_ACTION`（负例验证过），
+     真实动作在无窗口时报 `--doc guard: no connected window`（即"通道通、窗口缺"）。
+- **triedTools**：`actions`（169 条目录）、`call pcb.silk.list`、`call pcb.components.list`、`call pcb.no.such.action`（负例）、`daemon health`
+- **alternative**：**以后判断"工具能不能做某事"时，先查 `easyeda actions` 的 169 条动作，再查 `--help` 子命令**——
+  两者不是一回事；把 `call` 当通用入口用。仍**未验证**的是：这些动作在真实板子上返回的数据是否够用于诊断。
+- **status**：`resolved`

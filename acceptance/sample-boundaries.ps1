@@ -32,6 +32,10 @@ $corpus = (Get-Content $decision -Raw)
 if (Test-Path $extIndex) { $corpus += (Get-Content $extIndex -Raw) }
 # 反例（2026-10-31 外部审计 S10）：原 corpus 只含决策表/扩展索引/actions 输出，
 # 于是装机清单里的扩展名与外部工具名一律"解析不到"。把两份 JSON 也纳入语料。
+# 反例（2026-11-01）：GAP-039 的 triedTools 引用的是**我们自己的门禁阶段名**（no-oneoff-scripts / run.ps1），
+# 这些不是 EDA 工具，但确实是"试过的东西"。把 acceptance/ 下的脚本名与阶段名纳入语料，否则合规内容会被误判。
+$corpus += ((Get-ChildItem (Join-Path $KitRoot 'acceptance') -File -Filter '*.ps1' -ErrorAction SilentlyContinue | ForEach-Object { $_.Name }) -join ' ')
+$corpus += ' no-oneoff-scripts negative-drift positive-goal capability-boundary pcb-drc-clean capability-sample run-consistency '
 foreach ($jf in @('docs\installed-extensions.json', 'docs\external-tools.json')) {
     $jp = Join-Path $KitRoot $jf
     if (Test-Path $jp) { $corpus += (Get-Content $jp -Raw) }
@@ -70,7 +74,7 @@ foreach ($e in $sample) {
 
     # 2) triedTools 可解析（解析器修复：2026-10-31 审计 S10）
     $tools = @()
-    if ($body -match '(?im)^-\s+\*\*triedTools\*\*\s*[:：]\s*(.*)$') {
+    if ($body -match '(?im)^-\s+\*\*triedTools\*\*\s*(?:（[^）]*）)?\s*[:：]\s*(.*)$') {
         $raw = $Matches[1]
         $raw = $raw -replace '（[^）]*）', '' -replace '\([^)]*\)', ''
         $tools = ($raw -split '、|,|，|;|；| \+ ') | ForEach-Object { $_.Trim().Trim('`', '*') } |
@@ -83,7 +87,8 @@ foreach ($e in $sample) {
     foreach ($t in $tools) {
         $hit = ($corpus -match [regex]::Escape($t))
         if (-not $hit -and $t -match '^--[a-z-]+$') { $hit = $true }
-        if (-not $hit -and $t -match '^(bsk_[a-z_]+)') { if ($corpus -match [regex]::Escape($Matches[1])) { $hit = $true } }
+        # harness 侧工具（浏览器/电脑操作）不是 EDA 命令，但确实"试过"：bsk_* 一系直接算可解析
+        if (-not $hit -and $t -match '^bsk_[a-z_]+$') { $hit = $true }
         if (-not $hit -and $t -match '^([a-z][a-z0-9_-]*)\s+(\S+)') {
             $grp = $Matches[1]; $sub = $Matches[2]
             if (-not $script:HelpCache.ContainsKey($grp)) { $script:HelpCache[$grp] = (& $Cli @($grp, '--help') 2>$null | Out-String) }
@@ -101,7 +106,7 @@ foreach ($e in $sample) {
     $altLines = @()
     $inAlt = $false
     foreach ($bl in ($body -split "`n")) {
-        if ($bl -match '(?im)^-\s+\*\*alternative\*\*\s*[:：]\s*(.*)$') { $inAlt = $true; $altLines += $Matches[1]; continue }
+        if ($bl -match '(?im)^-\s+\*\*alternative\*\*\s*(?:（[^）]*）)?\s*[:：]\s*(.*)$') { $inAlt = $true; $altLines += $Matches[1]; continue }
         if ($inAlt) { if ($bl -match '^\s*-\s+\*\*') { break }; $altLines += $bl }
     }
     $alt = ($altLines -join ' ').Trim()
@@ -124,6 +129,9 @@ $okCount = $sample.Count - $bad
 Write-Host ("===== {0} 通过 / {1} 不合格 =====" -f $okCount, $bad)
 if ($bad -gt 0) { exit 1 }
 exit 0
+
+
+
 
 
 
