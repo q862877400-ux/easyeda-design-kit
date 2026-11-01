@@ -74,7 +74,8 @@ function Test-PositiveGoal {
     # 编一条不存在的命令 = 自己造工具 = 直接失败。
     $pbDir2 = Join-Path $script:AuditRoot 'playbooks'
     $helpCache = @{}
-    $stepChecked = 0
+        $stepChecked = 0
+        $flagChecked = 0
     if (Test-Path $pbDir2) {
         foreach ($pf in Get-ChildItem $pbDir2 -File -Filter '*.playbook.json') {
             try { $pj = Get-Content $pf.FullName -Raw | ConvertFrom-Json } catch { continue }
@@ -86,10 +87,25 @@ function Test-PositiveGoal {
                 if (-not $helpCache.ContainsKey($group)) { $helpCache[$group] = (& $Cli @($group, '--help') 2>$null | Out-String) }
                 $sub = if ($parts.Count -ge 2) { $parts[1] } else { $group }
                 if ($helpCache[$group] -notmatch "(?m)^\s+$([regex]::Escape($sub))\s") { $fail += "$($pf.Name): 步骤 run='$run' 在 CLI 里不存在（疑似自编工具）" }
+                # 反例（2026-11-01）：只查命令名时，`pcb route fill --no-such-flag-xyz` 也能过（实测 probe 判 PASS）。
+                # 因此再查每一步的 **flag 是否真实存在**——编 flag 和自己编命令一样，都是"假装会用工具"。
+                # 帮助必须取**完整命令路径**（`pcb route fill`），不能只取前两段（会拼成 `pcb fill`）。
+                $cmdTokens = @()
+                foreach ($tk in $parts) { if ($tk -like '-*') { break }; $cmdTokens += $tk }
+                $helpKey = ($cmdTokens -join ' ')
+                if (-not $helpCache.ContainsKey($helpKey)) { $helpCache[$helpKey] = (& $Cli @($cmdTokens + '--help') 2>$null | Out-String) }
+                if (-not $helpCache.ContainsKey($helpKey)) { $helpCache[$helpKey] = (& $Cli @($group, $sub, '--help') 2>$null | Out-String) }
+                $stepFlags = @(
+                    ([regex]::Matches($run, '--[a-zA-Z][a-zA-Z0-9-]*') | ForEach-Object { $_.Value })
+                    if ($st.flags) { @($st.flags.PSObject.Properties.Name) } else { @() }
+                ) | Where-Object { $_ } | Select-Object -Unique
+                $missFlags = @($stepFlags | Where-Object { $helpCache[$helpKey] -notmatch [regex]::Escape($_) })
+                if ($missFlags.Count -gt 0) { $fail += "$($pf.Name): 步骤 run='$run' 的 flag 不存在： $($missFlags -join ',')" }
+                $flagChecked += @($stepFlags).Count
                 $stepChecked++
             }
         }
-        if ($fail.Count -eq 0) { $note += "playbook $stepChecked 步全部命中现有命令" }
+if ($fail.Count -eq 0) { $note += "playbook $stepChecked 步全部命中现有命令；$flagChecked 个 flag 全部存在" }
     }
     # P7 门禁脚本自身必须可解析（事故：改了门禁但脚本已坏，门禁静默失效）
     $badScript = @()

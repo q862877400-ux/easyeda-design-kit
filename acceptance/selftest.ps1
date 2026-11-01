@@ -45,6 +45,15 @@ Write-Host ""
 
 # 断言 1：kit 自身，正负向都应 PASS
 Assert-Case "kit 自身 → positive-goal PASS" {
+# 断言（2026-11-01 新增）：playbook 步骤里**编造 flag** 必须判 FAIL。
+# 反例：只查命令名时 `pcb route fill --no-such-flag-xyz` 会被判 PASS（本轮实测），所以补这条。
+Assert-Case "positive-goal → playbook 里编造 flag 判 FAIL" {
+    $d = Join-Path $probe "pbflag"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "playbooks") | Out-Null
+    '{ "version": 1, "meta": { "name": "p" }, "steps": [ { "id": 1, "run": "pcb route fill --net A --from U1.1 --to U2.2 --no-such-flag-xyz" } ] }' |
+        Set-Content (Join-Path $d "playbooks\p.playbook.json") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'positive-goal').Status -eq 'FAIL'
+}
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-RunLog', $clean) 'positive-goal').Status -eq 'PASS'
 }
 Assert-Case "kit 自身 → negative-drift PASS" {

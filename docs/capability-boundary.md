@@ -1205,3 +1205,22 @@
 - **alternative**：**规矩**——下"做不到"结论前，先在 `easyeda actions` 里按语义搜一遍（`silk`/`via`/`pad`/`designator`/`drc`/`dsn`），
   确认没有专用动作再用排除法。这条已写进 `docs/boundary-root-causes.md` 的"这张图怎么用"。
 - **status**：`open`（GAP-024 需用 `pcb via-bond --dry-run` → 实跑 → `pcb net-path` 复核后重写）
+
+---
+
+## GAP-067 playbook 门禁只查命令名、不查 flag：`--no-such-flag-xyz` 也能过
+
+- **capability**：保证 playbook 里写的每一步**真能执行**（不只是命令存在）。
+- **evidence**（2026-11-01 实测）：
+  1. 造反例 playbook：`{"steps":[{"run":"pcb route fill --net A --from U1.1 --to U2.2 --no-such-flag-xyz"}]}`，
+     其中 `--no-such-flag-xyz` 是**编造的**。旧门禁输出 `playbook 1 步全部命中现作命令` → **PASS（误判）**。
+  2. 原因：P6 只比对 `<group> --help` 里是否有该子命令名，完全不看 flag。
+  3. 修后：按**完整命令路径**取帮助（`pcb route fill --help`，而不是 `pcb fill --help`——第一版就是这么错的，
+     导致把所有 flag 都判成缺失），逐 flag 比对。反例现在报
+     `步骤 run='… --no-such-flag-xyz' 的 flag 不存在： --no-such-flag-xyz`（**只报那一个**）。
+  4. 真 kit：`playbook 37 步全部命中现有命令；**27 个 flag 全部存在**`。
+  5. 自测加断言「playbook 里编造 flag 判 FAIL」（37/37 通过）。
+- **triedTools**：`pcb route fill --help`、`sch block-apply --help`、`daemon start --help`、`run.ps1 -AuditRoot`（探针 kit）、`selftest.ps1`
+- **alternative**：**规矩**——"命令存在"只是第一层；凡引用工具的地方（playbook / 决策表 / 边界），
+  都要能对上 flag。下一次同类风险：参数**取值**（如 `--layers 1,2` 的合法域）仍未校验，**未验证**。
+- **status**：`resolved`
