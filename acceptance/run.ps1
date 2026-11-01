@@ -87,6 +87,8 @@ function Test-KitIntegrity {
         "docs\phases\pcb-connectivity-recovery.md"
         "docs\publish-extension.md"
         "docs\prior-art-map.md"
+        "docs\boundary-index.md"
+        "docs\boundary-root-causes.md"
     )
     $missing = @()
     foreach ($rel in $required) {
