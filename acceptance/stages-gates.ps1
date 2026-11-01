@@ -416,6 +416,12 @@ function Test-DecisionActionability {
         $situation = $cells[1].Trim(); $tool = $cells[2].Trim(); $params = $cells[3].Trim()
         if ([string]::IsNullOrWhiteSpace($tool) -or $tool -eq '-') { $bad += "$situation（无工具）"; continue }
         if ($params.Length -lt 10) { $bad += "$situation（参数过短）"; continue }
+        # 反例（2026-10-31 外部审计 A1）：旧判据只量长度 ≥10 字符，于是 30 行纯散文参数也能拿到 100%。
+        # 参数列必须含**至少一个具体物**：flag / 反引号命令 / 数值+单位 / 文件名 / JSON 载荷，否则不算可执行。
+        $concrete = ($params -match '--[a-zA-Z]') -or ($params -match '`[^`]+`') -or
+                    ($params -match '\d+(\.\d+)?\s*(mil|mm|um|nm|V|A|W|%|kHz|MHz|s|ms|dB)') -or
+                    ($params -match '\.[a-z]{2,5}\b') -or ($params -match '\{[^}]*\}')
+        if (-not $concrete) { $bad += "$situation（参数无具体物：无 flag/命令/数值单位/文件）"; continue }
         if ($params -match '未装' -and $params -notmatch '替代|改用|命令|pcb ') { $bad += "$situation（标未装但无替代）"; continue }
     }
     $total = $rows.Count

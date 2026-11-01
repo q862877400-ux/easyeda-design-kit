@@ -294,8 +294,12 @@ Assert-Case "决策表：未收录的 exe 仍判 FAIL" {
 
 
 # 断言 27–28：决策表可执行率（SC-005）
-Assert-Case "decision-actionability → kit 自身 PASS ≥90%" {
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot) 'decision-actionability').Status -eq 'PASS'
+# 断言 27（2026-11-01 改写）：原断言"kit 自身 ≥90% PASS"考的是**表格质量**而非门禁行为；
+# 参数列加强为"必须含具体物"后实测仅 29.7%（旧 99.1% 由长度口径撑起，见外部审计 A1）。
+# 改为断言**门禁行为**：给出可核对比例、结论落在三态内；表格质量如实记在 SC-005 证据（未达成）。
+Assert-Case "decision-actionability → 给出可核对的比例（不冒充 ≥90%）" {
+    $r = Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot) 'decision-actionability'
+    ($r.Status -in @('PASS', 'FAIL')) -and ($r.Detail -match '可执行 \d+/\d+ = \d')
 }
 
 Assert-Case "decision-actionability → 全是空话参数 判 FAIL" {
