@@ -421,7 +421,20 @@ function Test-DecisionActionability {
         $concrete = ($params -match '--[a-zA-Z]') -or ($params -match '`[^`]+`') -or
                     ($params -match '\d+(\.\d+)?\s*(mil|mm|um|nm|V|A|W|%|kHz|MHz|s|ms|dB)') -or
                     ($params -match '\.[a-z]{2,5}\b') -or ($params -match '\{[^}]*\}')
-        if (-not $concrete) { $bad += "$situation（参数无具体物：无 flag/命令/数值单位/文件）"; continue }
+        # 判据细分（2026-11-01）：扩展类工具**没有 CLI flag**，硬要求 flag 会逼人编造参数。
+        # 因此"具体物"分两类：① CLI/动作类物证（flag/命令/数值单位/文件/JSON）；
+        # ② 可核对的**界面入口**（含 → 或 菜单/面板/对话框/右键），且工具列必须是**已装扩展**。
+        # 纯散文（既无物证、也无入口）仍然判不合格——这一条不变。
+        $uiEntry = ($params -match '→|菜单|面板|对话框|右键|工具栏|弹窗')
+        $isInstalledExt = $false
+        try {
+            $iePath = Join-Path $script:AuditRoot 'docs\installed-extensions.json'
+            if (Test-Path $iePath) {
+                $ie = Get-Content $iePath -Raw | ConvertFrom-Json
+                $isInstalledExt = @($ie.installed | Where-Object { $tool -and ($tool -like "*$_*") }).Count -gt 0
+            }
+        } catch { $isInstalledExt = $false }
+        if (-not $concrete -and -not ($uiEntry -and $isInstalledExt)) { $bad += "$situation（参数无具体物、也无可用界面入口）"; continue }
         if ($params -match '未装' -and $params -notmatch '替代|改用|命令|pcb ') { $bad += "$situation（标未装但无替代）"; continue }
     }
     $total = $rows.Count
@@ -433,6 +446,7 @@ function Test-DecisionActionability {
         Add-Result "decision-actionability" "FAIL" ("可执行 $ok/$total = $ratio%（<90%）；问题行示例： " + (($bad | Select-Object -First 3) -join '; '))
     }
 }
+
 
 
 
