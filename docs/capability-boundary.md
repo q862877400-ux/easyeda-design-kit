@@ -1132,3 +1132,17 @@
 **可复用的操作知识**：工程树里**单击只选中、双击才打开**成活动文档（`docType` 才会变成 `pcb`）。
 
 
+
+### GAP-060 续：窗口来自「bsk 会话 + 守护进程」两者同时在线，缺一即 0
+
+- **capability**：让 CLI 能对某块板执行动作（`--project/--doc` 路由）。
+- **evidence**（2026-11-01 本轮实测，两个必要条件）：
+  1. **守护进程**：`easyeda daemon start` 是**前台常驻**命令（本轮它在 600 s 后被移到后台任务才继续），
+     未启动时任何动作直接报 `no easyeda-agent daemon found on 127.0.0.1:60832-60841`。
+  2. **浏览器窗口**：守护进程在线、但 bsk 会话因空闲被回收后，`daemon health` 报
+     `守护: found  窗口数: 0` —— 此时所有 `--project … --doc …` 动作仍不可用。
+  3. 即：**可用性 = 守护进程在线 ∧ bsk 会话在线（窗口未随会话回收）**。此前我只把它们当成一件事。
+- **triedTools**：`daemon start`、`daemon health`、`pcb export-dsn`、`easyeda call pcb.export.dsn`
+- **alternative**：① 长流程期间保持 bsk 会话活跃（周期性 `bsk_inspect`）；② 给 bsk daemon 调大
+  `--session-idle`（**未验证**如何改，需查插件配置）；③ 每个动作前用 `ensure_eda_window` + `daemon health` 双检。
+- **status**：`resolved`（依赖关系已查明）
