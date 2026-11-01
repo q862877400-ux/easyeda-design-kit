@@ -188,6 +188,9 @@
 | 导入 PCB 时件数明显偏多 | `pcb import-changes` | 它会把**所有页**的块都导进来（实测 9 页→30 器件）；导入前对试验页 `sch clear`（**不要 `sch page-delete`，无撤销**） |
 | 导出 DSN 报「板是空的、没有网络」 | `pcb export-dsn` | 这句是**假错误**（实测 4 器件 4 网、layout-lint 96/100 时仍报）；先 `pcb save` → `doc reload` → 等 8–12s 再导出（GAP-048） |
 | `sch destagger` 跑到一半出错 | `sch connect` | destagger 会打印「待手工恢复」的每只脚期望网，照单逐脚 `sch connect --pin <REF>:<n> --net <net>` 即可复原（GAP-049） |
+| CLI 报 `no connected window` | `daemon health` | 看窗口数：0 表示"守护在但没窗口"——通常是浏览器没连或 bsk 会话被空闲回收（GAP-060/064） |
+| 动作报 `no easyeda-agent daemon found` | `daemon start` | 前台常驻命令（会自动转后台任务才继续）；启动后再 `daemon health` 确认 status=found |
+| 要在网页版里点 GUI（导入/导出/菜单） | `daemon health` | 三前置缺一不可：① 浏览器+扩展 connected（`bsk_session start` 会直接报 no browser is currently connected）② 会话每 ≤4 分钟一次 bsk 调用保活 ③ daemon 在线 |
 
 ---
 
