@@ -432,7 +432,10 @@ function Test-Delivery {
                 $parts += ("Gerber=" + [System.IO.Path]::GetFileName($ev.gerber.path) + " (" + (Get-Item $ev.gerber.path).Length + " B)")
             } else { $problems += "Gerber 文件不存在或为空" }
             $drillOk = $false
-            if ($ev.gerber.drilling -and $ev.gerber.drilling.metallic -and $ev.gerber.drilling.nonMetallic) { $drillOk = $true }
+        # 反例（2026-11-01）：要求 metallic **且** nonMetallic 都为真 ⇒ 全 SMD、无 NPTH 孔的板永远不满足。
+        #    实测 sc001-led-blk：7 走线 / 0 过孔 / 4 焊盘，平台只给 GDD 钻孔图，nonMetallic 合理为 false。
+        #    判据应改为「至少有一类钻孔证据」。
+        if ($ev.gerber.drilling -and ($ev.gerber.drilling.metallic -or $ev.gerber.drilling.nonMetallic)) { $drillOk = $true }
             $drl = Get-ChildItem $DeliveryDir -Filter "*.drl" -File -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 0 } | Select-Object -First 1
             if ($drl) { $parts += ("钻孔=" + $drl.Name + " (" + $drl.Length + " B)") }
             elseif ($drillOk) { $parts += "钻孔=在 Gerber 包内（drilling.metallic/nonMetallic=true）" }

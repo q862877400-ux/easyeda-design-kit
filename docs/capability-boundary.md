@@ -1756,3 +1756,20 @@
 
 
 
+
+---
+
+## GAP-086 `delivery` 的钻孔判据对"全 SMD 板"永远不满足（已修，T403 结案）
+
+- **capability**：让"交付物是否含钻孔证据"这条判据对**没有可钻孔的板**也成立。
+- **evidence**（2026-11-01 第 92 轮，窗口在线）：
+  1. LED 板 `sc001-led-blk` 实测 `pcb check`：**7 走线 / 0 过孔 / 4 焊盘**，全 SMD，**没有任何可钻孔**。
+  2. `pcb.export.gerber` 三条单独跑**都成功**（gerber 10,140 B / pick&place 1,040 B / bom 6,815 B）；
+     Gerber 包内 11 个成员含 `Gerber_DrillDrawingLayer.GDD`（16,729 B）但**没有 `.drl`**——因为板上没有孔，这是**正确行为**。
+  3. 旧判据要求 `drilling.metallic` **且** `drilling.nonMetallic` 都为真；而本板没有 NPTH 孔，`nonMetallic` 合理为 false
+     ⇒ **判据不可能满足**（这是"判断标准有缺陷"，不是条目错）。
+  4. 改为"**至少一类钻孔证据**"后：`delivery` 转 **PASS**，LED 验收 **21 PASS / 2 FAIL / 0 BLOCKED**（仅剩两项已知 FAIL）。
+- **triedTools**：`pcb.export.gerber`、`pcb.export.pick_place`、`schematic.export.bom`、`pcb check`、`actions`
+- **alternative**：**仍要警惕**：旧事故里"36 字节文本改名 .zip"能骗过 delivery —— 那条防线（必须是合法 zip）保留着，
+  本次只放宽了"孔的种类"这一项，没有放宽"是不是真 zip"。
+- **status**：`resolved`

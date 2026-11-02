@@ -154,3 +154,4 @@
 | 118 | **T343 完成**：`via-bond --dry-run` → planned=0、`netlessViaInPad=0` ⇒ **GAP-024 现场已不成立**；但发现 **`viaInPad=13`**（过孔压焊盘，独立 DFM 违规）；DFM 现状 1153 track/126 via/146 pad/ERROR=0 | 无需改板即定性；新开 T400/T401 | 本轮 |
 | 119 | 五块板按 23 阶段重跑（usbc 20/2/1、led 18/2/3、ldo/buck/autodl 各 19/2/2）；**修 report-hygiene 循环依赖**（把集合级阶段排除，BLOCKED→FAIL 4/5）；新发现 LED 交付物三项全 FAIL | 4/5 达标 | 本轮 |
 | 120 | **capability-sample 改全量**（抽样连续4次通过却藏住 26/85 问题）→ 修判据 6 条 + 改写 8 条散文 → **85/85 通过**；**report-hygiene 转 PASS**（5 份 23 阶段真实运行）；静态 **12 PASS / 1 FAIL / 0 BLOCKED** | 唯一 FAIL = 决策表口径（等业主）| 本轮 |
+| 121 | **T403 结案**：LED 板全 SMD（0 过孔）无孔可钻，`delivery` 却要求 metallic&&nonMetallic ⇒ 判据不可能满足；改为"至少一类钻孔证据"后 delivery PASS，LED **21/2/0**；五块板现均只剩两项已知 FAIL | 判据修正有反例 | 本轮 |

@@ -651,3 +651,8 @@ T025 docs/playbook-unseen-board.md
   ② 8 条散文式 triedTools 改写为真实工具名。结果：**85 通过 / 0 不合格**，且门禁调用改 `-Count 200`（全量）。
 - [x] T405 **`report-hygiene` 转 PASS**：五块板在 23 阶段下重跑后达到"5 份与当前阶段集一致的真实运行"。
   静态结论由 **11 PASS / 1 FAIL / 1 BLOCKED** 变为 **12 PASS / 1 FAIL / 0 BLOCKED**，唯一 FAIL 是 `decision-actionability`（等业主定口径）。
+
+- [x] T403 **LED 交付物失败结案（GAP-086）**：不是导出坏了——该板 **7 走线 / 0 过孔 / 4 焊盘（全 SMD）**，
+  平台正确地产出 GDD 钻孔图而无 `.drl`。是 `delivery` 判据要求 `metallic && nonMetallic` 才判过，对无 NPTH 孔的板不可能满足。
+  改为"至少一类钻孔证据"后 `delivery` **PASS**；LED 两次连跑后 **21 PASS / 2 FAIL / 0 BLOCKED**。
+  **五块板至此全部只有两项已知 FAIL**（`decision-actionability`、`pcb-drc-clean`），BLOCKED=0。

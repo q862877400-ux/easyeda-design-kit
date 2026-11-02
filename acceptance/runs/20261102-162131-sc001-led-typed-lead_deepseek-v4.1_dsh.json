@@ -1,0 +1,130 @@
+{
+  "case": "sc001-led-typed",
+  "executor": "lead/deepseek-v4.1/dsh",
+  "finishedAt": "2026-11-02T16:21:31",
+  "exitCode": 1,
+  "partial": false,
+  "pass": 21,
+  "fail": 2,
+  "blocked": 0,
+  "project": "sc001-led-blk",
+  "doc": "1e56ec91cd0bad4b",
+  "schDoc": "8124aea12d407530",
+  "stages": [
+    {
+      "stage": "kit-integrity",
+      "status": "PASS",
+      "detail": "20 份必需文档齐备；docs/README.md 链接有效；specs 两份一致；SKILL.md 引用全部存在"
+    },
+    {
+      "stage": "kit-portability",
+      "status": "PASS",
+      "detail": "文档无本机绝对路径"
+    },
+    {
+      "stage": "tool-decision-table",
+      "status": "PASS",
+      "detail": "127 行，点名工具全部可解析"
+    },
+    {
+      "stage": "installed-claims",
+      "status": "PASS",
+      "detail": "装机清单 22 项；决策表里所有『首选/已装』宣称均与之一致"
+    },
+    {
+      "stage": "decision-actionability",
+      "status": "FAIL",
+      "detail": "可执行 78/127 = 61.4%（<90%）；问题行示例： 让 DSH 本体直接进 EDA（参数无具体物、也无可用界面入口）; 窗口掉线、`windows` 为空（参数无具体物、也无可用界面入口）; 只有芯片图片要符号（参数无具体物、也无可用界面入口）"
+    },
+    {
+      "stage": "capability-boundary",
+      "status": "PASS",
+      "detail": "85 条边界，字段齐全且 status 合法"
+    },
+    {
+      "stage": "capability-sample",
+      "status": "PASS",
+      "detail": "85 通过 / 0 不合格"
+    },
+    {
+      "stage": "environment",
+      "status": "PASS",
+      "detail": "窗口在线 1 个，connector 1.9.1"
+    },
+    {
+      "stage": "schematic-gates",
+      "status": "PASS",
+      "detail": "sch drc passed"
+    },
+    {
+      "stage": "design-ir",
+      "status": "PASS",
+      "detail": "结果: 通过（0 error）"
+    },
+    {
+      "stage": "pcb-layout",
+      "status": "PASS",
+      "detail": "0 短路/0 重叠/0 出框"
+    },
+    {
+      "stage": "pcb-connectivity",
+      "status": "PASS",
+      "detail": "Connection Error 0"
+    },
+    {
+      "stage": "pcb-drc-clean",
+      "status": "FAIL",
+      "detail": "DRC passed=False，1 条违规：Netlist Error=1"
+    },
+    {
+      "stage": "pcb-dfm",
+      "status": "PASS",
+      "detail": "DFM ERROR 0"
+    },
+    {
+      "stage": "delivery",
+      "status": "PASS",
+      "detail": "Gerber=board-gerber.zip (10140 B)；钻孔=在 Gerber 包内（drilling.metallic/nonMetallic=true）；坐标=board-cpl.csv (1040 B)；BOM=6815 B)"
+    },
+    {
+      "stage": "no-oneoff-scripts",
+      "status": "PASS",
+      "detail": "无临时脚本调用"
+    },
+    {
+      "stage": "run-consistency",
+      "status": "PASS",
+      "detail": "22 个阶段结论一致（20261102-162030-sc001-led-typed-lead_deepseek-v4.1_dsh.json 与 20261102-162059-sc001-led-typed-lead_deepseek-v4.1_dsh.json）；两次均 0 BLOCKED，pass=20/fail=3"
+    },
+    {
+      "stage": "evidence-freshness",
+      "status": "PASS",
+      "detail": "全部文档（34 份，含 docs 子树；历史日志整份豁免）未出现未标注的作废数字（检查 7 类模式）"
+    },
+    {
+      "stage": "report-hygiene",
+      "status": "PASS",
+      "detail": "探针产物 0；与当前 23 阶段一致的真实运行 8 份（旧阶段集 8 份，仅作历史）"
+    },
+    {
+      "stage": "doc-coverage",
+      "status": "PASS",
+      "detail": "playbook/cases 引用的 39 个命令，决策表全部有对应行"
+    },
+    {
+      "stage": "claims-match",
+      "status": "PASS",
+      "detail": "HANDOVER 的 6 项能力声明与实测一致：boundaries=85, decision_actionable=78, decision_rows=127, playbook_steps=37, selftest_cases=46, stages=23"
+    },
+    {
+      "stage": "positive-goal",
+      "status": "PASS",
+      "detail": "规范产物 文档 27 个/playbooks 目录 5 个文件/acceptance 30 个/specs 9 个；SC 判据 6 条；三态语义由 run.ps1 保障（BLOCKED≠PASS，交付物查非空）；playbook 37 步全部命中现有命令；27 个 flag 全部存在；37 步做过取值类型校验；门禁脚本 12 个均可解析"
+    },
+    {
+      "stage": "negative-drift",
+      "status": "PASS",
+      "detail": "自建检查器 0 个（提字样 0 个均非实现）；日志审计：dump 0 / solve 0 / fill 1（fill 自带快照）；决策表 127 行"
+    }
+  ]
+}
