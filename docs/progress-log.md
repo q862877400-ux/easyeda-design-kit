@@ -134,3 +134,4 @@
 | 98 | 新增 `acceptance/pre-commit.ps1`（GAP-081）：提交前强制三件套，未预期 FAIL 即拦截；反例（GAP-999 缺字段）实测 exit 1 并点名问题 | 本会话两次带红灯提交的成因机械化 | 本轮 |
 | 99 | pre-commit 装成 git hook（`.githooks/pre-commit` + `core.hooksPath`）；反例：塞缺字段条目后直接 `git commit` 被拦、未产生提交 | 绕过不再可能（本仓库）| 本轮 |
 | 100 | **可移植性实测**（GAP-082）：副本跑三件套 45 PASS + **1 SKIP**（历史回测依赖 `../easyeda-auto`）/矩阵 16/16/静态 10-1-1；核心检查不依赖母目录，1 项依赖开发工作区 | 已写入 status.md 副本口径 | 本轮 |
+| 101 | 修边界状态与内容矛盾：GAP-006/032/061 原始段 open→resolved；分布改为 **open 29 / resolved 40 / accepted 13（82）**；两份文档数字同步 | 未加新判据（T381 留档）| 本轮 |

@@ -533,3 +533,8 @@ T025 docs/playbook-unseen-board.md
   矩阵 `16/16`、静态 `10 PASS / 1 FAIL / 1 BLOCKED`。**核心检查不依赖母目录**，但 `历史回测` 需要兄弟目录
   `../easyeda-auto` 作为夹具（脱离后诚实 SKIP，未被算作 PASS）。已写入 `docs/status.md` 的"怎么自己验"。
 - [ ] T379 **（待定）是否把历史回测夹具随 kit 分发**：需要评估体积与许可；不随包时应在文档标明"该项为开发期专有"。
+
+- [x] T380 **修正边界文件的状态与内容矛盾（3~5 条）**：`GAP-006`（标题已写"已更正：能力以类型化动作存在"）、
+  `GAP-032`/`GAP-061` 的原始段（各自已有"结案"/"续：解法"段）状态仍是 `open` ⇒ 改为 `resolved`。
+  实测分布：**open 29 / resolved 40 / accepted 13（共 82）**；`status.md` 与 `boundary-root-causes.md` 的 open 数字同步为 29。
+- [ ] T381 **（未做）**：加一条机械检查——标题含「已更正 / 结案 / 解法」而 status 仍为 `open` 的条目应判 FAIL（本轮先改数据，未加判据）。

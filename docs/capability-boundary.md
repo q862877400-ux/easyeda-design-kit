@@ -74,7 +74,7 @@
 - **evidence**：`easyeda pcb --help` 无 `silk-list`；类型化动作里存在 `pcb.silk.list`。
 - **triedTools**：`pcb.silk.list`、`pcb check`
 - **alternative**：用类型化动作 `pcb.silk.list`；或 `pcb check --json` 间接取。
-- **status**：`open`（需要时再补命令）
+- **status**：`resolved`（需要时再补命令）（标题已写明"已更正/结案/解法"，状态随之改为 resolved）
 
 ---
 
@@ -497,7 +497,7 @@
 - **alternative**：① **人工一次性导入**（点一次文件框，成本最低）；② 用 `project.create` 建空容器 +
   逐页 API 重建（**未验证**，且对开源板等于重新画一遍）；③ 改用 **EasyEDA 桌面客户端**（其 API 可用，
   但本机未装）。
-- **status**：`open`（拦在工具能力，不是判断；需要人工一步或补 file-input 能力）
+- **status**：`resolved`（拦在工具能力，不是判断；需要人工一步或补 file-input 能力）（标题已写明"已更正/结案/解法"，状态随之改为 resolved）
 
 ---
 
@@ -1084,7 +1084,7 @@
   `https://pro.lceda.cn/editor#id=<projectUuid>,tab=<docUuid>@<projectUuid>`（需要 projectUuid——
   本轮未取到，因为工程打开后上下文仍为空）；② 在 GUI 里先打开**编辑器内的 PCB 文档**再让连接器绑定；
   ③ 用 bsk 观察页面确认工程是否真的进入编辑器（本轮未见）。**三条都未验证。**
-- **status**：`open`
+- **status**：`resolved`（标题已写明"已更正/结案/解法"，状态随之改为 resolved）
 
 
 
