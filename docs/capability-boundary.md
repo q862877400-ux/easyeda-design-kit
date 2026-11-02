@@ -1794,3 +1794,21 @@
 - **alternative**：多窗口同时开着能省会话开销（第 91 轮用这招一次开了 5 个工程），但**只对验收（读）可用，对导出（写制品）不可用**——
   两者对窗口的要求不同，这条以前没分清。
 - **status**：`resolved`（已加显式拦截）
+
+---
+
+## GAP-088 验收报告无保留策略 → 证据目录越跑越乱，一致性判据被旧报告搅乱
+
+- **capability**：让"报告目录"保持可判定——旧阶段集归档后，`run-consistency` 不再把"版本差异"误报成"两次结论不一致"。
+- **evidence**（2026-11-01 第 96 轮，实测）：
+  1. 重跑五块板后 `acceptance/runs/` 累计 **32 份**（含 17/18/19 阶段旧报告与 23 阶段新报告）。
+     `run-consistency` 取"最近两份"时混进旧报告，报 **"两次运行的阶段集不同（门禁改过：18 vs 22 个阶段）"**——
+     **这是累积造成的误报，不是真的不一致**（同板连跑两次的实测结论完全一致）。
+  2. 新增 `acceptance/prune-runs.ps1`：按报告 JSON 的 `case` 字段分组，保留每 case 最新 3 份，其余移入 `runs/archive/`。
+     两个阶段都用**非递归**枚举 `runs/*.json`，archive 因此天然被排除在判据外。
+  3. 执行后：`runs/` **32 → 15 份**、`archive/` 17 份；`report-hygiene` 从"8 份 + 8 份旧"变为
+     **14 份 23 阶段真实运行、旧阶段集 0 份**；`run-consistency` PASS。
+- **triedTools**：`run.ps1`、`prune-runs.ps1`、`Get-ChildItem`、`Move-Item`
+- **alternative**：**仍未自动化**——脚本要手动跑。若长期不跑，目录会重新膨胀；建议每次大批重跑后执行一次
+  （`pwsh -NoProfile -File acceptance/prune-runs.ps1`）。是否挂进 `pre-commit` 未决定（它会移动文件，属改写而非检查）。
+- **status**：`resolved`（脚本可用；未自动执行）

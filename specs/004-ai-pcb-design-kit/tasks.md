@@ -669,3 +669,8 @@ T025 docs/playbook-unseen-board.md
   **关键条件**：`run-consistency` 要"同版本连跑两次"，因此每块板必须**单独开窗口连跑两次**；多窗口下验收可以，导出不行（GAP-087）。
 - [ ] T408 **（新）报告已累计 32 份**（今天新增 24 份），`run-consistency` 会因混入旧阶段集报告而误报"阶段集不同"。
   需要一个保留策略：每 case 只留最新 N 份（如 3 份）+ 其余移到 `runs/archive/`，否则证据目录会持续膨胀并把一致性判据搅乱。
+
+- [x] T408 **报告保留策略（GAP-088）**：新增 `acceptance/prune-runs.ps1`（按 `case` 字段分组，保留最新 3 份，其余归档；
+  支持 `-Keep N` 与 `-DryRun`）。实测 `runs/` **32 → 15**、`archive/` 17；
+  `report-hygiene` 从"8 新 + 8 旧"变为 **14 份 23 阶段、旧阶段集 0 份**，`run-consistency` 不再误报版本差异。
+- [ ] T409 **（未做）**：是否把 `prune-runs.ps1` 挂进常规流程（它移动文件，属改写，不宜放 `pre-commit` 的检查位）；目前需手动执行。
