@@ -12,6 +12,7 @@ param([string]$Cli = "$env:USERPROFILE\.local\bin\easyeda.exe")
 $ErrorActionPreference = "Stop"
 $AcceptDir = Split-Path -Parent $PSCommandPath
 $KitRoot = Split-Path -Parent $AcceptDir
+$RunPs1 = Join-Path $KitRoot 'acceptance\run.ps1'
 $run = Join-Path $AcceptDir 'run.ps1'
 $clean = Join-Path $AcceptDir 'fixtures\runlog-clean.txt'
 $drifted = Join-Path $AcceptDir 'fixtures\runlog-drifted.txt'
@@ -117,6 +118,12 @@ Assert-Case "report-hygiene → 只有旧阶段集报告判 BLOCKED" {
     '{ "case": "p", "executor": "lead/x", "stages": [ { "stage": "a", "status": "PASS", "detail": "x" } ] }' |
         Set-Content (Join-Path $d "acceptance\runs\old.json") -Encoding UTF8
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'report-hygiene').Status -eq 'BLOCKED'
+}
+# 断言（2026-11-01 新增）：`-Static` 模式必须**真的跳过板级检查**并在汇总里说明。
+# 反例：把板级调用缩进后，数阶段的正则曾把 22 读成 12 —— 同类"读错"必须能被钉住。
+Assert-Case "-Static 模式跳过板级检查并注明" {
+    $out = & $RunPs1 -Case 'sc001-usbc-typed' -Cli $Cli -Static *>&1 | Out-String
+    ($out -match '本模式不含 \d+ 项板级检查') -and ($out -notmatch '\[BLOCKED\]\s+pcb-layout')
 }
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-RunLog', $clean) 'positive-goal').Status -eq 'PASS'
 }
@@ -443,6 +450,8 @@ Write-Host ""
 Write-Host ("===== {0} PASS / {1} FAIL / {2} SKIP =====" -f $script:Pass, $script:Fail, $script:Skip)
 if ($script:Fail -gt 0) { exit 1 }
 exit 0
+
+
 
 
 
