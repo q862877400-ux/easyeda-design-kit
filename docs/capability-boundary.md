@@ -1989,3 +1989,22 @@
 - **alternative**：`pcb import-changes` 会把 43 个器件全灌进 PCB（历史事故 6→30 的真相就是这个）——
   **不是"修复"，是把板子变成另一种东西**。因此**不建议跑**。
 - **status**：`resolved`（成因已证；"不可达"重新表述为"结构性")
+
+### GAP-093 续：五块板 DRC 明细一致——**每块都只剩 1 条 Netlist Error，clearance 全为 0**
+
+- **capability**：把"DRC 不干净"这句话拆成可核查的分项，而不是一个 FAIL 了事。
+- **evidence**（2026-11-01，从 `acceptance/runs/` 的 23 阶段报告直接抽取，无需窗口）：
+
+  | 板 | 状态 | 明细 |
+  |---|---|---|
+  | `sc001-usbc-typed` | FAIL | `DRC passed=False，1 条违规：Netlist Error=1` |
+  | `sc001-led-typed` | FAIL | 同上 |
+  | `sc001-ldo-typed` | FAIL | 同上 |
+  | `sc001-pmos-typed`（buck）| FAIL | 同上 |
+  | `sc001-autodl-typed` | FAIL | 同上 |
+
+  ⇒ **五块板的 clearance / 间距类违规全部为 0**；唯一剩下的都是 `Netlist Error`，即"PCB 只实现了原理图的一部分"（GAP-093 已证：PCB 6 器件 vs SCH 43 器件）。
+- **triedTools**：`run.ps1`（报告）、`Get-ChildItem`、`ConvertFrom-Json`
+- **alternative**：**不建议**把 `pcb-drc-clean` 改成"忽略 Netlist Error"来让门禁变绿——
+  那会把"板与图不一致"从判据里抹掉。正确做法是**在结论页把两件事分开写**：clearance 0 条（可制造）、Netlist 1 条（设计范围所限）。
+- **status**：`resolved`

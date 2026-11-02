@@ -76,3 +76,7 @@ pwsh -NoProfile -File acceptance/mistake-matrix.ps1  # 期望：16/16
 
 
 
+
+> **关于 DRC**：五块自造板的 clearance / 间距类违规**全部为 0**；每块剩余的 1 条都是 Netlist Error，
+> 原因是 PCB 只实现了整份原理图的一部分（实测 PCB 6 器件 vs SCH 43 器件）。这是**设计范围**问题，不是几何不合格。
+
