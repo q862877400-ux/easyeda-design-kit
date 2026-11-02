@@ -32,19 +32,11 @@ $live['decision_rows'] = $rows.Count
 
 # 可执行行：与 decision-actionability 同口径（具体物 或 可核对界面入口 + 已装扩展）
 $ie = @((Get-Content $iePath -Raw | ConvertFrom-Json).installed)
-$act = 0
-foreach ($r in $rows) {
-    $cells = $r.Split('|')
-    if ($cells.Count -lt 4) { continue }
-    $tool = $cells[2].Trim()
-    $params = $cells[3].Trim()
-    $concrete = ($params -match '--[a-zA-Z]') -or ($params -match '`[^`]+`') -or ($params -match '\{[^}]*\}')
-    $ui = ($params -match '→|菜单|面板|对话框|右键|工具栏|弹窗')
-    $installed = @($ie | Where-Object { $tool -like "*$_*" -or $_ -like "*$tool*" }).Count -gt 0
-    $blockedRow = ($params -match '未装') -and ($params -notmatch '替代|改用|命令|pcb ')
-    if (($concrete -or ($ui -and $installed)) -and -not $blockedRow) { $act++ }
-}
-$live['decision_actionable'] = $act
+# 可执行行：不再自己算，直接问门禁（唯一真源）。
+# 反例（2026-11-01）：这里曾有第三份内联逻辑，与 decision-actionability 的 44 对不上，claims 写 42、门禁算 44。
+$gateOut = & pwsh -NoProfile -File (Join-Path $RepoRoot 'acceptance\run.ps1') -Case sc001-usbc-typed -Cli "$env:USERPROFILE\.local\bin\easyeda.exe" -Static 2>&1 | Out-String
+$mm = [regex]::Match($gateOut, '可执行 (\d+)/(\d+)')
+$live['decision_actionable'] = if ($mm.Success) { [int]$mm.Groups[1].Value } else { 0 }
 
 $pbSteps = 0
 foreach ($pf in (Get-ChildItem (Join-Path $RepoRoot 'playbooks') -File -Filter '*.playbook.json' -ErrorAction SilentlyContinue)) {

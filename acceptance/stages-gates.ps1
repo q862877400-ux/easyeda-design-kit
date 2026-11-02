@@ -8,6 +8,27 @@
 # ══════════════════════════════════════════════════════════════════════
 # 正向：是不是符合目标
 # ══════════════════════════════════════════════════════════════════════
+# ── 共享：决策表"可执行行"计数（2026-11-01）──────────────────────────────────────
+# 反例：这段逻辑曾在 decision-actionability 与 claims-match 里**各写一份**，一个算 44、一个算 42，互相对抗。
+# 同一事实只能有一处实现。
+function Get-DecisionActionableCount {
+    param([string[]]$Rows, [string[]]$Installed)
+    $act = 0
+    foreach ($r in $Rows) {
+        $cells = $r.Split('|')
+        if ($cells.Count -lt 4) { continue }
+        $tool = $cells[2].Trim(); $params = $cells[3].Trim()
+        $concrete = ($params -match '--[a-zA-Z]') -or ($params -match '`[^`]+`') -or
+                    ($params -match '\d+(\.\d+)?\s*(mil|mm|um|nm|V|A|W|%|kHz|MHz|s|ms|dB)') -or
+                    ($params -match '\.[a-z]{2,5}\b') -or ($params -match '\{[^}]*\}')
+        $ui = ($params -match '→|菜单|面板|对话框|右键|工具栏|弹窗')
+        $isInst = @($Installed | Where-Object { $tool -like "*$_*" -or $_ -like "*$tool*" }).Count -gt 0
+        $blocked = ($params -match '未装') -and ($params -notmatch '替代|改用|命令|pcb ')
+        if (($concrete -or ($ui -and $isInst)) -and -not $blocked) { $act++ }
+    }
+    return $act
+}
+
 function Test-PositiveGoal {
     $fail = @(); $note = @()
 
@@ -585,17 +606,7 @@ function Test-ClaimsMatch {
     $rows = @(Get-Content $tbl | Where-Object { $_ -match '^\|' -and $_ -notmatch '^\|\s*-+' -and $_ -notmatch '情境' })
     $live['decision_rows'] = $rows.Count
     $ie = @((Get-Content (Join-Path $script:AuditRoot 'docs\installed-extensions.json') -Raw | ConvertFrom-Json).installed)
-    $act = 0
-    foreach ($r in $rows) {
-        $cells = $r.Split('|'); if ($cells.Count -lt 4) { continue }
-        $tool = $cells[2].Trim(); $params = $cells[3].Trim()
-        $concrete = ($params -match '--[a-zA-Z]') -or ($params -match '`[^`]+`') -or ($params -match '\{[^}]*\}')
-        $ui = ($params -match '→|菜单|面板|对话框|右键|工具栏|弹窗')
-        $inst = @($ie | Where-Object { $tool -like "*$_*" -or $_ -like "*$tool*" }).Count -gt 0
-        $bad = ($params -match '未装') -and ($params -notmatch '替代|改用|命令|pcb ')
-        if (($concrete -or ($ui -and $inst)) -and -not $bad) { $act++ }
-    }
-    $live['decision_actionable'] = $act
+    $live['decision_actionable'] = Get-DecisionActionableCount -Rows $rows -Installed $ie
     $pbSteps = 0
     foreach ($pf in (Get-ChildItem (Join-Path $script:AuditRoot 'playbooks') -File -Filter '*.playbook.json' -ErrorAction SilentlyContinue)) {
         try { $pj = Get-Content $pf.FullName -Raw | ConvertFrom-Json; $pbSteps += @($pj.steps).Count } catch { }
@@ -670,6 +681,7 @@ function Test-ReportHygiene {
         Add-Result "report-hygiene" "BLOCKED" "没有任何与当前 $curStages 阶段一致的真实运行（$($stale.Count) 份都是旧阶段集）——需重跑板子，当前无窗口"
     }
 }
+
 
 
 
