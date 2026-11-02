@@ -1934,3 +1934,22 @@
   `cooperate sync` 状态拒绝（`bsk_session start` / `observe` 可用，点击不可用）；chrome-devtools MCP 因
   `executablePath` 缺空格仍无法启动。故本结论来自**官方公开工艺数据换算**，不是下单检查器的输出——已明确标注。
 - **status**：`open`（换算完成；下单检查器未跑成）
+
+### GAP-090 续：**实测把 DRC 从 3 条修到 1 条**（两条 clearance 全清）
+
+- **capability**：用 `pcb track-delete` + `pcb track` 做**收窄式改线**，把 DRC 的 clearance 违规消掉。
+- **evidence**（2026-11-01 实测，板 `sc001-usbc-blk`）：
+
+  | 步骤 | 操作 | DRC 违规数 |
+  |---|---|---|
+  | 起点 | — | **3**（SMD Pad to Track 5.1 mil、Slot Region 11.7 mil、Netlist Error）|
+  | 1 | 收窄 `D13_N4` 那段（Slot Region 相邻，id `806107f32c7bec16`，w 10→6，坐标**原样抄** track-list）| **2**（Slot Region 消失）|
+  | 2 | 收窄贴 `J5_A6` 的那段（id `66e1a73c04e80599`，w 10→6）| **1**（只剩 Netlist Error）|
+
+  做法要点：**收窄比挪线安全**——clearance 是边到边，线宽减 4 mil 直接换来 2 mil 间隙，且不改变走线路径、不会撞到相邻网络。
+  所有坐标**直接从 `track-list` 取值回填**（吃过 GAP-091 的 10 倍单位亏）。
+  修后已 `pcb save` 并导出备份 `.work\usbc-drc-fixed.epro2`。
+- **triedTools**：`pcb track`、`pcb track-delete`、`pcb track-list`、`pcb drc`、`pcb save`、`project export-source`
+- **alternative**：**Netlist Error 未处理**——DRC 只说"PCB 与原理图网表不一致，点 Import Changes 看差异"，没有给出差异明细；
+  唯一已知的查看/修复途径是 `pcb import-changes`，而这块板正是**历史上跑它导致器件 6→30** 的那块。故**停下来等授权**。
+- **status**：`open`（clearance 已清；Netlist Error 待授权处理）

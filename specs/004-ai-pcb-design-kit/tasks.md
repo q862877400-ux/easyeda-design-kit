@@ -707,3 +707,9 @@ T025 docs/playbook-unseen-board.md
   ⇒ 结论：**DRC 0 比"能打样"更严**，本项目唯一真正卡打样的是第 ② 条（差 2.8 µm）。
 - [ ] T417 **（未完成）跑通"嘉立创下单检查"**：需 GUI 点击，当前 bsk click 被 `cooperate sync` 拒绝、
   chrome-devtools 起不来；要么修 bsk 协作状态，要么修 chrome-devtools 的 `executablePath`（需宿主重启）。
+
+- [x] T418 **实测把 DRC 3 → 1（GAP-090 续）**：收窄式改线（w 10→6）两条——
+  `D13_N4` 段消掉 Slot Region 违规、`66e1a73c04e80599` 段消掉 5.1 mil 违规；**只剩 Netlist Error**。
+  坐标一律从 `track-list` 原样回填（避开 GAP-091 单位坑）；已保存并导出 `.work\usbc-drc-fixed.epro2`。
+- [ ] T419 **（需授权）Netlist Error**：DRC 无差异明细，唯一途径是 `pcb import-changes`；
+  该板历史上跑它会 6→30 器件。**等业主授权或指定可回滚方案**。
