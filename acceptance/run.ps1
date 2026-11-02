@@ -92,6 +92,7 @@ function Test-KitIntegrity {
         "docs\prior-art-map.md"
         "docs\boundary-index.md"
         "docs\boundary-root-causes.md"
+        "docs\README.md"
     )
     $missing = @()
     foreach ($rel in $required) {
@@ -99,7 +100,22 @@ function Test-KitIntegrity {
         if (-not (Test-Path $p)) { $missing += $rel }
     }
     if ($missing.Count -eq 0) {
-        Add-Result "kit-integrity" "PASS" "$($required.Count) 份必需文档齐备"
+        # 入口文档的链接必须全部有效（反例：改文件名后 docs/README.md 会留下死链，没人发现）
+        $idxPath = Join-Path $script:RepoRoot 'docs\README.md'
+        $badLinks = @()
+        if (Test-Path $idxPath) {
+            $t = Get-Content $idxPath -Raw
+            foreach ($m in [regex]::Matches($t, '\]\((\.\.?/[^)]+|[A-Za-z0-9_\-\./]+?\.md|[A-Za-z0-9_\-\./]+/)\)')) {
+                $rel = $m.Groups[1].Value
+                $p = Join-Path (Join-Path $script:RepoRoot 'docs') $rel
+                if (-not (Test-Path $p)) { $badLinks += $rel }
+            }
+        }
+        if ($badLinks.Count -gt 0) {
+            Add-Result "kit-integrity" "FAIL" "$($required.Count) 份齐备，但 docs/README.md 有 $($badLinks.Count) 个死链： $(($badLinks | Select-Object -First 3) -join ', ')"
+        } else {
+            Add-Result "kit-integrity" "PASS" "$($required.Count) 份必需文档齐备；docs/README.md 链接全部有效"
+        }
     } else {
         Add-Result "kit-integrity" "FAIL" "缺 $($missing.Count)/$($required.Count) 份： $($missing -join ', ')"
     }
