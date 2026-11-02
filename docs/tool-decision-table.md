@@ -231,3 +231,4 @@
 | 挪器件前要断开原连线 | `sch disconnect` | `--pin <位号:脚>`；断开后再 `sch modify` 挪位，最后 `sch connect` 重连（不先断会留悬空线） |
 | 查原理图布局是否过密/重叠 | `sch layout-lint` | 跑 `sch layout-lint --strict`：只读，看 marker 包络与是否出图框；块放置前先跑一次 |
 | 板子与原理图不同步 | `board rebind` | 原理图改了器件/封装后把 PCB 重新绑定；绑定后仍需 `pcb import-changes` |
+| 删掉某条走线（重布/改线） | `pcb track-delete` | 按 id 或 `--net <网名>` 批量删；删完要 `pcb pour-rebuild` 再 `pcb drc` |

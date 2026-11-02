@@ -712,9 +712,11 @@ function Test-DocCoverage {
             } catch { }
         }
     }
-    $caseDir = Join-Path $script:AuditRoot 'acceptance\cases'
-    if (Test-Path $caseDir) {
-        foreach ($cf in (Get-ChildItem $caseDir -File -Filter '*.md' -ErrorAction SilentlyContinue)) {
+    # 2026-11-01 扩面：phases/*.md 也是"照着做"的文档，同样会让命令溜出决策表（实测漏了 pcb track-delete）。
+    $scanDirs = @((Join-Path $script:AuditRoot 'acceptance\cases'), (Join-Path $script:AuditRoot 'docs\phases'))
+    foreach ($sd in $scanDirs) {
+        if (-not (Test-Path $sd)) { continue }
+        foreach ($cf in (Get-ChildItem $sd -File -Filter '*.md' -ErrorAction SilentlyContinue)) {
             foreach ($m in [regex]::Matches((Get-Content $cf.FullName -Raw), '`((?:pcb|sch|project|daemon|doc|library|board)\s+[a-z][a-z0-9-]+)[^`]*`')) {
                 $cited += $m.Groups[1].Value
             }
@@ -729,3 +731,4 @@ function Test-DocCoverage {
         Add-Result "doc-coverage" "FAIL" "$($missing.Count)/$($cited.Count) 个命令决策表没有行： $(($missing | Select-Object -First 3) -join ', ')"
     }
 }
+
