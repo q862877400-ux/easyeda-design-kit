@@ -562,3 +562,9 @@ T025 docs/playbook-unseen-board.md
   （`sch drc` / `daemon health` / `pcb via-stitch` / `sch block-apply` …），参数列也有真实内容，只是被"未装（本机未安装该扩展）"
   的残留文字连累——**同一处批量误标第二次清理**。已把 56/111 同步到 sc-evidence / status / decision-gaps / 决策表四处。
   至此误标清理完毕：18 → 44 → **56**，全是修正错误造成的，没有放宽判据。
+
+- [x] T386 **剩余行判定完成：可执行 56 → 62/111 = 55.9%**。逐条核对后给 7 行补上已验证的 CLI 替代
+  （`pcb mount-holes` / `pcb power-planes` / `pcb pour`+`pcb fill` / `pcb drc-rules-set` / `pcb config`+`pcb drc-rules` /
+  `pcb report` / `pcb silk-netnames`），并清掉 2 处误标（`JsPCB自动布线` 已装、`pcb_autorouter.exe` 是外部工具）。
+- [x] T387 **SC-005 上限已确定**：剩 31 行中 A 类 AI 助手 18、B 类 GUI 专用、C 类仿真 5 —— **均无 CLI 等价物**。
+  ⇒ 我这边能到的上限就是 **62/111 ≈ 55.9%**，**90% 在当前工具链下不可达**，与 SC-A（DRC 0）同性质。
