@@ -608,13 +608,26 @@ function Test-ReportHygiene {
             elseif (-not [string]::IsNullOrWhiteSpace([string]$j.executor) -and $blk -eq 0) { $real += $r.Name }
         } catch { $junk += "$($r.Name)（无法解析）" }
     }
-    $fail = @()
-    if ($junk.Count -gt 0) { $fail += "探针产物 $($junk.Count) 份： $(($junk | Select-Object -First 3) -join ', ')" }
-    if ($real.Count -lt 5) { $fail += "真实运行仅 $($real.Count) 份 < 板数 5" }
-    if ($fail.Count -eq 0) {
-        Add-Result "report-hygiene" "PASS" "探针产物 0 份；真实运行 $($real.Count) 份（≥ 板数 5）"
+    # 阶段集一致性（2026-11-01）：旧报告（阶段数 ≠ 当前）**不算当前证据**——否则"报告入库"会永远靠旧账过关。
+    $curStages = @(Select-String -Path (Join-Path $script:RepoRoot 'acceptance\run.ps1') -Pattern '^Test-[A-Za-z]+$').Count
+    $fresh = @(); $stale = @()
+    foreach ($name in $real) {
+        try {
+            $j = Get-Content (Join-Path $dir $name) -Raw | ConvertFrom-Json
+            if (@($j.stages).Count -eq $curStages) { $fresh += $name } else { $stale += $name }
+        } catch { $stale += $name }
+    }
+    if ($junk.Count -gt 0) {
+        Add-Result "report-hygiene" "FAIL" ("探针产物 $($junk.Count) 份： " + (($junk | Select-Object -First 3) -join ', '))
+        return
+    }
+    if ($fresh.Count -ge 5) {
+        Add-Result "report-hygiene" "PASS" "探针产物 0；与当前 $curStages 阶段一致的真实运行 $($fresh.Count) 份（旧阶段集 $($stale.Count) 份，仅作历史）"
+    } elseif ($fresh.Count -gt 0) {
+        Add-Result "report-hygiene" "FAIL" "与当前 $curStages 阶段一致的真实运行仅 $($fresh.Count) 份 < 板数 5（旧阶段集 $($stale.Count) 份）"
     } else {
-        Add-Result "report-hygiene" "FAIL" ($fail -join '; ')
+        Add-Result "report-hygiene" "BLOCKED" "没有任何与当前 $curStages 阶段一致的真实运行（$($stale.Count) 份都是旧阶段集）——需重跑板子，当前无窗口"
     }
 }
+
 

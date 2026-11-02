@@ -110,6 +110,14 @@ Assert-Case "report-hygiene → 探针垃圾报告判 FAIL" {
         Set-Content (Join-Path $d "acceptance\runs\junk.json") -Encoding UTF8
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'report-hygiene').Status -eq 'FAIL'
 }
+# 断言（2026-11-01 新增）：只有**旧阶段集**报告时判 BLOCKED（旧账不算当前证据，但也不是失败）。
+Assert-Case "report-hygiene → 只有旧阶段集报告判 BLOCKED" {
+    $d = Join-Path $probe "runsstale"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "acceptance\runs") | Out-Null
+    '{ "case": "p", "executor": "lead/x", "stages": [ { "stage": "a", "status": "PASS", "detail": "x" } ] }' |
+        Set-Content (Join-Path $d "acceptance\runs\old.json") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'report-hygiene').Status -eq 'BLOCKED'
+}
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-RunLog', $clean) 'positive-goal').Status -eq 'PASS'
 }
 Assert-Case "kit 自身 → negative-drift PASS" {
