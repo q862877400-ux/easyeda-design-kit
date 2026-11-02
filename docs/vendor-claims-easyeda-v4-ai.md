@@ -53,7 +53,7 @@ faster-whisper `medium` 在 GPU 上转写**全片**，4079 行，覆盖 `[00:00]
 | 2 | 三条接入之一：**CLI** | `easyeda actions` = **169** 条类型化动作；本会话用它造了 2 块板并全绿 | **✅ 已验证** |
 | 3 | 三条接入之一：**MCP（客户端内置 MCP Service）** | 装机清单（`docs/installed-extensions.json`）**不含任何 MCP 扩展**；本机监听端口只有 60832(easyeda-agent 守护)、3080(DSH Web)、8000/8080/8081(OXR)，**无 EDA MCP 服务** | **❌ 本机不具备** |
 | 4 | 三条接入之一：**API-RUN Gateway** | 扩展 `API Gateway` 在已装 22 个之内 | **◐ 已装、未实跑** |
-| 5 | "AI 生成原理图（多图页/器件/网络）" | `sch block-apply` 实跑：`sc001-led-typed` 2 件/3 网、`sc001-ldo-typed` 4 件/3 网，`reconcile ✓` 且两板验收 16 PASS / 0 FAIL / 0 BLOCKED | **✅ 已验证（本会话）** |
+| 5 | "AI 生成原理图（多图页/器件/网络）" | `sch block-apply` 实跑：`sc001-led-typed` 2 件/3 网、`sc001-ldo-typed` 4 件/3 网，`reconcile ✓` 且两板验收 16 PASS / 0 FAIL / 0 BLOCKED（**当时** 16 阶段口径） | **✅ 已验证（本会话）** |
 | 6 | "AI 自动布局与布线" | `pcb layout-lint` 100/100；DSN→`pcb_autorouter` 实跑 **335/335**（练习板）/ **7/7**（LDO 板）连通 | **✅ 已验证（本会话）** |
 | 7 | "AI 差分自动布线" | CLI 有 `pcb diff-pair`（差分对约束）、`pcb eq-group`（等长组）、`pcb report`（含 diff-pair skew）；布线器文档称原生支持差分对 | **◐ 能力在，未实跑差分板** |
 | 8 | "复用模块 AI 助手（CBB）" | 装机清单**无**该扩展；扩展广场有（OSHWHub v1.11.0） | **❌ 未装** |
@@ -85,3 +85,4 @@ faster-whisper `medium` 在 GPU 上转写**全片**，4079 行，覆盖 `[00:00]
 - **差分自动布线**：只有约束命令与厂商文档，**未在差分板上实跑**。
 - **文生原理图（compose 路线）**：我们用的是 `block-apply`（块库），`sch compose` 的
   schemaVersion:1 组合数据**未实跑**。
+

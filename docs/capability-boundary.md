@@ -725,7 +725,7 @@
   在默认 grid 下确有 **3 处重叠**（31×11 / 21×11 / 17×11）；
   但改用 **`--spacing 220 --per-row 3`** 后：`sch clusters --strict` → **6 组 0 重叠 / 0 出图纸**，
   网表 `reconcile ✓`，随后 `pcb import-changes` 6 件 verified、DSN→`pcb_autorouter` **15/15 连通**、
-  DFM **ERROR=0**、验收 **16 PASS / 0 FAIL / 0 BLOCKED**。
+  DFM **ERROR=0**、验收 **16 PASS / 0 FAIL / 0 BLOCKED**（**当时** 16 阶段口径；现为 18 PASS / 1 FAIL）。
   → 同样是 6 件，USB-C 块（含 12 marker 的 16P 连接器）放不下，而全小封装的块放得下。
   **因此 GAP-042 的「919×672 vs 1170×627 差 45 mil」只能代表 `usbc_ufp_power_or` 这一种块**；
   并且当时多次重试被拒还叠加了 GAP-043（按页缓存的"放不下"判定）。
@@ -816,7 +816,7 @@
 ## GAP-049 GAP-047 已解：USB-C 六件块**能**在 A4 上全绿；解在多页污染、NC 语法与 destagger 半途失败
 
 - **capability**：把 `usbc_ufp_power_or`（16P 连接器 + ESD + TVS + 肖特基 + 双 CC）做成一块过验收的板。
-- **evidence**（2026-10-31，`sc001-usbc-typed` 实测，验收 **16 PASS / 0 FAIL / 0 BLOCKED**）：
+- **evidence**（2026-10-31，`sc001-usbc-typed` 实测，验收 **16 PASS / 0 FAIL / 0 BLOCKED**，**当时** 16 阶段口径）：
   最终配方 = `--spacing 220 --per-row 3`（能进框）+ 补 `J:A6 → USB_HOST_DP`（reconcile 7/7 才成立）
   + 把 ESD 挪到 (350,700) 并给同侧三个标签不同桩长（18/96/174）
   + `sch no-connect --designator J --pin A8,B8`（SBU 两脚按设计悬空，需显式 NC）。
@@ -1245,14 +1245,14 @@
 
 ---
 
-## GAP-069 证据文档里的过期数字**无人看守**：`selftest 36 PASS` 写了两周没人发现
+## GAP-069 证据文档里的过期数字**无人看守**：自测项数写错两周没人发现（**当时**写 36，实为 46）
 
 - **capability**：让"证据新鲜"成为机械检查，而不是靠我记性。
 - **evidence**（2026-11-01 实测）：
   1. 三份文档同时残留已作废的数字：`executor-crosscheck.md`（16 PASS×6、36 PASS、107 行）、
      `HANDOVER.md`（16 PASS×2、36 PASS×2）、`README.md`（36 PASS）。真实值已是 38 PASS / 111 行 / 16.2%。
   2. 新阶段 `evidence-freshness` 上线后**立刻又抓到 2 处**我上一轮漏改的：
-     `executor-crosscheck.md:135` 的「107 行」、`sc-evidence.md:11` 的「99.1%」。
+     `executor-crosscheck.md:135` 的「107 行」（**当时**值）、`sc-evidence.md:11` 的「99.1%」（**旧口径**）。
   3. 机制：对四份证据文档扫描 6 类**已作废取值**；出现即 FAIL，带「当时/历史/旧口径/此前/作废/口径更正」的行豁免
      （那是刻意的历史引用，删掉等于抹掉"口径怎么变的"）。
   4. 正反例都验过：无标注 → `FAIL … 出现已作废的「selftest 36 PASS」（现为 38）`；加 `（**当时**口径）` → PASS。

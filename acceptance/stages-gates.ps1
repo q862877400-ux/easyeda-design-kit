@@ -488,18 +488,21 @@ function Test-EvidenceFreshness {
     # 反例（2026-11-01）：HANDOVER 与 executor-crosscheck 长期写「selftest 36 PASS」「99.1%」「107 行」，
     # 而真实值是 38 / 16.2% / 111 行——数字靠记性维护必然过期，且过期时没人报错。
     # 这里机械检查：**已被取代的取值**不得在正文里无标注出现；带「当时/历史/旧口径/此前/作废」的行豁免。
-    $docs = @('docs\HANDOVER.md', 'docs\executor-crosscheck.md', 'README.md', 'docs\sc-evidence.md')
+    # 2026-11-01 扩面：原来只扫 4 份，其余 20+ 份文档里的作废数字无人看。现在扫 docs 下全部 .md + 根 README。
+    $docs = @('README.md') + @(Get-ChildItem (Join-Path $script:AuditRoot 'docs') -Recurse -File -Filter '*.md' -ErrorAction SilentlyContinue |
+        ForEach-Object { $_.FullName.Substring($script:AuditRoot.Length).TrimStart('\') })
     $stale = @{
         'selftest 36 PASS' = '现为 38'
         '36 PASS / 0 FAIL' = '现为 38 PASS / 0 FAIL'
         '99.1%'            = '现为 16.2%（可执行率口径已收紧）'
         '106/107'          = '现为 110/111 计数 / 18 可执行'
         '107 行'           = '现为 111 行'
-        '16 PASS / 0 FAIL / 0 BLOCKED' = '现为 18 PASS / 1 FAIL / 0 BLOCKED（19 阶段）'
+        '16 PASS / 0 FAIL / 0 BLOCKED' = '现为 18 PASS / 1 FAIL / 0 BLOCKED（22 阶段）'
     }
     $exempt = '当时|历史|旧口径|此前|作废|口径更正'
     $hits = @()
     foreach ($rel in $docs) {
+        if ($rel -match 'progress-log\.md$') { continue }   # 历史日志只增不改，整份豁免
         $p = Join-Path $script:AuditRoot $rel
         if (-not (Test-Path $p)) { continue }
         $ln = 0
@@ -512,7 +515,7 @@ function Test-EvidenceFreshness {
         }
     }
     if ($hits.Count -eq 0) {
-        Add-Result "evidence-freshness" "PASS" "四份证据文档未出现未标注的作废数字（检查 $(($stale.Keys).Count) 类模式）"
+        Add-Result "evidence-freshness" "PASS" "全部文档（$($docs.Count) 份，含 docs 子树；历史日志整份豁免）未出现未标注的作废数字（检查 $(($stale.Keys).Count) 类模式）"
     } else {
         Add-Result "evidence-freshness" "FAIL" "$($hits.Count) 处过期数字： $(($hits | Select-Object -First 3) -join '; ')"
     }
@@ -629,6 +632,9 @@ function Test-ReportHygiene {
         Add-Result "report-hygiene" "BLOCKED" "没有任何与当前 $curStages 阶段一致的真实运行（$($stale.Count) 份都是旧阶段集）——需重跑板子，当前无窗口"
     }
 }
+
+
+
 
 
 
