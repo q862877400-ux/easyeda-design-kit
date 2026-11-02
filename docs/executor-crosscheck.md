@@ -3,11 +3,10 @@
 > **口径更正（2026-10-31，外部审计后）。** 本文件里 2026-10-31 之前出现的「16 PASS / 0 FAIL / 0 BLOCKED」
 > 是**旧 16 阶段口径**的结果——那套判据只验 `Connection Error`，不验 DRC 其他分类。
 > 加入第 17 阶段 `pcb-drc-clean` 后，五块板实测均为 16 PASS / 1 FAIL；**现为 19 阶段 → 18 PASS / 1 FAIL**。
-> **当前口径快照（2026-11-01，第 49 轮）**：门禁 **19 阶段**；完整运行一块板 **18 PASS / 1 FAIL / 0 BLOCKED**（FAIL = `pcb-drc-clean`）；
-> `selftest` **38 PASS / 0 FAIL**；`mistake-matrix` **16/16**；静态 acceptance **8 PASS / 1 FAIL / 10 BLOCKED**（FAIL = `decision-actionability` 18/111）；
-> 边界 **66 条**（open 28 → 7 根因）；决策表 **111 行**（可执行 18 行，其余为未装扩展目录）；必需文档 **18 份**。
-> 历史记录保留原样（它们在当时的口径下是真的），当前真相见 `docs/sc-evidence.md` 的「状态更正」一节
-> 与 `acceptance/runs/` 下入库的 per-board 报告。
+> **当前口径快照（2026-11-02，第 107 轮）**：门禁 **23 阶段**；完整运行一块板 **21 PASS / 2 FAIL / 0 BLOCKED**（FAIL = decision-actionability + pcb-drc-clean）；
+> selftest **46 PASS / 0 FAIL**；mistake-matrix **16/16**；静态 acceptance **12 PASS / 1 FAIL / 0 BLOCKED**；
+> 边界 **92 条**；决策表 **127 行**（可执行 78 行）；必需文档 **27 份**；报告 **15 份**（23 阶段，旧阶段集已归档）。
+> **DRC 分项**：五块自造板 clearance/间距违规 **0 条**；每块剩余 1 条 Netlist Error 属结构性（PCB 只实现整份原理图的一部分）。
 
 
 **判据原文**：「至少**一个不同模型**（或不同 harness）复跑其中一块板并通过，证明结果不依赖特定执行者。」

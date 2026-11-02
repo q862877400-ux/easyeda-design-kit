@@ -2029,3 +2029,21 @@
   ③ 是否为**导入工程**特有（`client`/`editVersion` 差异，外部板来自不同的编辑器实例）。
   下一步应查 ②（`pcb.components.list --includePads` 找无封装/无焊盘器件）。
 - **status**：`open`（假设已证否；候选已收窄）
+
+---
+
+## GAP-094 "当前口径快照"这类**散文承诺**没有任何检查，可以和同一文件的 claims 行自相矛盾
+
+- **capability**：找出"数字层被看住、文字层没人看"的残留。
+- **evidence**（2026-11-01 第 107 轮，扫描 45 份文档）：
+  1. `docs/HANDOVER.md` 与 `docs/executor-crosscheck.md` 的「当前口径快照」块写
+     **19 阶段 / 18 PASS / 1 FAIL / 38 PASS 自测 / 8 PASS 静态 / 66 条边界 / 111 行**（均过期），
+     而**同一个文件**下面的 claims 行已是 **23 阶段 / 92 条 / 127 行 / 78 可执行 / 46 自测**——
+     **同一份文档自相矛盾，且没有任何门禁比较这两处。**
+  2. `docs/decision-gaps.md` 里 SC-005 的百分比写 **60.7%**（现为 **61.4% = 78/127**）。
+  3. 已把两处快照块重写为当前实测值，并加入 **DRC 分项**一句（clearance 0 / 结构性 netlist）。
+- **triedTools**：`Select-String`、`Get-Content`、`Set-Content`、`run.ps1 -Static`
+- **alternative**：**检查未落地**。尝试在 `claims-match` 内加"快照块必须含 claims 各字段"的校验，
+  第一版只查数字出现（块里别处的 `23` 会误满足），第二版改用上下文模式时**改坏了文件**（按行号替换时把花括号配对弄错），
+  已 `git checkout` 回滚。**改为记成 T425 待做**，不在本轮强行加阶段。
+- **status**：`open`（文档已更正；机械检查待做）
