@@ -656,3 +656,9 @@ T025 docs/playbook-unseen-board.md
   平台正确地产出 GDD 钻孔图而无 `.drl`。是 `delivery` 判据要求 `metallic && nonMetallic` 才判过，对无 NPTH 孔的板不可能满足。
   改为"至少一类钻孔证据"后 `delivery` **PASS**；LED 两次连跑后 **21 PASS / 2 FAIL / 0 BLOCKED**。
   **五块板至此全部只有两项已知 FAIL**（`decision-actionability`、`pcb-drc-clean`），BLOCKED=0。
+
+- [x] T406 **三块板补齐交付物（单窗口逐块）+ 多窗口陷阱机械化（GAP-087）**：
+  3 窗口下三块板导出 **ok=0/fail=3**；改单窗口后全部成功（ldo 11,469/1,944/7,014 B、buck 16,136/2,882/7,110 B、autodl 14,662/2,116/6,885 B）。
+  `export-delivery.ps1` 已加前置检查：>1 窗口直接 BLOCKED 并 exit 2。
+  三块板验收现均为 **20 PASS / 2 FAIL / 1 BLOCKED**（BLOCKED = `run-consistency` 需同版本连跑两次）。
+- [ ] T407 **（下一步）三块板各再跑一次**以清掉 `run-consistency` 的 BLOCKED（需每块单独开窗口）。

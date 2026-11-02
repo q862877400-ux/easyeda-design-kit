@@ -26,6 +26,22 @@ $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+# 前置检查（2026-11-01 实测，有反例）：**同时开着多个 EDA 窗口时，三条导出会全部失败且只报 "gerber FAIL"**——
+# 看不出原因。反例：同三块板（ldo/buck/autodl）在 3 个窗口下 ok=0/fail=3；关到只剩 1 个窗口后立刻全部成功
+# （ldo：gerber 11,469 B / cpl 1,944 B / bom 7,014 B）。这里显式拦下，避免把"多窗口"误判成"导出坏了"。
+$__w = (& $Cli daemon health 2>$null | Out-String)
+$__i = $__w.IndexOf("{")
+if ($__i -ge 0) {
+    try {
+        $__d = $__w.Substring($__i) | ConvertFrom-Json
+        $__n = if ($__d.found) { @($__d.found.raw.windows).Count } else { 0 }
+        if ($__n -gt 1) {
+            Write-Host "[BLOCKED] 当前有 $__n 个 EDA 窗口；导出在有多个窗口时会静默失败。请只保留目标工程一个窗口后重试。"
+            exit 2
+        }
+    } catch { }
+}
+
 
 function Call-Action {
     param([string]$Name, [string]$Payload, [string]$PinDoc = "")

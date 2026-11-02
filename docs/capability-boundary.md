@@ -1773,3 +1773,24 @@
 - **alternative**：**仍要警惕**：旧事故里"36 字节文本改名 .zip"能骗过 delivery —— 那条防线（必须是合法 zip）保留着，
   本次只放宽了"孔的种类"这一项，没有放宽"是不是真 zip"。
 - **status**：`resolved`
+
+---
+
+## GAP-087 同时开着多个 EDA 窗口时，三条交付导出会**静默全失败**
+
+- **capability**：让"导出失败"不再被误读成"导出坏了"，而是先分清"多窗口"这个环境前提。
+- **evidence**（2026-11-01 第 93–94 轮，可复现对照）：
+
+  | 条件 | 结果 |
+  |---|---|
+  | **3 个窗口**（ldo + buck + autodl）| 三块板 **ok=0 / fail=3**，只报 `[FAIL] gerber`，无原因 |
+  | **1 个窗口**逐块做 | **全部成功**：ldo gerber 11,469 / cpl 1,944 / bom 7,014 B；buck 16,136 / 2,882 / 7,110 B；autodl 14,662 / 2,116 / 6,885 B |
+
+  ⇒ 反例确凿：同一脚本、同一板、同一命令，仅窗口数不同，结果从全失败变全成功。
+- **修法**：`acceptance/export-delivery.ps1` 增加前置检查——`daemon health` 报 >1 窗口时直接
+  `[BLOCKED] 当前有 N 个 EDA 窗口；导出在有多个窗口时会静默失败。请只保留目标工程一个窗口后重试。` 并 `exit 2`。
+  验证：1 窗口下仍正常导出（11,468 / 1,944 / 7,014 B）。
+- **triedTools**：`pcb.export.gerber`、`pcb.export.pick_place`、`schematic.export.bom`、`daemon health`、`sch pages`
+- **alternative**：多窗口同时开着能省会话开销（第 91 轮用这招一次开了 5 个工程），但**只对验收（读）可用，对导出（写制品）不可用**——
+  两者对窗口的要求不同，这条以前没分清。
+- **status**：`resolved`（已加显式拦截）
