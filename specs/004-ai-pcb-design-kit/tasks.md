@@ -599,3 +599,8 @@ T025 docs/playbook-unseen-board.md
   由此提出**未验证的推论**：USB-C 板 `project export` 失败与外部板 `pcb export-dsn` 失败**可能同源**（都是导出器遇到某类数据不出文件）。
 - [x] T394 **记录外部板源文件消失**：`DSH-Data\tmp\osb\` 整个目录不存在，`esp32s3-usb.epro2` 全工作区无果；
   可复现性改以 case 文件里的 **GitHub URL + SHA-256** 为准（云端工程 `ESP32S3_USB` 仍在）。
+
+- [x] T395 **离线建立"健康 `.epro2`"的结构基准（GAP-053 续 2）**：健康归档 = `project2.json`（0.2 KB 元数据，
+  含 `editorVersion`）+ **`<工程名>.epru`（2.5 MB 数据体）** + `IMAGE/*.webp` 预览图。
+  ⇒ 新的离线判据：**含元数据但缺 `*.epru` 或 `.epru` 为 0 字节 = 不完整导出**，无需窗口即可判定。
+  成因（为何某些板在生成 `.epru`/DSN 时失败）仍**未验证**，需窗口复现。

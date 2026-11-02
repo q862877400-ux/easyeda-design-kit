@@ -1613,3 +1613,21 @@
   但"本地已有文件"这个前提不再成立。已导入的云端工程 `ESP32S3_USB` 仍可用。
 - **status**：`accepted`（以 URL + SHA 作为复现依据）
 
+
+### GAP-053 续 2：一份**健康** `.epro2` 的内部结构（判断"导出是否完整"的基准）
+
+- **capability**：不靠"命令返回 ok"，而靠**归档结构**判断一次 `.epro2` 导出是否真的完整。
+- **evidence**（2026-11-01 离线读取练习板备份 `esp32s3-board31-r23`）：
+
+  | 条目 | 大小 | 作用 |
+  |---|---|---|
+  | `project2.json` | **0.2 KB** | 元数据：`title` / `cbb_project` / `editorVersion`（此份为 `4.1.78`）/ `introduction` / `description` / `custom_tags` |
+  | `<工程名>.epru` | **2586.8 KB** | **真正的数据体**（原理图 + PCB 全部内容） |
+  | `IMAGE/*.webp` | 5 份，31–148 KB | 文档预览图 |
+
+  ⇒ **判据**：一份可用的 `.epro2` 必须含 `project2.json` **且**含非空的 `*.epru`。
+  只有元数据没有 `.epru`，或 `.epru` 为 0 字节，就是**不完整导出**——这正是"命令说成功、其实没出文件"的离线可查形态。
+- **triedTools**：`System.IO.Compression.ZipFile`（离线读归档目录与内容）
+- **alternative**：仍**未验证**：为什么某些板（`sc001-usbc-blk`、`ESP32S3_USB`）在**生成 `.epru` / DSN** 这一步失败——
+  失败发生在数据体序列化，元数据层看不出原因；需要窗口复现。
+- **status**：`open`（基准已建立；成因未验证）
