@@ -1507,3 +1507,21 @@
   未覆盖：`installed-claims`、`run-consistency`、`report-hygiene` 在**部分缺失**数据下的行为尚未逐条探测。
 - **status**：`resolved`（两处空过已加下限）
 
+
+---
+
+## GAP-081 我两次带红灯提交：纪律写在文档里不拦人，必须变成检查
+
+- **capability**：让"先跑三件套再提交"从口头纪律变成**会拦人的门**。
+- **evidence**（2026-11-01 实测）：
+  1. 本会话至少 **2 次**带红灯提交：`3a016e7`（抽样 3 通过 / 2 不合格）与更早一次 claims 落后（`614d45d`）。
+     两次都不是判据错，而是**我的顺序错**：先 commit，后跑门禁；或改完没核对就提交。
+  2. 新增 `acceptance/pre-commit.ps1`：强制跑 `selftest` / `mistake-matrix` / `run.ps1 -Static`，
+     **任一未达预期即 exit 1 并列出问题行，不执行 git commit**。
+     唯一例外是**允许清单**（`decision-actionability`——SC-005 已记未达成，它的存在不代表本轮改坏），且每次打印。
+  3. 反例实测：往边界塞一条缺字段的 `GAP-999` → 工具报
+     `拦截：不许提交` 并点名两条未预期 FAIL（`capability-boundary 1/81 条结构不全`、`claims-match boundaries 80 ≠ 81`），退出码 1；还原后放行。
+- **triedTools**：`pre-commit.ps1`（新工具）、`selftest.ps1`、`mistake-matrix.ps1`、`run.ps1 -Static`
+- **alternative**：仍**未覆盖**：允许清单目前只有 1 项，未来若出现第二个"已知未达成"，必须**显式加进清单并写理由**，
+  否则会被静默当成"可接受的红"。另：该工具依赖我在提交时用它（没有装成 git hook），**绕过仍然可能**。
+- **status**：`resolved`（纪律已机械化，但不是强制钩子）

@@ -519,3 +519,8 @@ T025 docs/playbook-unseen-board.md
   可执行率 ≥20 行、边界 ≥8 条、抽样需解析到条目）；**`kit-portability` 空过**（1 份无路径文档 → PASS），已加下限
   （扫到 <10 文件 → BLOCKED）；上一轮已修 `evidence-freshness`。两项按设计读 RepoRoot（kit-integrity / positive-goal）已写明。
 - [ ] T375 **（未做）**：`installed-claims` / `run-consistency` / `report-hygiene` 在**部分缺失**数据下的行为未逐条探测。
+
+- [x] T376 **新增 `acceptance/pre-commit.ps1`（GAP-081）**：提交前强制三件套，任一未达预期即 exit 1 并列出问题行，
+  不执行 commit。允许清单只有 `decision-actionability`（SC-005 已知未达成）且每次打印。
+  反例（塞 `GAP-999` 缺字段）实测被拦并点名两条未预期 FAIL；还原后放行。**本会话两次带红灯提交（`3a016e7`/`614d45d`）的成因已机械化拦截。**
+- [ ] T377 **（未做）**：把 `pre-commit.ps1` 装成 git hook（`.git/hooks/pre-commit`）才能真正防绕过；当前依赖"我主动用它"。
