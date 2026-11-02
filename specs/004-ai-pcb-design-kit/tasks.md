@@ -743,3 +743,10 @@ T025 docs/playbook-unseen-board.md
 - [x] T425 **快照块 ↔ claims 行 检查落地（GAP-094）**：新增 `Get-SnapshotClaimsProblems`（带上下文模式），由 `run.ps1` 放进
   `$script:SnapshotProblems` 交 `claims-match` 合并。**不新增阶段**（加第 24 阶段会让 15 份归档报告失效、`report-hygiene` 变 BLOCKED，实测后已退回）。
   反例：快照写 21 阶段 ⇒ FAIL 并点名；还原 ⇒ PASS。
+
+- [x] T426 **可行性实验 001（CH224A USB-PD 触发模块）：功能反推 → 设计 → 对比**（`docs/feasibility-001-ch224a.md`）。
+  素材：README + Gerber + 原理图 PNG + CH224X 数据手册（均下载留档 `.work\exp-ch224a\`）。
+  **结论对我方不利且已如实写入**：我的设计草案**漏了 I²C 电平转换**（它用 2×BSS138 + 4×4.7k）——这是**电气错误**不是简化；
+  还漏了"无 MCU 也能用"的三档 Rset 跳线。猜对的：1 µF@VHV、100 kΩ CFG1→VHV、e-marker 位 DNP、SBU 悬空。
+  它板尺寸 **23.00×15.24 mm / 2 层 / 24 过孔 / 40 PTH**（Gerber 实测解析）；我方同类板面积约为其 1.8 倍。
+  **第 3 步（真画）未完成**：执行时浏览器未连接，EDA 窗口起不来 ⇒ 无 PCB 级对比，报告中明确写"没有"。
