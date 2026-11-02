@@ -375,6 +375,13 @@ function Test-KitPortability {
     if ($bad.Count -gt 0) {
         Add-Result "kit-portability" "FAIL" ("$($bad.Count) 份文档含本机绝对路径： " + (($bad | Select-Object -Unique -First 5) -join ', '))
     } else {
+    # 反例（2026-11-01）：探针里只放 1 份文档且不含任何路径，本阶段报「文档无本机绝对路径」PASS——
+    # 那是"没扫到路径"，不是"路径都合法"。扫到的文件太少时按 BLOCKED 处理。
+    $scanned = @($roots | ForEach-Object { $pp = Join-Path $script:AuditRoot $_; if (Test-Path $pp) { Get-ChildItem $pp -Recurse -File -Include '*.md', '*.json' -ErrorAction SilentlyContinue } } | Where-Object { $_ }).Count
+    if ($scanned -lt 10) {
+        Add-Result "kit-portability" "BLOCKED" "只扫到 $scanned 个文件（<10），无法证明可移植性"
+        return
+    }
         Add-Result "kit-portability" "PASS" "文档无本机绝对路径"
     }
 }

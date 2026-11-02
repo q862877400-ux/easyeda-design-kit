@@ -514,3 +514,8 @@ T025 docs/playbook-unseen-board.md
   同探针还确认 `kit-integrity`/`positive-goal` **按设计**读 `$script:RepoRoot`，在探针里不能证明任何事（已写明）。
 - [ ] T374 **（未做）**：逐条探测其他阶段在"零样本"下的行为（如 `capability-boundary` 在 0 条边界时、`capability-sample` 在 0 条可抽时），
   凡"扫到 0 个却说没问题"的都要加下限。
+
+- [x] T374 **零样本普查（GAP-080）**：逐条探测 16 项静态阶段的零样本行为。**4 项本来就有下限**（决策表 ≥30 行、
+  可执行率 ≥20 行、边界 ≥8 条、抽样需解析到条目）；**`kit-portability` 空过**（1 份无路径文档 → PASS），已加下限
+  （扫到 <10 文件 → BLOCKED）；上一轮已修 `evidence-freshness`。两项按设计读 RepoRoot（kit-integrity / positive-goal）已写明。
+- [ ] T375 **（未做）**：`installed-claims` / `run-consistency` / `report-hygiene` 在**部分缺失**数据下的行为未逐条探测。

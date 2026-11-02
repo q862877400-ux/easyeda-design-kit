@@ -1181,7 +1181,7 @@
      → GAP-035「传位号会 ok:false」的绕法：先用它或 `pcb.components.list` 拿到 primitiveId，再传给 `--ids`。
   4. **`easyeda call <action> --payload {...}` 通道有效**：未知动作返回 `code=UNKNOWN_ACTION`（负例验证过），
      真实动作在无窗口时报 `--doc guard: no connected window`（即"通道通、窗口缺"）。
-- **triedTools**：`actions`（169 条目录）、`call pcb.silk.list`、`call pcb.components.list`、`call pcb.no.such.action`（负例）、`daemon health`
+- **triedTools**：`actions`（169 条目录）、`pcb.silk.list`、`pcb.components.list`、`pcb.no.such.action`（负例）、`daemon health`
 - **alternative**：**以后判断"工具能不能做某事"时，先查 `easyeda actions` 的 169 条动作，再查 `--help` 子命令**——
   两者不是一回事；把 `call` 当通用入口用。仍**未验证**的是：这些动作在真实板子上返回的数据是否够用于诊断。
 - **status**：`resolved`
@@ -1485,3 +1485,25 @@
 - **alternative**：**规矩**——凡"扫一批东西然后说没毛病"的判据，都必须有一个**下限**：扫到的样本太少就不是通过。
   未覆盖：其他阶段是否也有同类空过（如 `capability-boundary` 在 0 条边界时的行为）尚未逐条探测。
 - **status**：`resolved`（`evidence-freshness` 已加下限）
+
+---
+
+## GAP-080 零样本普查：`kit-portability` 也在"没扫到"时判 PASS（4 个阶段已确认有下限）
+
+- **capability**：把"扫一批东西然后说没毛病"这类判据的**下限**补齐。
+- **evidence**（2026-11-01 零样本普查，16 项静态阶段逐条探测）：
+  1. **已有下限、零样本正确拒绝**：`tool-decision-table`（0 行 → FAIL，要求 ≥30）、
+     `decision-actionability`（0 行 → FAIL，要求 ≥20）、`capability-boundary`（0 条 → FAIL，要求 ≥8）、
+     `capability-sample`（解析不到条目 → FAIL）。这 4 条本来就没问题。
+  2. **零样本 PASS（空过）**：`kit-portability`——探针里只放 1 份无路径文档，它报「文档无本机绝对路径」PASS。
+     那是"没扫到路径"，不是"路径都合法"。
+  3. 修：`kit-portability` 增加下限，扫到文件 <10 → **BLOCKED**（"只扫到 N 个文件，无法证明可移植性"）。
+     实测：单文档探针 → BLOCKED；真 kit → PASS。
+  4. 上一轮已修的同类：`evidence-freshness`（<10 份 → BLOCKED）。
+  5. **按设计**读 `$script:RepoRoot` 的两项（`kit-integrity` / `positive-goal`）在探针模式下永远全绿，
+     不能证明任何事——这是有意为之并已写明。
+- **triedTools**：空/单文档 `-AuditRoot` 探针、`run.ps1 -Static`、`stages-gates.ps1`（加下限）
+- **alternative**：**规矩**——"扫一批再报没问题"的判据必须同时报**样本量**并设下限；否则数据缺失会伪装成健康。
+  未覆盖：`installed-claims`、`run-consistency`、`report-hygiene` 在**部分缺失**数据下的行为尚未逐条探测。
+- **status**：`resolved`（两处空过已加下限）
+
