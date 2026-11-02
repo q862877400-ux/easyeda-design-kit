@@ -1654,3 +1654,23 @@
 - **triedTools**：`System.IO.Compression.ZipFile`、`epru-audit.ps1`（新工具，含 `-Json`）
 - **alternative**：窗口回来后，对 `ESP32S3_USB` 导出的 `.epro2` 跑一次本工具，即可验证"畸形焊盘"假设（GAP-059）。
 - **status**：`open`（工具可用且自洽；检出方向未验证）
+
+---
+
+## GAP-084 `project export-source --uuid` 对**外部板成功**；DSN 失败另有原因（"畸形焊盘"假设被证否）
+
+- **capability**：判断外部板 `ESP32S3_USB` 的导出能力边界，并定位 `pcb export-dsn` 失败的真因。
+- **evidence**（2026-11-01 第 86 轮，**窗口已在线**，编辑器已升级到 **4.1.93**）：
+  1. `project export-source` 必须带 `--uuid`（不带报 `--uuid is required`）；带 `--uuid 8b44c965…` 后**成功**产出
+     `20261102-152531-project_source-7a6ed749.epro2`（**306.2 KB**）⇒ **工程源文件导出对这块板可用**。
+  2. 用 `acceptance/epru-audit.ps1` 离线审计该文件：`完整=True`、`editorVersion=4.1.93`、
+     **器件 119 / 焊盘 103 / 过孔 90 / 走线 1422 / 网络 44 / 已铺铜 8**、**畸形焊盘 0**。
+  3. `pcb export-dsn` 在 4.1.93 上**仍报** `DSN export returned no file — the PCB may be empty or have no nets`。
+  4. **"畸形焊盘导致 DSN 失败"这个假设被证否**：审计初版报"恰好 1 个畸形焊盘 e7"，一度看起来与 DFM 的
+     `1 pad lacks shape and width` 完全对上；但打印该记录后发现它是 **`padType: POLYGON` + `path` 轮廓焊盘**，
+     **没有 width/height 是合法的**。修正判据后两块板均 **0 畸形焊盘**。
+  5. 所以：**导出的源文件是完整健康的，DSN 仍然导不出** ⇒ 失败在 `export-dsn` 这一条路径上（不是板数据缺失）。
+- **triedTools**：`project export-source --uuid`、`pcb export-dsn`、`pcb layout-lint`、`board list`、`epru-audit.ps1`
+- **alternative**：下一步二分——① 对**练习板**（已知能备份、DSN 曾成功）在当前 4.1.93 上导一次 DSN，确认 CLI 路径本身没坏；
+  ② 若练习板也失败，则问题是 CLI/编辑器版本，与板无关。
+- **status**：`open`（假设已证否；真因待二分）

@@ -85,6 +85,9 @@ if ($epruText) {
         if ($data -match '"defaultPad"\s*:\s*\{[^}]*"width"\s*:\s*(-?[0-9.]+)[^}]*"height"\s*:\s*(-?[0-9.]+)') {
             if ([double]$Matches[1] -gt 0 -and [double]$Matches[2] -gt 0) { $ok = $true }
         }
+        # 判据修正（第四次，也是最关键一次）：POLYGON 焊盘用 `path` 定义轮廓，**没有 width/height 是正常的**。
+        # 前几版把它当畸形，于是外部板"恰好 1 个畸形焊盘"其实是合法多边形焊盘——那个"与 DFM 对上"的判断是错的。
+        if (-not $ok -and ($data -match '"padType"\s*:\s*"POLYGON"' -and $data -match '"path"\s*:\s*\[\s*-?[0-9]')) { $ok = $true }
         if (-not $ok -and ($data -match '"specialPad"\s*:\s*\[\s*\{')) { $ok = $true }
         if (-not $ok) {
             $num = if ($segs[0] -match '"id"\s*:\s*"([^"]*)"') { $Matches[1] } else { '?' }
@@ -114,6 +117,7 @@ if ($Json) {
 
 if ($result.badPads.Count -gt 0) { exit 1 }
 exit 0
+
 
 
 
