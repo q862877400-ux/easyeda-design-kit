@@ -1674,3 +1674,19 @@
 - **alternative**：下一步二分——① 对**练习板**（已知能备份、DSN 曾成功）在当前 4.1.93 上导一次 DSN，确认 CLI 路径本身没坏；
   ② 若练习板也失败，则问题是 CLI/编辑器版本，与板无关。
 - **status**：`open`（假设已证否；真因待二分）
+
+### GAP-084 续：**二分结果——CLI 路径正常，DSN 失败是外部板特有的**
+
+- **capability**：把"导出失败"定位到"CLI/版本"还是"某块板"。
+- **evidence**（2026-11-01 第 88 轮，窗口在线，编辑器 **4.1.93**）：
+  1. **控制组**：练习板 `agent-e2e-esp32s3-board31`（PCB1 `e8c8b7cb5507b5e2`）在同一 CLI、同一编辑器版本下
+     `pcb export-dsn` **成功**，产出 **153.6 KB** 的 DSN。
+  2. **实验组**：外部板 `ESP32S3_USB`（PCB2 `87d68529660f4a39`）同一条命令**失败**，报
+     `DSN export returned no file — the PCB may be empty or have no nets`——而该板实测有 **44 网络 / 103 焊盘 / 1422 走线**。
+  3. 离线审计该板导出源（`epru-audit.ps1`）：完整、**0 畸形焊盘**。
+  4. ⇒ **不是 CLI 坏了、也不是编辑器版本问题**（同一版本下练习板正常）；是**这块板的数据里有 DSN 导出器不接受的东西**。
+- **triedTools**：`pcb export-dsn`（对照实验）、`project export-source --uuid`、`epru-audit.ps1`、`board list`、`daemon health`
+- **alternative**：下一步对该板逐项排查（都需要窗口）：`pcb outline-get`（板框是否存在/闭合）、`pcb layers`（层栈）、
+  `pcb nets`（是否有无焊盘的网）、`pcb stackup`。已有线索：该板 44 网络但只有 8 个已铺铜，且是 8 页原理图导入，
+  可能存在**跨页/未实例化的网**。
+- **status**：`open`（已排除 CLI/版本；原因定位到板数据，具体项待查）
