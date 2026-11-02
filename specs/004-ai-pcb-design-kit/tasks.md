@@ -568,3 +568,8 @@ T025 docs/playbook-unseen-board.md
   `pcb report` / `pcb silk-netnames`），并清掉 2 处误标（`JsPCB自动布线` 已装、`pcb_autorouter.exe` 是外部工具）。
 - [x] T387 **SC-005 上限已确定**：剩 31 行中 A 类 AI 助手 18、B 类 GUI 专用、C 类仿真 5 —— **均无 CLI 等价物**。
   ⇒ 我这边能到的上限就是 **62/111 ≈ 55.9%**，**90% 在当前工具链下不可达**，与 SC-A（DRC 0）同性质。
+
+- [x] T388 **由 playbook 反查补入 7 行决策表（覆盖缺口）**：37 步 playbook 里有 **10 步**用了决策表**根本没有**的命令
+  （`project create` / `sch pages` / `sch titleblock` / `pcb outline-fit` / `pcb rip-up` / `pcb pour-fit` / `pcb place-constrained`），
+  读者查表会漏掉。已补 7 行（每行带真实参数），决策表 **111 → 118 行**，可执行 **62 → 69/118 = 58.5%**。
+  这类"playbook 用了、表里没有"的缺口之前无人检查——它是"两份文档各自演进"的又一次表现。

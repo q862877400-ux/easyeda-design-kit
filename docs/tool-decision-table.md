@@ -212,3 +212,19 @@
 
 
 
+
+## 由 playbook 反查补入（2026-11-01 第 78 轮）
+
+> 反例：`playbook` 的 37 步里有 **10 步**用到决策表**根本没有**的命令（`sch titleblock` / `pcb outline-fit` /
+> `pcb rip-up` / `pcb pour-fit` / `pcb place-constrained` / `project create` / `sch pages`）——
+> 说明"情境→工具"表漏了这些，读者查表会查不到，只能去读 playbook。以下补上。
+
+| 情境 | 工具 | 参数/坑 |
+|---|---|---|
+| 建一个空工程 | `project create` | `--name <工程名> --description <说明> --open`；返回里取 `uuid` 作为后续 `--project` |
+| 查原理图页 uuid | `sch pages` | 输出 `pages[].uuid`；`--project <名>` 路由，不要用 `--window`（窗口会变） |
+| 填图签（可制造信息） | `sch titleblock` | `--data '{"Name":{"value":"…","showTitle":true,"showValue":true}}'`；缺省不显示标题 |
+| 按器件自动定板框 | `pcb outline-fit` | `--margin 100`（给布线留空隙用 200）；异形板改 `pcb outline-round` / `pcb outline-set` |
+| 重布前先拆旧铜 | `pcb rip-up` | `--net <网名>` 只拆该网，省略=全拆；板框与锁定图元安全 |
+| 按网名铺铜（GND/3V3） | `pcb pour-fit` | `--net GND`；落孔后必须 `pcb pour-rebuild` 再 `pcb drc` |
+| 约束放置（给关键器件留位） | `pcb place-constrained` | 先 `pcb layout-plan` 出方案，再落位；坐标单位是 mil |
