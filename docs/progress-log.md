@@ -156,3 +156,4 @@
 | 120 | **capability-sample 改全量**（抽样连续4次通过却藏住 26/85 问题）→ 修判据 6 条 + 改写 8 条散文 → **85/85 通过**；**report-hygiene 转 PASS**（5 份 23 阶段真实运行）；静态 **12 PASS / 1 FAIL / 0 BLOCKED** | 唯一 FAIL = 决策表口径（等业主）| 本轮 |
 | 121 | **T403 结案**：LED 板全 SMD（0 过孔）无孔可钻，`delivery` 却要求 metallic&&nonMetallic ⇒ 判据不可能满足；改为"至少一类钻孔证据"后 delivery PASS，LED **21/2/0**；五块板现均只剩两项已知 FAIL | 判据修正有反例 | 本轮 |
 | 122 | 三块板补齐交付物：多窗口下 ok=0/fail=3、单窗口全成功 ⇒ **GAP-087**（导出对多窗口敏感），已在 `export-delivery.ps1` 加显式拦截（>1 窗口 BLOCKED + exit 2）；ldo/buck/autodl 验收均 **20/2/1** | 反例对照确凿 | 本轮 |
+| 123 | **五块板全部 21 PASS / 2 FAIL / 0 BLOCKED**（每块单独窗口连跑两次以满足 run-consistency）；发现证据目录已累计 32 份报告，混入旧阶段集会扰乱一致性判据（T408）| 板级证据齐备 | 本轮 |

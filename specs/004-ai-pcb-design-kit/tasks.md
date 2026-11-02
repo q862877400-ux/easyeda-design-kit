@@ -662,3 +662,10 @@ T025 docs/playbook-unseen-board.md
   `export-delivery.ps1` 已加前置检查：>1 窗口直接 BLOCKED 并 exit 2。
   三块板验收现均为 **20 PASS / 2 FAIL / 1 BLOCKED**（BLOCKED = `run-consistency` 需同版本连跑两次）。
 - [ ] T407 **（下一步）三块板各再跑一次**以清掉 `run-consistency` 的 BLOCKED（需每块单独开窗口）。
+
+- [x] T407 **五块板全部清到 0 BLOCKED（各连跑两次）**：
+  `sc001-usbc-typed` **21/2/0**、`sc001-led-typed` 21/2/0、`sc001-ldo-typed` 21/2/0、`sc001-pmos-typed`（buck）21/2/0、`sc001-autodl-typed` 21/2/0。
+  唯一两项 FAIL 恒为 `decision-actionability`（等业主定口径）与 `pcb-drc-clean`（DRC 非 0，GAP-058 已判不可达）。
+  **关键条件**：`run-consistency` 要"同版本连跑两次"，因此每块板必须**单独开窗口连跑两次**；多窗口下验收可以，导出不行（GAP-087）。
+- [ ] T408 **（新）报告已累计 32 份**（今天新增 24 份），`run-consistency` 会因混入旧阶段集报告而误报"阶段集不同"。
+  需要一个保留策略：每 case 只留最新 N 份（如 3 份）+ 其余移到 `runs/archive/`，否则证据目录会持续膨胀并把一致性判据搅乱。
