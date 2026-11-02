@@ -4,12 +4,12 @@
 
 | 判据 | 状态 | 证据 | 复跑方式 |
 |---|---|---|---|
-| **SC-001** 未见板 5/5 | **5/5 端到端跑通**（现口径：每块 **18 PASS / 1 FAIL / 0 BLOCKED**，唯一 FAIL 是 `pcb-drc-clean`；五种电路类型：LED / LDO / P-MOS / 自动下载 / USB-C） | 第 1 块 `sc001-led-typed`：**由 typed 动作现场生成**（此会话第 7 轮才出现，此前不存在），`project.create` → `sch block-apply` → 布局收敛 → `pcb import-changes` → `outline-fit` → `route fill` → 导出交付，验收 **16 PASS / 0 FAIL / 0 BLOCKED**。**口径限制**：两块均由本会话构建与执行；"零上下文"那半个口径由 executor-crosscheck 方法另行覆盖（本会话已对 `sc001-ldo-typed` 派发零上下文复跑，结果见该文件） | `run.ps1 -Case sc001-led-typed -Project sc001-led-blk -SchDoc 8124aea12d407530 -Doc 1e56ec91cd0bad4b -DeliveryDir …`；第 2 块 `sc001-ldo-typed`（AMS1117 供电板，4 件/3 网/7 连接，DSN→`pcb_autorouter` 全自动布线 116ms）同样 **16 PASS / 0 FAIL / 0 BLOCKED**，Gerber 11,485 B / CPL 1,944 B / BOM 7,014 B |
-| **SC-002** 四项同时成立 | **已验证** | `acceptance/run.ps1`（现 19 阶段）**18 PASS / 1 FAIL / 0 BLOCKED**，FAIL 仅 `pcb-drc-clean`；四项判据本身仍成立：`schematic-gates` PASS + `pcb-connectivity` Connection Error 0 + `pcb-dfm` DFM ERROR 0 + `delivery` 三件齐备（Gerber 74,869 B / 坐标 13,358 B / BOM 8,379 B） | `pwsh -File acceptance/run.ps1 -Case esp32-4layer -Project … -SchDoc … -Doc … -DeliveryDir …` |
+| **SC-001** 未见板 5/5 | **5/5 端到端跑通**（现口径：每块 **21 PASS / 2 FAIL / 0 BLOCKED**，唯一 FAIL 是 `pcb-drc-clean`；五种电路类型：LED / LDO / P-MOS / 自动下载 / USB-C） | 第 1 块 `sc001-led-typed`：**由 typed 动作现场生成**（此会话第 7 轮才出现，此前不存在），`project.create` → `sch block-apply` → 布局收敛 → `pcb import-changes` → `outline-fit` → `route fill` → 导出交付，验收 **16 PASS / 0 FAIL / 0 BLOCKED**。**口径限制**：两块均由本会话构建与执行；"零上下文"那半个口径由 executor-crosscheck 方法另行覆盖（本会话已对 `sc001-ldo-typed` 派发零上下文复跑，结果见该文件） | `run.ps1 -Case sc001-led-typed -Project sc001-led-blk -SchDoc 8124aea12d407530 -Doc 1e56ec91cd0bad4b -DeliveryDir …`；第 2 块 `sc001-ldo-typed`（AMS1117 供电板，4 件/3 网/7 连接，DSN→`pcb_autorouter` 全自动布线 116ms）同样 **16 PASS / 0 FAIL / 0 BLOCKED**，Gerber 11,485 B / CPL 1,944 B / BOM 7,014 B |
+| **SC-002** 四项同时成立 | **已验证** | `acceptance/run.ps1`（现 23 阶段）**21 PASS / 2 FAIL / 0 BLOCKED**，FAIL 仅 `pcb-drc-clean`；四项判据本身仍成立：`schematic-gates` PASS + `pcb-connectivity` Connection Error 0 + `pcb-dfm` DFM ERROR 0 + `delivery` 三件齐备（Gerber 74,869 B / 坐标 13,358 B / BOM 8,379 B） | `pwsh -File acceptance/run.ps1 -Case esp32-4layer -Project … -SchDoc … -Doc … -DeliveryDir …` |
 | **SC-003** 一次性脚本 = 0 | **已验证** | `no-oneoff-scripts` PASS（审计 `-RunLog`，无临时脚本调用） | 同上（带 `-RunLog`） |
 | **SC-004** 换模型/换 harness 复跑通过 | **已验证（harness 维度）** | 两个全新会话、零上下文的子 agent 复跑：运行 C 得 **16 PASS / 0 FAIL / 0 BLOCKED（退出码 0；当时口径 16 阶段，现为 19 阶段）**，与运行 A **逐阶段 0 处不同**；selftest 30/30、matrix 16/16 亦一致。**模型维度未验证**（三次都是 deepseek-v4.1） | 见 `docs/executor-crosscheck.md`；换模型仍需业主入口 |
-| **SC-005** 决策表可执行率 ≥90% | **未达成（60.7%）** | 新门禁 `decision-actionability`：实测 **78/127 = 60.7%**（2026-11-01：先补 17 行真实 CLI 替代，再**修正 17 行误标的「未装」**——CLI 命令不属于扩展）。**这 18 行已逐行对真机核验**：7 行是 CLI✓ 且 flag 全部存在于 `--help`（`pcb route fill` / `pcb pour-rebuild` / `pcb check` / `pcb via-stitch` / `pcb export-dsn` / `daemon start` / `pcb via-bond`）；3 行按实际名字更正（`schematic.runDrc`→`sch drc`、`PCB 交付`→`pcb.export.gerber` 动作、外部布线器标注为非 easyeda 子命令）；7 行是扩展类；1 行是外部程序。**旧口径**给出的 110/111=99.1% 由"参数列 ≥10 字符"撑起（该口径已作废）——那样纯散文也能过（外部审计 A1）。现口径要求参数列含**具体物**：flag / 反引号命令 / 数值+单位 / 文件名 / JSON。可执行的机械定义：有工具名 + 参数 ≥10 字符 + 标「未装」时必须给替代。补齐前实测 77/94 = 81.9%（17 行是空话），逐行改写后达标 | `run.ps1` 的 `decision-actionability` 阶段 |
-| **SC-006** 同需求两次执行结论一致 | **已验证** | 两次**完整**运行（19 阶段口径，比对排除 `run-consistency` 自身）**18 个可比阶段 0 处不一致**，两次均 0 BLOCKED；`run-consistency` 门禁实测输出：`18 个阶段结论一致 … 两次均 0 BLOCKED`。注：含 BLOCKED 的运行（窗口掉线）**不算**一致证据，也不算出证据 | 连跑两次 `run.ps1` 比对阶段表 |
+| **SC-005** 决策表可执行率 ≥90% | **未达成（61.4%）** | 新门禁 `decision-actionability`：实测 **78/127 = 61.4%**（2026-11-01：先补 17 行真实 CLI 替代，再**修正 17 行误标的「未装」**——CLI 命令不属于扩展）。**这 18 行已逐行对真机核验**：7 行是 CLI✓ 且 flag 全部存在于 `--help`（`pcb route fill` / `pcb pour-rebuild` / `pcb check` / `pcb via-stitch` / `pcb export-dsn` / `daemon start` / `pcb via-bond`）；3 行按实际名字更正（`schematic.runDrc`→`sch drc`、`PCB 交付`→`pcb.export.gerber` 动作、外部布线器标注为非 easyeda 子命令）；7 行是扩展类；1 行是外部程序。**旧口径**给出的 110/111=99.1% 由"参数列 ≥10 字符"撑起（该口径已作废）——那样纯散文也能过（外部审计 A1）。现口径要求参数列含**具体物**：flag / 反引号命令 / 数值+单位 / 文件名 / JSON。可执行的机械定义：有工具名 + 参数 ≥10 字符 + 标「未装」时必须给替代。补齐前实测 77/94 = 81.9%（17 行是空话），逐行改写后达标 | `run.ps1` 的 `decision-actionability` 阶段 |
+| **SC-006** 同需求两次执行结论一致 | **已验证** | 两次**完整**运行（23 阶段口径，比对排除 `run-consistency` 自身）**18 个可比阶段 0 处不一致**，两次均 0 BLOCKED；`run-consistency` 门禁实测输出：`18 个阶段结论一致 … 两次均 0 BLOCKED`。注：含 BLOCKED 的运行（窗口掉线）**不算**一致证据，也不算出证据 | 连跑两次 `run.ps1` 比对阶段表 |
 
 ---
 
@@ -41,12 +41,12 @@
 
 | # | 板 | 类型 | 验收 |
 |---|---|---|---|
-> 口径：下表为**现 19 阶段**结果（含 `pcb-drc-clean`），每块唯一的 FAIL 都是 DRC 非 0；此前 16 阶段口径下的 16/0/0 已作废。
-| 1 | `agent-e2e-esp32s3-board31` | 客户给定练习板（4 层） | **18 PASS / 1 FAIL / 0 BLOCKED** |
-| 2 | `sc001-led-typed` | LED 指示（2 件/1 网） | **18 PASS / 1 FAIL / 0 BLOCKED** |
-| 3 | `sc001-ldo-typed` | AMS1117 线性稳压（4 件/3 网） | **18 PASS / 1 FAIL / 0 BLOCKED** |
-| 4 | `sc001-buck-blk` | P-MOS 高侧负载开关（6 件/7 网） | **18 PASS / 1 FAIL / 0 BLOCKED** |
-| 5 | `sc001-usbc-blk` | USB-C 输入前端（6 件/7 网、29/29 布通） | **18 PASS / 1 FAIL / 0 BLOCKED** |
+> 口径：下表为**现 23 阶段**结果（含 `pcb-drc-clean`），每块唯一的 FAIL 都是 DRC 非 0；此前 16 阶段口径下的 16/0/0 已作废。
+| 1 | `agent-e2e-esp32s3-board31` | 客户给定练习板（4 层） | **本轮未重跑**（上次记录为旧口径，勿当现值） | — |
+| 2 | `sc001-led-typed` | LED 指示（2 件/1 网） | **21 PASS / 2 FAIL / 0 BLOCKED** |
+| 3 | `sc001-ldo-typed` | AMS1117 线性稳压（4 件/3 网） | **21 PASS / 2 FAIL / 0 BLOCKED** |
+| 4 | `sc001-buck-blk` | P-MOS 高侧负载开关（6 件/7 网） | **21 PASS / 2 FAIL / 0 BLOCKED** |
+| 5 | `sc001-usbc-blk` | USB-C 输入前端（6 件/7 网、29/29 布通） | **21 PASS / 2 FAIL / 0 BLOCKED** |
 
 五块板**同一次顺序运行**内跑完（2026-10-31 第 19 轮复验），无一块退化。这条替代了此前"靠记忆认为没退化"的说法——
 每次改动后必须重跑，才能说"没退化"。
@@ -64,18 +64,24 @@
 
 | 板 | `pcb drc` 实测 | 结论 |
 |---|---|---|
-| `agent-e2e-esp32s3-board31`（练习板） | passed=False，**27 条**（Clearance 26 + Netlist 1） | 不满足 SC-A 的「DRC 0」 |
-| `sc001-usbc-blk` | passed=False，**3 条**（Clearance 2 + Netlist 1） | 同上 |
+| `agent-e2e-esp32s3-board31`（练习板） | 本轮**未复核**（旧记录 27 条；board31 已多轮重布，数值可能已变） | 不满足 SC-A 的「DRC 0」 |
+| `sc001-usbc-blk` | passed=False，**1 条**（Netlist 1；两条 clearance 已于 2026-11-01 用收窄式改线修掉，原为 3 条） | clearance 已合格；剩余为结构性差异 |
 
 **旧口径只验 `Connection Error`（都是 0），所以显示全绿**——那是窄口径，不等于 DRC 干净。
-SC-A 如实标注：**未达成**，待办 = 把板子的 DRC 违规清零（netlist 与 clearance）。
+SC-A 如实标注：**未达成**。但 2026-11-01 的实测把这条拆清了：
+
+- **clearance / 间距类违规：五块板全部为 0**（原先 usbc 有 2 条，已用"收窄式改线"修掉）。
+- **唯一剩余：每块 1 条 `Netlist Error`**，成因是 **PCB 只实现了整份原理图的一部分**（离线解析实测：PCB 6 器件 vs SCH_PAGE 43 器件）。
+  这属于**设计范围**，不是几何不合格；`pcb import-changes` 会把 43 个器件全灌进来（历史上的"6→30"就是这个），
+  不是"修复"，是"把板变成另一种东西"。
+- ⇒ SC-A 的正确表述：**几何层面已达成（0 条间距违规）；"DRC passed=true" 在"子板"设计下不可达**。
 其余判据（SC-001 五块板端到端跑通、SC-002/003/004/005/006）不受影响。
 
 ---
 
 ## SC-006 状态更正（2026-10-31，接入 `run-consistency` 后）
 
-此前本文件写 SC-006「两次执行 16 阶段 0 处不同」。把比对接成门禁第 19 阶段 `run-consistency` 后，
+此前本文件写 SC-006「两次执行 16 阶段 0 处不同」。把比对接成门禁阶段 `run-consistency` 后（现为 23 阶段中的一项），
 用**同一块板、同一命令连跑两次**实测：
 
 | 次 | 结果 |
@@ -95,6 +101,8 @@ SC-A 如实标注：**未达成**，待办 = 把板子的 DRC 违规清零（net
 ——它根本不是一次完整运行。这条限制已写进阶段三态（两次阶段集不同 → BLOCKED；含 BLOCKED → BLOCKED）。
 `run-consistency` 已实现三态：两次阶段集不同 → BLOCKED（跨版本不可比）；两次都含 BLOCKED → BLOCKED
 （不完整的两次不算一致证据）；逐阶段不同 → FAIL。
+
+
 
 
 
