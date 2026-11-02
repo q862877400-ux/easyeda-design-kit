@@ -1588,3 +1588,28 @@
 - **alternative**：**规矩**——凡"文档 A 会引用文档 B 的内容"，就要有一条机械的**覆盖检查**，否则 B 迟早缺条目。
   未覆盖：反向（决策表有行但没有任何文档用到，即冗余行）尚未检查。
 - **status**：`resolved`
+
+### GAP-053 续：备份**并非普遍失败**——练习板有 4 份有效 `.epro2`，USB-C 板才失败
+
+- **capability**：区分"备份能力整体不可用"与"某块板导不出"，后者是可诊断的具体问题。
+- **evidence**（2026-11-01 离线核查归档，无需 EDA 窗口）：
+  1. `easyeda-auto\backups\`（工作区相对） 与 `.work\` 里共 **4 份 `.epro2`**（`esp32s3-board31` 的两次快照、一次 r23、一次 `backup-before-autoroute`），
+     **全部是有效 ZIP 归档、各 9 个条目**（599.5–711.7 KB）。
+  2. 而 GAP-053 记录的失败对象是 **`sc001-usbc-blk`**（`project export` / `export-source` 都不出文件）。
+  3. ⇒ **备份能力本身可用**；失败是**板级/工程级**的。这一点此前被我写成"PCB 备份导出在本项目上失败"，
+     措辞容易被读成"普遍不可用"，现已更正为"对 `sc001-usbc-blk` 失败"。
+  4. **未验证的推论**：USB-C 板的 `project export` 失败与外部板 `ESP32S3_USB` 的 `pcb export-dsn` 失败，
+     可能同源（都是"导出器遇到某类数据就不出文件"）。验证它需要窗口——当前无窗口。
+- **triedTools**：`System.IO.Compression.ZipFile`（离线读归档）、`Get-ChildItem`（枚举备份）
+- **alternative**：窗口回来后，用两块板二分：先对 `esp32s3-board31` 导 DSN（已知能备份，看能否导 DSN），
+  再对 `sc001-usbc-blk` 导 `.epro2`（已知失败），对比差异。
+- **status**：`open`（措辞已更正；同源假设未验证）
+
+### GAP-082 续：外部板源文件已从临时目录消失，可复现性依赖 case 文件里的 URL
+
+- **evidence**（2026-11-01 实测）：`<DSH-Data>\tmp\osb\` **整个目录已不存在**，
+  `esp32s3-usb.epro2` 全工作区搜索无果（工作区只有 `esp32s3-board31` 相关的 6 份 `.epro2`）。
+- **影响**：`acceptance/cases/open-source-esp32s3-usb.md` 里记了 GitHub raw URL 与 SHA-256，**可重新下载复现**；
+  但"本地已有文件"这个前提不再成立。已导入的云端工程 `ESP32S3_USB` 仍可用。
+- **status**：`accepted`（以 URL + SHA 作为复现依据）
+

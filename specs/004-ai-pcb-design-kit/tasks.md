@@ -593,3 +593,9 @@ T025 docs/playbook-unseen-board.md
   （case / executor / stages 非空）——**8/8 全部成立，0 处问题**。另确认它们仍是 17/19 阶段（旧阶段集，GAP-074 已记）。
   本轮**未新增检查**：报告层的问题由 `report-hygiene`（探针产物=0、真实运行≥5、阶段集一致）与 `run-consistency` 已覆盖，
   再加一条算术校验边际收益过低。
+
+- [x] T393 **离线核查 `.epro2` 归档，更正 GAP-053 的措辞**（无需窗口）：`easyeda-auto\backups\` 与 `.work\` 有 **4 份有效 `.epro2`**
+  （练习板 `esp32s3-board31`，各 9 条目、599–712 KB）⇒ **备份能力本身可用**，之前"备份导出失败"只对 `sc001-usbc-blk` 成立。
+  由此提出**未验证的推论**：USB-C 板 `project export` 失败与外部板 `pcb export-dsn` 失败**可能同源**（都是导出器遇到某类数据不出文件）。
+- [x] T394 **记录外部板源文件消失**：`DSH-Data\tmp\osb\` 整个目录不存在，`esp32s3-usb.epro2` 全工作区无果；
+  可复现性改以 case 文件里的 **GitHub URL + SHA-256** 为准（云端工程 `ESP32S3_USB` 仍在）。
