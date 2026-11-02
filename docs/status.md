@@ -57,7 +57,8 @@ pwsh -NoProfile -File acceptance/selftest.ps1   # 期望：46 PASS / 0 FAIL（**
 pwsh -NoProfile -File acceptance/mistake-matrix.ps1  # 期望：16/16
 ```
 
-唯一的 FAIL 是 `decision-actionability`（决策表可执行率 18/111 = 16.2%），已如实记为**未达成**，出路见上表。
+唯一的 FAIL 是 `decision-actionability`（决策表可执行率 35/111 = 16.2%），已如实记为**未达成**，出路见上表。
+
 
 
 

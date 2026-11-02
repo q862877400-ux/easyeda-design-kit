@@ -543,3 +543,10 @@ T025 docs/playbook-unseen-board.md
   **上线即抓到 GAP-035**（标题已更正、状态仍 open）；连同上轮人工修的 3 条，共修 **4 条矛盾**。
   分布更正为 **open 28 / resolved 41 / accepted 13**（此前报 34，虚高 6 条）。
 - [ ] T382 **（未做）**：反向矛盾（标题写"待验证/未解决"而 status=resolved）未检查；关键词表未覆盖全部措辞。
+
+- [x] T383 **决策表补真实替代路径：可执行行 18 → 35（16.2% → 31.5%）**。做法：逐一核实 CLI 命令面的真实语义后，
+  给 17 行「未装」补上**已验证存在**的替代命令（`pcb auto-place` / `pcb escape-plan` / `pcb route-short` / `pcb beautify` /
+  `pcb outline-round` / `pcb mount-holes` / `pcb dump` / `sch netlist` / `sch check` / `sch resolve-lcsc` /
+  `schematic.export.bom` / `pcb autoroute` / `pcb add-component` / `pcb arrange` / `pcb nets` + `pcb net-path`）。
+  中途写了一个不存在的 `library list`（那是动作名不是子命令）已改掉。
+  **SC-005 仍为未达成**（31.5% < 90%），但数字是实的，且每一行替代都可执行。
