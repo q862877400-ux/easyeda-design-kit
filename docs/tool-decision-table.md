@@ -46,7 +46,7 @@
 | 批量放元件  | 批量放置元件 | 导入 CSV（位号+封装+X/Y+旋转，mil），一键落位；放置后用 `pcb layout-lint` 查重叠；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
 | 网表 → 原理图 | 网表重建原理图 | 导入网表 JSON 重建布局；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
 | BOM 有重复值  | BOM元件查重 | **未装**；**替代**：`schematic.export.bom`（导出后按位号/封装比对） |
-| 原理图 DRC | `sch drc` | 命令层；`runDrcDetailed` 带明细；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
+| 原理图 DRC | `sch drc` | 命令层；`runDrcDetailed` 带明细； |
 
 ## D. PCB 布局
 
@@ -64,7 +64,7 @@
 |---|---|---|
 | 全板自动布线（**已装可用**） | JsPCB自动布线 | 扩展菜单里唯一实际安装的自动布线器（基于 JS-PCB）；**PCB Auto Router / FreeRouting 本机未装** |
 | 想用开源布线器（**未装**） | FreeRouting | **未装**；**替代**：`pcb autoroute`（内置 Freerouting 通道：DSN→布线→SES→导入→DRC） |
-| 命令行逐跳布线（已装，实测 39→6） | `pcb route fill` | `--net <网名> --from <位号.脚> --to <位号.脚>`；每跳后 `pcb pour-rebuild` 再 `pcb drc` 复测（实测把 39 条未连降到 6 条）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
+| 命令行逐跳布线（已装，实测 39→6） | `pcb route fill` | `--net <网名> --from <位号.脚> --to <位号.脚>`；每跳后 `pcb pour-rebuild` 再 `pcb drc` 复测（实测把 39 条未连降到 6 条）； |
 | 全板自动布线（DSN→SES，主程序无头 CLI） | pcb_autorouter.exe | `-i board.dsn -a -o board.ses --threads 8 --auto-rules`；配合 `pcb export-dsn` / `pcb import-autoroute`；需主程序已登录（免费档 100 网/600 焊盘/4 层）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
 | 管脚扇出打孔 | PCB自动化工具 | **未装**；**替代**：`pcb escape-plan`（离线计算逃逸路径，**只读不写板**） |
 | 模块级扇出 | PCB自动化工具 | **未装**；**替代**：`pcb escape-plan`（按 layout 意图预留逃逸通道） |
@@ -84,7 +84,7 @@
 | 局部铺铜 | 自动生成铜皮 | 按选中过孔/焊盘/器件焊盘生成；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
 | 空白区补铜提高良率 | 平衡铜工具 | 银角式补铜；另有盗铜工具自动避让 |
 | 查铺铜填充状态 | pcb.listPours | **`filled` 未知时不能当空，也不能当完成**； |
-| 重新填充铺铜 | `pcb pour-rebuild` | 新过孔/走线落板后必须重铺，否则 `pcb drc` 读到假间隙；重铺后 `pcb save` → `doc reload` 再读；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
+| 重新填充铺铜 | `pcb pour-rebuild` | 新过孔/走线落板后必须重铺，否则 `pcb drc` 读到假间隙；重铺后 `pcb save` → `doc reload` 再读； |
 
 ## G. DRC / 规则 / DFM
 
@@ -124,7 +124,7 @@
 |---|---|---|
 | Gerber+BOM+坐标一键 | PCB Delivery Export | CPL 过滤 + 双语制造要求；**打样交付首选**； |
 | 只要 Gerber（含钻孔） | pcb.export.gerber | 动作面：`--payload {"unit":"mm","integerNumber":4,"decimalNumber":6}`；**产出是一个 zip，钻孔数据在包内**（metallic/nonMetallic/drillTable 默认 true）；空板/无铜返回 null；实测 74,863 B； |
-| 要坐标文件（CPL） | `pcb.export.pick_place` | `--payload '{"fileType":"csv","unit":"mm"}'`；缺 `fileType` 会返回 no file；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
+| 要坐标文件（CPL） | `pcb.export.pick_place` | `--payload '{"fileType":"csv","unit":"mm"}'`；缺 `fileType` 会返回 no file； |
 | 要 BOM | schematic.export.bom | 动作面：**必须 `--doc <原理图页 uuid>`**，否则返回 `ok:false`「BOM export returned no file.」；`fileType=csv； |xlsx`；实测 xlsx 8,378 B |
 | 多子板生产+测试资料 | 多板生产文件一键导出 | 17 类接口，6 语言；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
 | 工程源文件批量 | 工程文档批量导出 | .epro2，每工程一子目录；需开「项目管理>下载工程」 |
@@ -140,14 +140,14 @@
 | 丝印填充避让 | 动态丝印填充 | 当前未装；替代：pcb silk-import-svg 放置已排版 SVG（even-odd 填充） |
 | 3D 渲染 | PCB Blender 渲染工具 | WebSocket 发 Blender； |
 
-| 未连焊盘要接到同网已连通铜 | `pcb route fill` | `--net` 指定网 + `--from/--to` 给两端焊盘；逐跳落线，每跳后重铺复测；实测 39→6；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
+| 未连焊盘要接到同网已连通铜 | `pcb route fill` | `--net` 指定网 + `--from/--to` 给两端焊盘；逐跳落线，每跳后重铺复测；实测 39→6； |
 | 自动布线后剩 5.x mil 微差（5.4–5.8 对 6mil） | pcb via | 把肇事过孔从 24mil 原位缩到 20mil（位置不变、走线连接不受影响），实测 3 条清零； |
 | 网页版要出富交付（STEP/交互BOM/工程源） | `pcb.export.gerber` | 扩展；仅桌面客户端可用；网页版点导出必报 `非客户端环境无法调用本接口`，改用 CLI 三动作 |
 | 接一块别人的板（开源/客户给的） | pcb check | 先记基线再动手：`pcb drc --json` + `pcb check --json`，以 pcb check 为准；基线有违规就照实写进交付说明； |
 | 本机 `.epro2` 要进编辑器 | `project.open` | 只能开**已有**工程：`--project-uuid <uuid>`；导入本地文件需人工点原生文件框（GAP-032），`project.create` 只建空容器； |
 | 板子布完仍报一堆未连 | pcb drc | 用 `--json` 扁平输出；坐标是 **mil**（嵌套输出是 mm）；先按网分诊再动手； |
 | 未连集中在电源/地 | pcb power-planes | 看 `stitch.<net>.unplaced`，>0 表示该焊盘周围无干净落孔位； |
-| 必须在焊盘内打散热孔 | `pcb via-stitch` | 先 `--dry-run` 看计划；孔径用 `16/8`（默认 24/12 常放不下）；**dry-run 不校验间距**，落板后必须 `pcb drc`；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
+| 必须在焊盘内打散热孔 | `pcb via-stitch` | 先 `--dry-run` 看计划；孔径用 `16/8`（默认 24/12 常放不下）；**dry-run 不校验间距**，落板后必须 `pcb drc`； |
 | 撤销本次落的铜 | pcb via-delete | 按 id 精确删；**绝不删 DRC 标的未连过孔**，也绝不用 rip-up --net； |
 ## L. 计算 / 知识
 
@@ -178,20 +178,20 @@
 | PCB 线圈 | 线圈生成器 | 只服务 PCB 线圈（无线充/变压器）；当前未装，需现装后用 |
 | 番茄钟/待办/项目管理 | EE Workbench | 只服务番茄钟/待办/项目管理类工作流，不参与画板 |
 | 物料库存 | PartLab 元器件库存管理 | 只服务物料库存查询；画板流程不依赖它；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 六件以上的块放不进 A4 | `sch block-apply` | 先试 `--spacing 220 --per-row 3`，再试 260/3；**判定非单调**（实测 220/260 接受，240/250 被拒）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 同一页反复重试都被拒（说放不下） | `sch page-new` | 「放不下」判定**按页缓存**，`sch clear` 清不掉；换参数必须开新页（GAP-043）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 块落好了，想知道连线对不对 | `sch reconcile` | 从块库重推应有连接逐条对账；块自带 autoconnect 会**漏脚**（实测漏 `J:A6`），漏了先补再谈布局；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 器件组（本体+marker+桩线）互相压 | `sch clusters` | 加 `--strict`；看「体积 vs 本体」；消重叠靠挪单件或同侧标签错开 `--offset`（实测 18/96/174），不靠 `sch destagger`；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 怀疑有引脚没连上 | `sch check` | 只看 floating pin 计数；`connect` 失败时 `clusters` 会显示 `marker 0`（假干净），只有这里能揭穿（GAP-048）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 有些脚设计上就不接 | `sch no-connect` | `--designator J5 --pin A8,B8`；写成 `--pin J5:A8` 会**静默 ok:false** 且脚仍算悬空（GAP-049）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 挪完器件要重新接线 | `sch connect` | `--direction` 必须等于**引脚外朝方向**（左脚 left/右脚 right），反了被几何守卫拒（`wire segment enters component body`）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 导入 PCB 时件数明显偏多 | `pcb import-changes` | 它会把**所有页**的块都导进来（实测 9 页→30 器件）；导入前对试验页 `sch clear`（**不要 `sch page-delete`，无撤销**）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 导出 DSN 报「板是空的、没有网络」 | `pcb export-dsn` | 这句是**假错误**（实测 4 器件 4 网、layout-lint 96/100 时仍报）；先 `pcb save` → `doc reload` → 等 8–12s 再导出（GAP-048）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| `sch destagger` 跑到一半出错 | `sch connect` | destagger 会打印「待手工恢复」的每只脚期望网，照单逐脚 `sch connect --pin <REF>:<n> --net <net>` 即可复原（GAP-049）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| CLI 报 `no connected window` | `daemon health` | 看窗口数：0 表示"守护在但没窗口"——通常是浏览器没连或 bsk 会话被空闲回收（GAP-060/064）；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 动作报 `no easyeda-agent daemon found` | `daemon start` | 前台常驻命令（会自动转后台任务才继续）；启动后再 `daemon health` 确认 status=found；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 要在网页版里点 GUI（导入/导出/菜单） | `daemon health` | 三前置缺一不可：① 浏览器+扩展 connected（`bsk_session start` 会直接报 no browser is currently connected）② 会话每 ≤4 分钟一次 bsk 调用保活 ③ daemon 在线；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
-| 焊盘内打过孔仍不连通 | `pcb via-bond` | 先 `--dry-run` 看计划、`--component U1` 限定器件；注意平台限制：赋值**不能跨 doc reload 存活**（#118），改完立刻 `pcb net-path` 复核；**未装**（本机未安装该扩展，本行仅为目录信息，不能直接执行） |
+| 六件以上的块放不进 A4 | `sch block-apply` | 先试 `--spacing 220 --per-row 3`，再试 260/3；**判定非单调**（实测 220/260 接受，240/250 被拒）； |
+| 同一页反复重试都被拒（说放不下） | `sch page-new` | 「放不下」判定**按页缓存**，`sch clear` 清不掉；换参数必须开新页（GAP-043）； |
+| 块落好了，想知道连线对不对 | `sch reconcile` | 从块库重推应有连接逐条对账；块自带 autoconnect 会**漏脚**（实测漏 `J:A6`），漏了先补再谈布局； |
+| 器件组（本体+marker+桩线）互相压 | `sch clusters` | 加 `--strict`；看「体积 vs 本体」；消重叠靠挪单件或同侧标签错开 `--offset`（实测 18/96/174），不靠 `sch destagger`； |
+| 怀疑有引脚没连上 | `sch check` | 只看 floating pin 计数；`connect` 失败时 `clusters` 会显示 `marker 0`（假干净），只有这里能揭穿（GAP-048）； |
+| 有些脚设计上就不接 | `sch no-connect` | `--designator J5 --pin A8,B8`；写成 `--pin J5:A8` 会**静默 ok:false** 且脚仍算悬空（GAP-049）； |
+| 挪完器件要重新接线 | `sch connect` | `--direction` 必须等于**引脚外朝方向**（左脚 left/右脚 right），反了被几何守卫拒（`wire segment enters component body`）； |
+| 导入 PCB 时件数明显偏多 | `pcb import-changes` | 它会把**所有页**的块都导进来（实测 9 页→30 器件）；导入前对试验页 `sch clear`（**不要 `sch page-delete`，无撤销**）； |
+| 导出 DSN 报「板是空的、没有网络」 | `pcb export-dsn` | 这句是**假错误**（实测 4 器件 4 网、layout-lint 96/100 时仍报）；先 `pcb save` → `doc reload` → 等 8–12s 再导出（GAP-048）； |
+| `sch destagger` 跑到一半出错 | `sch connect` | destagger 会打印「待手工恢复」的每只脚期望网，照单逐脚 `sch connect --pin <REF>:<n> --net <net>` 即可复原（GAP-049）； |
+| CLI 报 `no connected window` | `daemon health` | 看窗口数：0 表示"守护在但没窗口"——通常是浏览器没连或 bsk 会话被空闲回收（GAP-060/064）； |
+| 动作报 `no easyeda-agent daemon found` | `daemon start` | 前台常驻命令（会自动转后台任务才继续）；启动后再 `daemon health` 确认 status=found； |
+| 要在网页版里点 GUI（导入/导出/菜单） | `daemon health` | 三前置缺一不可：① 浏览器+扩展 connected（`bsk_session start` 会直接报 no browser is currently connected）② 会话每 ≤4 分钟一次 bsk 调用保活 ③ daemon 在线； |
+| 焊盘内打过孔仍不连通 | `pcb via-bond` | 先 `--dry-run` 看计划、`--component U1` 限定器件；注意平台限制：赋值**不能跨 doc reload 存活**（#118），改完立刻 `pcb net-path` 复核； |
 
 ---
 
@@ -208,5 +208,6 @@
 
 
 ---
+
 
 
