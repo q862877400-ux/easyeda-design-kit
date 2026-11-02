@@ -588,3 +588,8 @@ T025 docs/playbook-unseen-board.md
 - [x] T391 **`doc-coverage` 扩到 `docs/phases/*.md`**：阶段文档也是"照着做"的文档，实测它让 **1 个命令**溜出决策表
   （`pcb track-delete`，重布/改线必经）。补行后决策表 **121 → 122 行**、可执行 **73 → 74/122 = 60.7%**；
   反例（删 `pcb track-delete` 行）判 `doc-coverage FAIL`，还原后 PASS。覆盖检查现在覆盖 playbook / cases / phases 三类"照着做"的文档。
+
+- [x] T392 **核查 8 份存档报告的内部一致性（阴性结果）**：逐份验证 `pass + fail + blocked == stages.Count` 与必填字段
+  （case / executor / stages 非空）——**8/8 全部成立，0 处问题**。另确认它们仍是 17/19 阶段（旧阶段集，GAP-074 已记）。
+  本轮**未新增检查**：报告层的问题由 `report-hygiene`（探针产物=0、真实运行≥5、阶段集一致）与 `run-consistency` 已覆盖，
+  再加一条算术校验边际收益过低。
