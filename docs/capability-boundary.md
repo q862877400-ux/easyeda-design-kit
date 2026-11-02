@@ -1863,3 +1863,52 @@
   依赖"板级完整跑"的数字，不在 claims 行里，暂未被自校验覆盖。
 - **status**：`resolved`（4/7 提示已自校验；3 条待补真源）
 
+
+### GAP-089 续 2：7 条提示全部不再"裸写会腐烂的数字"（T413 完成）
+
+- **capability**：消灭"提示里写死一个没有真源的数字"这种情况本身。
+- **evidence**（2026-11-01 第 100 轮，逐条处置）：
+  1. **4 条**（selftest 两处、`107 行`、`99.1%` 三个旧口径数字）→ 已由 claims 行自校验（第 99 轮）。
+  2. **板级那条**（旧口径 16-0-0）→ 新增真源：取 `runs/` 里**最新一份 23 阶段且排除两个集合级阶段后 0 BLOCKED** 的报告，
+     用它的 PASS/FAIL 数比对提示。注入假数字（改成 99 PASS / 99 FAIL）⇒ 立即
+     `[FAIL] … 提示未含最新完整运行的 21（现写：现为 99 PASS / 99 FAIL / 0 BLOCKED（23 阶段）；报告 sc001-usbc-typed）`；还原 ⇒ PASS。
+  3. **静态那条**（旧口径 2-1-8）→ **不再写死数字**：提示改为"现为静态门禁当前值（见本次运行汇总行，不在此写死）"。
+     理由：静态结果只能由"跑一次门禁"得到，在门禁内部算它会构成递归。
+  4. **旧口径计数那条** → 改为"现为决策表当前可执行数（见 claims 行）"，不写死。
+  ⇒ 7 条提示里 **5 条有真源自校验、2 条不再含数字**；**没有一条是"写死但无人检查"的**。
+- **triedTools**：`run.ps1`、`Copy-Item`、`Set-Content`、`Get-ChildItem`
+- **alternative**：静态门禁若要自校验数值，唯一办法是把"上一次完整运行的汇总"落成文件再比对（多一次 IO，收益低）。
+- **status**：`resolved`
+
+---
+
+## GAP-090 **更正 GAP-058 的前提**：走线级编辑**是存在的**（`pcb track` / `pcb track-delete`）
+
+- **capability**：把"DCR 0 不可达"这个结论的前提拆开验证；其中"没有走线级编辑"这一条**是错的**。
+- **evidence**（2026-11-01 实测）：
+  1. `pcb track --help` 明确支持**按坐标建线**：`--x1 --y1 --x2 --y2 --net --layer --width`（默认宽 6）。
+  2. `pcb track-delete --ids <primitiveId>[,<id2>]` 按 id 删除。
+  3. `pcb track-list` 给出全部 173 条线段（`primitiveId/net/startX/startY/endX/endY/lineWidth/layer/locked`）。
+  4. `pcb.drc.check` 的违规里带 **对象 id 与后缀**（例：`obj1=7e8d6dcaab98b5e0 (USB_HOST_DM): e143 ↔ obj2=… (USB_HOST_DP): J5_A6`），
+     可直接与 `track-list` 对接定位到具体那一段线。
+  ⇒ 所以"修 DRC 需要走线级编辑但不可得"这一条**不成立**；GAP-058 只能保留"没有 slot/pad 级 clearance 参数"与"没有精确端点编辑（只能删了按坐标重建）"。
+- **triedTools**：`pcb track`、`pcb track-delete`、`pcb track-list`、`pcb drc`、`pcb.drc.check`
+- **alternative**：仍**未验证**：能否把 DRC 真正降到 0（本轮修一条试了但失败，见 GAP-091）。
+- **status**：`open`（前提已更正；不可达性仅对部分成因成立）
+
+---
+
+## GAP-091 坐标单位陷阱：`pcb track` 的 `--x1/--y1` 按**板数据单位**解释，`track-list` 也是数据单位，而我按 mil 传 → 造出 10 倍小的错位线
+
+- **capability**：避免"修一条违规反而造出三条新违规"。
+- **evidence**（2026-11-01 实测，完整过程）：
+  1. 目标段原值：`(5070.4876, -575.2639) → (5101.7876, -575.2639)`，宽 10（`track-list` 单位）。
+  2. 我按 **mil** 传 `--x1 507.04876 …`，结果新线段在 `track-list` 里显示为 `(507.0488, -57.5264)`——
+     **比原值小 10 倍**，即落在错误位置；DRC 从 **3 条变 6 条**（新增 3 条 Track 类违规）。
+  3. 删除错位段、按**数据单位**（`5070.4876`）重建后，`track-list` 显示与原值一致，DRC **回到 3 条**
+     （`Netlist Error=1 / Slot Region to Track=1 / SMD Pad to Track=1`）。
+  4. 注意宽度是**按 mil** 解释的（传 `--width 6` 后 `lineWidth=6`），所以**同一命令里两种单位并存**。
+- **triedTools**：`pcb track`、`pcb track-delete`、`pcb track-list`、`pcb drc`
+- **alternative**：**规矩**——用 `track-list` 的坐标**原样回填**给 `pcb track`（不要做单位换算），宽度按 mil 传。
+  已验证改动可逆：删错位段 + 按原数据单位重建即可完全复原。
+- **status**：`accepted`（陷阱已量化并给出安全用法）

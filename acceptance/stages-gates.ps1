@@ -547,9 +547,9 @@ function Test-EvidenceFreshness {
         'selftest 36 PASS' = '现为 46'
         '36 PASS / 0 FAIL' = '现为 46 PASS / 0 FAIL'
         '99.1%'            = '现为 61.4%（78/127；可执行率口径已收紧）'
-        '106/107'          = '现为 78/127 可执行'
+        '106/107'          = '现为决策表当前可执行数（见 claims 行）'
         '107 行'           = '现为 127 行'
-        '2 PASS / 1 FAIL / 8 BLOCKED' = '现为 12 PASS / 1 FAIL / 0 BLOCKED（静态）'
+        '2 PASS / 1 FAIL / 8 BLOCKED' = '现为静态门禁当前值（见本次运行汇总行，不在此写死）'
         '16 PASS / 0 FAIL / 0 BLOCKED' = '现为 21 PASS / 2 FAIL / 0 BLOCKED（23 阶段）'
     }
     $exempt = '当时|历史|旧口径|此前|作废|口径更正'
@@ -578,6 +578,33 @@ function Test-EvidenceFreshness {
                     if ($want -and $hint -notmatch [regex]::Escape($want)) {
                         $hintProblems += "「$($ck.key)」提示未含当前 $field=$want（现写：$hint）"
                     }
+                }
+            }
+        }
+    }
+    # 板级提示（'16 PASS / 0 FAIL / 0 BLOCKED'）的真源在报告里：取最新一份 23 阶段完整运行，
+    # 排除两个集合级阶段后统计 pass/fail/blocked，再比对提示是否含这三个数。
+    $runsDir2 = Join-Path $script:AcceptDir 'runs'
+    if (Test-Path $runsDir2) {
+        $newest = $null
+        foreach ($rf in (Get-ChildItem $runsDir2 -File -Filter '*.json' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)) {
+            try {
+                $rj = Get-Content $rf.FullName -Raw | ConvertFrom-Json
+                $st2 = @($rj.stages)
+                if ($st2.Count -eq 23) {
+                    $blk2 = @($st2 | Where-Object { $_.status -eq 'BLOCKED' -and ($_.stage -notin @('report-hygiene', 'run-consistency')) }).Count
+                    if ($blk2 -eq 0) { $newest = $rj; break }
+                }
+            } catch { }
+        }
+        if ($newest) {
+            $p2 = @($newest.stages | Where-Object { $_.status -eq 'PASS' }).Count
+            $f2 = @($newest.stages | Where-Object { $_.status -eq 'FAIL' }).Count
+            $hint2 = [string]$stale['16 PASS / 0 FAIL / 0 BLOCKED']
+            foreach ($want2 in @($p2, $f2)) {
+                if ($hint2 -notmatch [regex]::Escape([string]$want2)) {
+                    $hintProblems += "「16 PASS / 0 FAIL / 0 BLOCKED」提示未含最新完整运行的 $want2（现写：$hint2；报告 $(Split-Path $newest.case -Leaf)）"
+                    break
                 }
             }
         }
@@ -766,5 +793,7 @@ function Test-DocCoverage {
         Add-Result "doc-coverage" "FAIL" "$($missing.Count)/$($cited.Count) 个命令决策表没有行： $(($missing | Select-Object -First 3) -join ', ')"
     }
 }
+
+
 
 
