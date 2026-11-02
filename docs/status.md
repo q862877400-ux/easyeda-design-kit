@@ -53,9 +53,10 @@
 ```powershell
 pwsh -NoProfile -File acceptance/run.ps1 -Case sc001-usbc-typed -Static
 # 期望：10 PASS / 1 FAIL / 1 BLOCKED（本模式不含 10 项板级检查，未计入 BLOCKED）
-pwsh -NoProfile -File acceptance/selftest.ps1   # 期望：46 PASS / 0 FAIL
+pwsh -NoProfile -File acceptance/selftest.ps1   # 期望：46 PASS / 0 FAIL（**独立副本里为 45 PASS + 1 SKIP**，见 GAP-082）
 pwsh -NoProfile -File acceptance/mistake-matrix.ps1  # 期望：16/16
 ```
 
 唯一的 FAIL 是 `decision-actionability`（决策表可执行率 18/111 = 16.2%），已如实记为**未达成**，出路见上表。
+
 

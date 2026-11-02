@@ -528,3 +528,8 @@ T025 docs/playbook-unseen-board.md
 - [x] T377 **把 pre-commit 装成真正的 git hook（GAP-081 收尾）**：`.githooks/pre-commit` + `git config core.hooksPath .githooks`；
   `pre-commit.ps1` 加 `-Check`（只校验）。**反例实测**：塞 `GAP-998` 缺字段后直接 `git commit` → hook 拦下、退出码 1、
   **未产生提交**；正常提交可通过（本轮即用它提交）。未覆盖：`core.hooksPath` 不随仓库分发，新克隆需一次性配置（已写明）。
+
+- [x] T378 **可移植性实测：把 kit 复制到临时目录并跑三件套（GAP-082）**。结果：`45 PASS / 0 FAIL / 1 SKIP`、
+  矩阵 `16/16`、静态 `10 PASS / 1 FAIL / 1 BLOCKED`。**核心检查不依赖母目录**，但 `历史回测` 需要兄弟目录
+  `../easyeda-auto` 作为夹具（脱离后诚实 SKIP，未被算作 PASS）。已写入 `docs/status.md` 的"怎么自己验"。
+- [ ] T379 **（待定）是否把历史回测夹具随 kit 分发**：需要评估体积与许可；不随包时应在文档标明"该项为开发期专有"。

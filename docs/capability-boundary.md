@@ -1540,3 +1540,19 @@
   `git config core.hooksPath .githooks`（已在 `.githooks/pre-commit` 头部写明装法）。要真正随仓库生效需要
   文档提示或安装脚本，**未做**。
 - **status**：`resolved`（本仓库已强制；新克隆需一次性配置）
+
+---
+
+## GAP-082 把 kit 复制到别处能跑，但自测少 1 项：`历史回测` 依赖开发工作区的 `../easyeda-auto`
+
+- **capability**：让"可安装的 kit"在**脱离开发工作区**后仍能完整自证。
+- **evidence**（2026-11-01 实测，robocopy 副本、排除 `.git`）：
+  1. 副本里三件套结果：`selftest 45 PASS / 0 FAIL / **1 SKIP**`、`matrix 16/16`、静态 `10 PASS / 1 FAIL / 1 BLOCKED`。
+  2. 母目录里同一套：`46 PASS / 0 FAIL / 0 SKIP`。差异来源明确：
+     `[SKIP] 历史回测（找不到 …\easyeda-auto）`——该断言需要一个**兄弟目录** `../easyeda-auto` 作为历史回测夹具。
+  3. 结论：**kit 的核心检查不依赖母目录**（自测 45 项、矩阵 16 项、静态 12 项都在副本里跑通），
+     但**有 1 项依赖开发工作区**。SKIP 是诚实上报（未被算作 PASS），但意味着"拿到 kit 的人少验一项"。
+- **triedTools**：`robocopy`（复制）、副本内 `selftest.ps1` / `mistake-matrix.ps1` / `run.ps1 -Static`
+- **alternative**：① 把该夹具**随 kit 分发**（体积与许可需评估，**未验证**）；② 把它标为"开发期专有检查"并在文档写明
+  （已在 `docs/status.md` 写明副本口径）。未做①。
+- **status**：`open`（文档已如实说明；夹具未随包分发）
