@@ -518,3 +518,61 @@ function Test-EvidenceFreshness {
     }
 }
 
+
+# ── 阶段：能力声明与实测一致（HANDOVER 的 claims 块）────────────────────────
+function Test-ClaimsMatch {
+    # 反例（2026-11-01）：HANDOVER 写「三块板全绿」「19 阶段」这类**文字承诺**，没有任何门禁核对，
+    # 于是它随我每轮改动慢慢变歪（数字层已被 evidence-freshness 看住，文字层没人看）。
+    # 做法：HANDOVER 里放一行 `<!-- claims: stages=N; boundaries=N; ... -->`，本阶段用**同一轮的数据**核对。
+    $hp = Join-Path $script:AuditRoot 'docs\HANDOVER.md'
+    if (-not (Test-Path $hp)) { Add-Result "claims-match" "FAIL" "HANDOVER.md 不存在"; return }
+    $text = Get-Content $hp -Raw
+    $m = [regex]::Match($text, '<!--\s*claims:(.*?)-->')
+    if (-not $m.Success) { Add-Result "claims-match" "FAIL" "HANDOVER 里没有 claims 块（无法核对能力声明）"; return }
+    $claims = @{}
+    foreach ($pair in ($m.Groups[1].Value -split ';')) {
+        $kv = $pair.Trim() -split '=', 2
+        if ($kv.Count -eq 2) { $claims[$kv[0].Trim()] = $kv[1].Trim() }
+    }
+    # 实测值：全部在本轮内可算，不递归
+    $runPs1 = Join-Path $script:RepoRoot 'acceptance\run.ps1'
+    $live = @{}
+    $live['stages'] = @(Select-String -Path $runPs1 -Pattern '^Test-[A-Za-z]+$').Count
+    $bd = Get-Content (Join-Path $script:AuditRoot 'docs\capability-boundary.md') -Raw
+    $live['boundaries'] = ([regex]::Matches($bd, '(?m)^##\s+GAP-\d+')).Count
+    $tbl = Join-Path $script:AuditRoot 'docs\tool-decision-table.md'
+    $rows = @(Get-Content $tbl | Where-Object { $_ -match '^\|' -and $_ -notmatch '^\|\s*-+' -and $_ -notmatch '情境' })
+    $live['decision_rows'] = $rows.Count
+    $ie = @((Get-Content (Join-Path $script:AuditRoot 'docs\installed-extensions.json') -Raw | ConvertFrom-Json).installed)
+    $act = 0
+    foreach ($r in $rows) {
+        $cells = $r.Split('|'); if ($cells.Count -lt 4) { continue }
+        $tool = $cells[2].Trim(); $params = $cells[3].Trim()
+        $concrete = ($params -match '--[a-zA-Z]') -or ($params -match '`[^`]+`') -or ($params -match '\{[^}]*\}')
+        $ui = ($params -match '→|菜单|面板|对话框|右键|工具栏|弹窗')
+        $inst = @($ie | Where-Object { $tool -like "*$_*" -or $_ -like "*$tool*" }).Count -gt 0
+        $bad = ($params -match '未装') -and ($params -notmatch '替代|改用|命令|pcb ')
+        if (($concrete -or ($ui -and $inst)) -and -not $bad) { $act++ }
+    }
+    $live['decision_actionable'] = $act
+    $pbSteps = 0
+    foreach ($pf in (Get-ChildItem (Join-Path $script:AuditRoot 'playbooks') -File -Filter '*.playbook.json' -ErrorAction SilentlyContinue)) {
+        try { $pj = Get-Content $pf.FullName -Raw | ConvertFrom-Json; $pbSteps += @($pj.steps).Count } catch { }
+    }
+    $live['playbook_steps'] = $pbSteps
+    # selftest 项数：静态数 `Assert-Case`，不递归执行 selftest
+    $stPath = Join-Path $script:RepoRoot 'acceptance\selftest.ps1'
+    $live['selftest_cases'] = @(Get-Content $stPath | Where-Object { $_ -match '^\s*Assert-Case\s' }).Count
+    $mismatch = @()
+    foreach ($k in $claims.Keys) {
+        if (-not $live.ContainsKey($k)) { $mismatch += "$k 是未知字段"; continue }
+        if ([string]$claims[$k] -ne [string]$live[$k]) { $mismatch += "$k 声明 $($claims[$k]) ≠ 实测 $($live[$k])" }
+    }
+    if ($mismatch.Count -eq 0) {
+        Add-Result "claims-match" "PASS" ("HANDOVER 的 $($claims.Count) 项能力声明与实测一致：" + (($claims.Keys | Sort-Object | ForEach-Object { "$_=$($live[$_])" }) -join ', '))
+    } else {
+        Add-Result "claims-match" "FAIL" ("$($mismatch.Count) 项不一致： " + (($mismatch | Select-Object -First 3) -join '; '))
+    }
+}
+
+

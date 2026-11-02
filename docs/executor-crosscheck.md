@@ -137,7 +137,7 @@ pwsh -NoProfile -File easyeda-design-kit\acceptance\run.ps1 `
 
 | 项 | 结果 |
 |---|---|
-| `selftest.ps1` | **38 PASS / 0 FAIL**（当时 36；后加 flag 缺失/取值类型两条断言）|
+| `selftest.ps1` | **42 PASS / 0 FAIL**（当时 36；后加 flag 缺失/取值类型/证据新鲜/claims 四条断言）|
 | `mistake-matrix.ps1` | **16/16 抓到，0 漏网**（M12 重新被抓到） |
 | 静态 acceptance | **8 PASS / 0 FAIL / 10 BLOCKED**（BLOCKED = 需在线板子的阶段） |
 | 五块板（同一次顺序运行，**当时 16 阶段口径**） | 每块 **16 PASS / 0 FAIL / 0 BLOCKED** |
@@ -145,6 +145,7 @@ pwsh -NoProfile -File easyeda-design-kit\acceptance\run.ps1 `
 
 **判读**：门禁脚本的改动不会影响板子验收——这是**测出来的**，不是推断的。以后每次动 `acceptance/` 下的判据，
 都应照这条跑一遍：三件套 + 五板复验 + 一条反例。
+
 
 
 

@@ -423,7 +423,7 @@
      本板 21 网 / 279 焊盘 / 4 层 / 70×45mm → **注册会员免费档即可，无需付费**。
   6. **实际报错**：`Error: design exceeds free version limits (pins=279 nets=21 layers=4), please upgrade to Pro`
      —— 因为当时是**未登录游客**（2 层上限）。登录后应落回 4 层档。
-- **triedTools**：`pcb_autorouter.exe --help/-a/-u`、`easyeda pcb export-dsn`、官网定价页
+- **triedTools**：`pcb autoroute`（一体化调用外部布线器）、`daemon health`、`bsk_inspect`（读扩展广场页面）
 - **alternative**：登录有两种，但都需人工一步——
   (a) 打开 GUI（`pcb_autorouter.exe -u`）用邮箱注册/登录；
   (b) 提供账号凭据。
@@ -1260,3 +1260,23 @@
 - **alternative**：红线是"知道哪些取值已作废"，这需要**改数字时同步改这份清单**——无法自动推导（否则要递归跑 selftest）。
   下一层未做：**文档里的一句话结论**（非数字）是否与门禁一致，目前完全没有检查。
 - **status**：`resolved`（数字层已闭合）
+
+---
+
+## GAP-070 HANDOVER 里的**文字能力声明**没人核对：写「19 阶段」时实际已是 21 阶段
+
+- **capability**：让 HANDOVER 里"这套东西现在能做什么"的声明可被机械核对。
+- **evidence**（2026-11-01 实测）：
+  1. 数字层已由 `evidence-freshness` 看住，但**结构化的能力声明**（阶段数、边界条数、决策表行数、playbook 步数、
+     自测项数）此前无人核对；每轮加阶段/加断言都会让它悄悄变歪。
+  2. 做法：HANDOVER 顶部放一行 `<!-- claims: stages=21; boundaries=69; decision_rows=111; playbook_steps=37; selftest_cases=42 -->`，
+     新阶段 `claims-match` 用**同一轮内可算**的值核对（`run.ps1` 的 `Test-*` 行数、`## GAP-` 段数、表格行数、
+     playbook steps 数、`Assert-Case` 行数）——**不递归执行 selftest**。
+  3. 反例：把 claims 的 `stages` 改成 19 → `FAIL 1 项不一致： stages 声明 19 ≠ 实测 21`；无 claims 块 → FAIL；
+     真文档 → `PASS 5 项能力声明与实测一致`。
+  4. 自测加 2 条断言（不一致 / 缺块），**42 PASS / 0 FAIL**；claims 里的 `selftest_cases` 也随之同步（否则这一项立刻报不一致）。
+- **triedTools**：`run.ps1`（新阶段 + `-AuditRoot` 探针）、`selftest.ps1`、`capability-boundary.md` / `tool-decision-table.md` / `playbooks\*.json`（解析源）
+- **alternative**：仍**未验证/未覆盖**：① 声明里的**语义**（如"五块板全绿"这类自然语言结论）不在核对范围；
+  ② claims 只增不减的棘轮尚未加（当前只判"相等"，不判"不少于"）。
+- **status**：`resolved`（结构化声明层已闭合）
+

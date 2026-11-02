@@ -502,6 +502,7 @@ Test-Delivery
 Test-NoOneOffScripts
 Test-RunConsistency
 Test-EvidenceFreshness
+Test-ClaimsMatch
 Test-PositiveGoal
 Test-NegativeDrift
 

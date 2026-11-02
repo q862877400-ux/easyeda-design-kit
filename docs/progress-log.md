@@ -109,3 +109,5 @@
 | 77 | playbook 门禁只查命令名不查 flag：造反例（`--no-such-flag-xyz` 判 PASS）→ 补 flag 校验（按完整命令路径取帮助）| 真 kit **37 步 / 27 flag 全部存在**；自测 36→**37**；反例只报假 flag | 本轮 |
 | 78 | 补 playbook 的 flag **取值类型**校验（GAP-068）：反例 `--spacing abc` 原判 PASS → 现精确报错；真 kit 37 步/27 flag/37 步类型校验 | 自测 36→**38**；静态 8/1/10 | 本轮 |
 | 79 | 新增第 **20** 阶段 `evidence-freshness`（GAP-069）：扫四份证据文档的 6 类作废取值，无标注即 FAIL；上线即抓到 2 处上轮漏改 | 自测 38→**40**；静态 9 PASS / 1 FAIL / 10 BLOCKED | 本轮 |
+| 80 | 新增第 **21** 阶段 `claims-match`（GAP-070）：HANDOVER 的 claims 块与同轮实测比对（阶段/边界/行数/步数/断言数），不递归 | 反例 19≠21 判 FAIL；真文档 5 项一致；自测 40→**42**；静态 **10/1/10** | 本轮 |
+| 80b | 修：claims 边界数 69→70 同步；GAP-029 triedTools 改写为真实工具名（`pcb autoroute`/`daemon health`/`bsk_inspect`）| 抽样 5/5、claims 5 项一致、静态 **10/1/10** | 本轮 |
