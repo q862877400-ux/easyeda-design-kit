@@ -24,7 +24,7 @@ $hpPath = Join-Path $RepoRoot 'docs\HANDOVER.md'
 $stPath = Join-Path $RepoRoot 'acceptance\selftest.ps1'
 
 $live = [ordered]@{}
-$live['stages'] = @(Select-String -Path $runPs1 -Pattern '^Test-[A-Za-z]+$').Count
+$live['stages'] = @(Select-String -Path $runPs1 -Pattern '^\s*Test-[A-Za-z]+\s*$').Count
 $bd = Get-Content $bdPath -Raw
 $live['boundaries'] = ([regex]::Matches($bd, '(?m)^##\s+GAP-\d+')).Count
 $rows = @(Get-Content $tblPath | Where-Object { $_ -match '^\|' -and $_ -notmatch '^\|\s*-+' -and $_ -notmatch '情境' })
@@ -71,3 +71,4 @@ if ($text -match '<!--\s*claims:.*?-->') {
 Set-Content -Path $hpPath -Value $text -Encoding UTF8
 Write-Host "claims 已同步:"
 Write-Host $line
+

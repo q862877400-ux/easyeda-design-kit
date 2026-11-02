@@ -1061,7 +1061,7 @@
      **它打开的 Agent Window 与其中标签一并关闭**——EDA 页面随之消失，`daemon health` 里窗口数归零。
   3. 即：**掉线不是 EDA 或连接器的问题，是自动化会话的空闲回收**。
 - **triedTools**：`bsk_session start`（新会话恢复窗口）、`bsk_tabs list`（暴露 session 已停止）、
-  `easyeda daemon health`（窗口数 0/2 但上下文为空）
+  `daemon health`（窗口数 0/2 但上下文为空）
 - **alternative**：① 长流程前先开 bsk 会话并**在流程中周期性使用它**（保持不空闲）；
   ② 给 bsk daemon 加 `--session-idle` 更大值（需改启动参数，**未验证**）；
   ③ 用 `ensure_eda_window` 在每步前重连（已实现，但会话被回收时也会失败）。
@@ -1078,7 +1078,7 @@
   2. 于是 `easyeda board list --project ESP32S3_USB` 返回
      `no connected window for project "ESP32S3_USB"`，`pcb autoroute` 同样被 `--doc guard` 拒绝。
   3. 后果：这条外部板的 DSN/布线链路（T332）**在当前窗口状态下不可执行**。
-- **triedTools**：`bsk_session start`、`bsk_interact click`（工程链接）、`easyeda daemon health`、
+- **triedTools**：`bsk_session start`、`bsk_interact`（工程链接）、`daemon health`、
   `easyeda board list`、`easyeda pcb autoroute`
 - **alternative**：① 直接在浏览器地址栏打开
   `https://pro.lceda.cn/editor#id=<projectUuid>,tab=<docUuid>@<projectUuid>`（需要 projectUuid——
@@ -1161,7 +1161,7 @@
   3. **守护进程必须在线**：`easyeda daemon start` 是前台常驻命令；没有它任何 `--project/--doc` 动作报
      `no easyeda-agent daemon found`。
   ⇒ **可用性 = 浏览器+扩展已连 ∧ 会话保活 ∧ 守护进程在线**，三者缺一即不可用。
-- **triedTools**：`bsk_session start`、`bsk_tabs list`、`easyeda daemon start`、`easyeda daemon health`
+- **triedTools**：`bsk_session start`、`bsk_tabs list`、`easyeda daemon start`、`daemon health`
 - **alternative**：① 需要 GUI 的回合，先请业主确认浏览器与扩展处于 connected 状态；
   ② 把 idle 调大（扩展侧设置，**未验证**具体入口）；③ 纯 CLI 路径（不需要浏览器窗口，但仍需守护进程）。
 - **status**：`resolved`（前置条件已查明；能否执行取决于这三条是否在线）
@@ -1376,3 +1376,24 @@
 - **alternative**：仍**未覆盖**：若有人先用它"洗"掉一个被手工写错的声明，则错误声明会被覆盖成实测值而非被发现——
   这层的兜底是 `baseline.json` 的地板（只增不减），但**语义错误**（写了与实测一致却理解错的描述）仍只能靠人工评审。
 - **status**：`resolved`
+
+---
+
+## GAP-075 「11 项 BLOCKED」这个说法本身在夸大：其中 9 项只是**这次静态跑没给板子参数**
+
+- **capability**：区分"能力被阻塞"与"这次调用没用板级参数"，不把后者报成前者。
+- **evidence**（2026-11-01 实测）：
+  1. 静态跑（不带 `-Project`）时汇总恒为 `10 PASS / 1 FAIL / 11 BLOCKED`，看起来像有 11 项能力不可用。
+     实际逐条看：`environment`（无窗口）+ `report-hygiene`（无新证据）是**真**阻塞；
+     其余 **9 项**（schematic-gates / design-ir / pcb-layout / pcb-connectivity / pcb-drc-clean / pcb-dfm /
+     delivery / no-oneoff-scripts / negative-drift）都只是因为**没传 `-Project/-Doc/-IR/-DeliveryDir/-RunLog`**。
+  2. 新增 `-Static` 模式：只跑文档与门禁自身检查（12 项），板级阶段**不执行**并在汇总行注明
+     `（本模式不含 N 项板级检查，未计入 BLOCKED）`。实测
+     `10 PASS / 1 FAIL / 1 BLOCKED（本模式不含 10 项板级检查）`——阻塞从 11 降到 1。
+  3. 顺带修掉一个被 `-Static` 暴露的真缺陷：把板级调用缩进后，数阶段的正则 `^Test-` 从 22 掉到 12，
+     导致 `claims-match` 与 `report-hygiene` 都读错"当前阶段数"。三处正则改为 `^\s*Test-[A-Za-z]+\s*$`。
+- **triedTools**：`run.ps1 -Static`、`sync-claims.ps1`、`selftest.ps1`
+- **alternative**：**规矩**——汇总行必须能区分"未执行"与"阻塞"；否则一个措辞会把 9 项正常跳过说成 9 项故障。
+  未覆盖：`-Static` 与完整模式的**结论一致性**尚无门禁比对（两者本就不该一致，但"静态项在两种模式下同结论"值得查）。
+- **status**：`resolved`
+

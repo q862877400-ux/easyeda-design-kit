@@ -537,7 +537,7 @@ function Test-ClaimsMatch {
     # 实测值：全部在本轮内可算，不递归
     $runPs1 = Join-Path $script:RepoRoot 'acceptance\run.ps1'
     $live = @{}
-    $live['stages'] = @(Select-String -Path $runPs1 -Pattern '^Test-[A-Za-z]+$').Count
+    $live['stages'] = @(Select-String -Path $runPs1 -Pattern '^\s*Test-[A-Za-z]+\s*$').Count
     $bd = Get-Content (Join-Path $script:AuditRoot 'docs\capability-boundary.md') -Raw
     $live['boundaries'] = ([regex]::Matches($bd, '(?m)^##\s+GAP-\d+')).Count
     $tbl = Join-Path $script:AuditRoot 'docs\tool-decision-table.md'
@@ -609,7 +609,7 @@ function Test-ReportHygiene {
         } catch { $junk += "$($r.Name)（无法解析）" }
     }
     # 阶段集一致性（2026-11-01）：旧报告（阶段数 ≠ 当前）**不算当前证据**——否则"报告入库"会永远靠旧账过关。
-    $curStages = @(Select-String -Path (Join-Path $script:RepoRoot 'acceptance\run.ps1') -Pattern '^Test-[A-Za-z]+$').Count
+    $curStages = @(Select-String -Path (Join-Path $script:RepoRoot 'acceptance\run.ps1') -Pattern '^\s*Test-[A-Za-z]+\s*$').Count
     $fresh = @(); $stale = @()
     foreach ($name in $real) {
         try {
@@ -629,5 +629,6 @@ function Test-ReportHygiene {
         Add-Result "report-hygiene" "BLOCKED" "没有任何与当前 $curStages 阶段一致的真实运行（$($stale.Count) 份都是旧阶段集）——需重跑板子，当前无窗口"
     }
 }
+
 
 

@@ -26,7 +26,8 @@ param(
     [Parameter(Mandatory = $false)][string]$InstalledCli = "",
     [Parameter(Mandatory = $false)][string]$Executor = "",
 [Parameter(Mandatory = $false)][switch]$Quiet,
-    [switch]$NoArchive
+    [switch]$NoArchive,
+    [switch]$Static
 )
 
 $ErrorActionPreference = "Stop"
@@ -39,6 +40,7 @@ if ([string]::IsNullOrWhiteSpace($AuditRoot)) { $script:AuditRoot = $script:Repo
 if ([string]::IsNullOrWhiteSpace($CodeScope)) { $script:CodeScope = "" } else { $script:CodeScope = $CodeScope }
 . (Join-Path $script:AcceptDir "stages-gates.ps1")
 $script:Results = @()
+$script:StaticSkipped = 0
 
 function Add-Result {
     param([string]$Stage, [string]$Status, [string]$Detail)
@@ -492,21 +494,27 @@ Test-InstalledClaims
 Test-DecisionActionability
 Test-CapabilityBoundary
 Test-CapabilitySample
-Test-Environment
-Test-SchematicGates
-Test-DesignIR
-Test-PcbLayout
-Test-PcbConnectivity
-Test-PcbDrcClean
-Test-PcbDfm
-Test-Delivery
-Test-NoOneOffScripts
+if (-not $Static) {
+    Test-Environment
+    Test-SchematicGates
+    Test-DesignIR
+    Test-PcbLayout
+    Test-PcbConnectivity
+    Test-PcbDrcClean
+    Test-PcbDfm
+    Test-Delivery
+    Test-NoOneOffScripts
+} else {
+    $script:StaticSkipped = 9
+}
 Test-RunConsistency
 Test-EvidenceFreshness
 Test-ReportHygiene
 Test-ClaimsMatch
 Test-PositiveGoal
-Test-NegativeDrift
+if (-not $Static) {
+    Test-NegativeDrift
+} else { $script:StaticSkipped++ }
 
 $fail = @($script:Results | Where-Object Status -eq "FAIL").Count
 $connEnd = Get-ConnectorWindowCount
@@ -518,7 +526,8 @@ $blocked = @($script:Results | Where-Object Status -eq "BLOCKED").Count
 $pass = @($script:Results | Where-Object Status -eq "PASS").Count
 if (-not $Quiet) {
     Write-Host ""
-    Write-Host "===== $pass PASS / $fail FAIL / $blocked BLOCKED$(if ($partial) { ' [PARTIAL: 窗口中途掉线' } else { '' }) ====="
+    $skipNote = if ($Static -and $script:StaticSkipped -gt 0) { "（本模式不含 $script:StaticSkipped 项板级检查，未计入 BLOCKED）" } else { "" }
+    Write-Host "===== $pass PASS / $fail FAIL / $blocked BLOCKED$(if ($partial) { ' [PARTIAL: 窗口中途掉线' } else { '' })$skipNote ====="
 }
 
 $report = Join-Path $script:AcceptDir "last-report.json"
