@@ -1,5 +1,5 @@
 {
-  "docs_files": 26,
+  "docs_files": 27,
   "playbooks": 5,
   "acceptance": 27,
   "spec_files": 9,
@@ -8,5 +8,5 @@
   "boundaries": 82,
   "playbook_steps": 37,
   "selftest_cases": 46,
-  "decision_actionable": 35
+  "decision_actionable": 44
 }

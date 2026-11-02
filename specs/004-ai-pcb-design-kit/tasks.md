@@ -550,3 +550,10 @@ T025 docs/playbook-unseen-board.md
   `schematic.export.bom` / `pcb autoroute` / `pcb add-component` / `pcb arrange` / `pcb nets` + `pcb net-path`）。
   中途写了一个不存在的 `library list`（那是动作名不是子命令）已改掉。
   **SC-005 仍为未达成**（31.5% < 90%），但数字是实的，且每一行替代都可执行。
+
+- [x] T384 **修正 17 行误标的「未装」并给出剩余行的分类上限**（关键：找到了我自己的批量标记错误）。
+  早几轮我按 `installed-extensions.json` 把 90 行标成「未装」——但 **CLI 命令不是扩展**（`sch drc`、`pcb route fill`、
+  `daemon health`、`sch connect` 等一直都在），于是 16 行 CLI 命令 + 1 行已装扩展（`JsPCB自动布线`）被误伤。
+  去掉误标后：**18 → 44/111 = 39.6%**（本轮净增 26 行可执行）。
+  对剩余 60 行做分类：A 类 AI 助手 11 / B 类 GUI 专用 11 / C 类仿真 5 / **D 类 CLI 参数待补 20** / E 类待判定 13。
+  结论：**即使把 D 类全补完，上限也只有 64/111 ≈ 57.7%** —— 这是 SC-005 取舍（A 装扩展 / B 重划范围）的量化依据。

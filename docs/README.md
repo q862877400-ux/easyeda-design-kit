@@ -41,7 +41,8 @@
 ## 要查具体条目
 
 10. [`boundary-index.md`](boundary-index.md) —— 75 条边界的**索引**（按 open / resolved / accepted 分组，一屏看完待办）。
-11. [`capability-boundary.md`](capability-boundary.md) —— 75 条完整条目（100 KB）。
+11. [decision-gaps.md](decision-gaps.md) —— 决策表剩余行的可替代性分类（含 SC-005 能达到的上限）。
+11b. [`capability-boundary.md`](capability-boundary.md) —— 75 条完整条目（100 KB）。
     **每条固定五字段**：capability / evidence / triedTools / alternative / status。用索引定位后再跳进来读。
 
 ## 想知道"这些结论可靠吗"
@@ -70,4 +71,5 @@
 2. **看到"未验证"就当它没做过**。本 kit 刻意保留这个词，用来区分"我试过"和"我以为"。
 3. **`未达成` 不是失败，是记录**。`SC-005`（决策表可执行率）与 `SC-A`（DRC 0）都标未达成，
    理由和出路都写在 `sc-evidence.md` 与 `boundary-root-causes.md`。
+
 
