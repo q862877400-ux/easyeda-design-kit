@@ -544,13 +544,13 @@ function Test-EvidenceFreshness {
             ForEach-Object { $_.FullName.Substring($script:AuditRoot.Length).TrimStart('\') })
     }
     $stale = @{
-        'selftest 36 PASS' = '现为 38'
-        '36 PASS / 0 FAIL' = '现为 38 PASS / 0 FAIL'
-        '99.1%'            = '现为 16.2%（可执行率口径已收紧）'
-        '106/107'          = '现为 110/111 计数 / 18 可执行'
-        '107 行'           = '现为 111 行'
-        '2 PASS / 1 FAIL / 8 BLOCKED' = '现为 10 PASS / 1 FAIL / 1 BLOCKED'
-        '16 PASS / 0 FAIL / 0 BLOCKED' = '现为 18 PASS / 1 FAIL / 0 BLOCKED（22 阶段）'
+        'selftest 36 PASS' = '现为 46'
+        '36 PASS / 0 FAIL' = '现为 46 PASS / 0 FAIL'
+        '99.1%'            = '现为 61.4%（78/127；可执行率口径已收紧）'
+        '106/107'          = '现为 78/127 可执行'
+        '107 行'           = '现为 127 行'
+        '2 PASS / 1 FAIL / 8 BLOCKED' = '现为 12 PASS / 1 FAIL / 0 BLOCKED（静态）'
+        '16 PASS / 0 FAIL / 0 BLOCKED' = '现为 21 PASS / 2 FAIL / 0 BLOCKED（23 阶段）'
     }
     $exempt = '当时|历史|旧口径|此前|作废|口径更正'
     $hits = @()
@@ -733,4 +733,5 @@ function Test-DocCoverage {
         Add-Result "doc-coverage" "FAIL" "$($missing.Count)/$($cited.Count) 个命令决策表没有行： $(($missing | Select-Object -First 3) -join ', ')"
     }
 }
+
 

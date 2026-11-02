@@ -1825,3 +1825,25 @@
 - **triedTools**：`run.ps1`、`Copy-Item`、`Remove-Item`、`prune-runs.ps1`
 - **alternative**：`prune-runs.ps1` **仍需手动执行**（T409 未决）；`docs/status.md` 的自验命令已加入这一行，拿到 kit 的人能看到。
 - **status**：`resolved`
+
+---
+
+## GAP-089 `evidence-freshness` 的"现为 X"提示自身过期了（已修，并用注入法验证）
+
+- **capability**：让"过期数字检查器"给出的**修正建议**是当前真值，而不是另一个过期值。
+- **evidence**（2026-11-01 第 98 轮，实测）：
+  1. 该检查的 `$stale` 映射里 7 条"现为 X"全部过期：写旧口径 `selftest 36 PASS` → 现为 38（实际 **46**）、
+     旧口径 `99.1%` → 现为 16.2%（实际 **61.4%，78/127**）、旧口径 `107 行` → 现为 111 行（实际 **127 行**）、
+     旧口径 `2 PASS/1 FAIL/8 BLOCKED` → 现为 10/1/1（实际 **12/1/0**）、
+     旧口径 `16 PASS/0 FAIL/0 BLOCKED` → 现为 18/1/0（实际 **21/2/0，23 阶段**）。
+     ⇒ **照着提示改会写进另一个过期数字**。
+  2. 已把 7 条全部改为实测值。
+  3. **注入法验证**（这是本条的重点）：新建 `docs/_probe-freshness.md` 写入旧口径三串数字（36 PASS / 99.1% / 107 行） ⇒ 判
+     `[FAIL] evidence-freshness 3 处过期数字： docs\_probe-freshness.md:3 出现已作废的「99.1%」（现为 61.4%（78/127…））…`；
+     删除该文件后立即 `[PASS] 全部文档（34 份）…（检查 7 类模式）`。
+     ⇒ **判据能抓到、能点名文件与行号，且提示值是真值**。
+- **triedTools**：`run.ps1`、`Set-Content`、`Remove-Item`、`Select-String`
+- **alternative**：**未做**——"提示值本身是否过期"仍靠人眼维护（这是刚被它抓到的教训：映射会跟着一起腐烂）。
+  候选做法：把 7 个"现为"数字纳入 `claims-match`，与实测比较。
+- **status**：`resolved`（提示已修正、注入法已验证；自校验未做）
+
