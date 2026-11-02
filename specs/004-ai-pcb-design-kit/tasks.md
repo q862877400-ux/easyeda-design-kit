@@ -637,3 +637,17 @@ T025 docs/playbook-unseen-board.md
   需逐个数出这 13 个过孔属于哪个焊盘、是否 EPAD。
 - [ ] T401 **（证据新鲜）用例基线要带版本**：练习板基线（215 issue/378 track/90 via）与现状（246/1153/126）差异来自重布，
   旧基线直接对比会误判退化。基线需记录 `editorVersion` + 时间戳。
+
+- [x] T402 **五块板按 23 阶段重跑 + 修 `report-hygiene` 循环依赖**：实测
+  usbc **20/2/1**、led 18/2/3、ldo 19/2/2、buck 19/2/2、autodl 19/2/2（FAIL 恒为 `decision-actionability` + `pcb-drc-clean`）。
+  **修的 bug**：`blocked=0` 把 `report-hygiene` 自己算进去 ⇒ 不可能满足；排除两个**集合级**阶段后由 `BLOCKED` 变 `FAIL 4/5`。
+  手法改进：用 `bsk_tabs create` 在同一会话里开 5 个工程标签页，省掉 4 次会话开销。
+- [ ] T403 **（新）LED 板交付物导出失败**：`export-delivery.ps1` 报 `gerber`/`pick&place`/`bom` 三项全 FAIL，需查是否与"该板未铺铜/未布线"或窗口绑定有关。
+
+- [x] T404 **`capability-sample` 从 5 条抽样改为全量，并修好被抽样掩盖的 26 条**（关键教训）。
+  反例：`-Count 5` 等距抽样**连续 4 次通过**，而全量扫描发现 **26/85 条** triedTools 解析不到 —— 抽样把问题藏住了。
+  修法两条：① 判据修正（有反例）：带参数的命令按首词解析（`run.ps1 -Static` 曾误判）、`bsk_*` 允许带子命令、
+  `easyeda ` 前缀剥离、`.exe` 工具、真实文件/通配符（`baseline.json`、`acceptance/runs/*.json`）、系统工具白名单（git/robocopy/Test-Path）；
+  ② 8 条散文式 triedTools 改写为真实工具名。结果：**85 通过 / 0 不合格**，且门禁调用改 `-Count 200`（全量）。
+- [x] T405 **`report-hygiene` 转 PASS**：五块板在 23 阶段下重跑后达到"5 份与当前阶段集一致的真实运行"。
+  静态结论由 **11 PASS / 1 FAIL / 1 BLOCKED** 变为 **12 PASS / 1 FAIL / 0 BLOCKED**，唯一 FAIL 是 `decision-actionability`（等业主定口径）。

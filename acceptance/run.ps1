@@ -329,7 +329,7 @@ function Test-CapabilitySample {
     # 在裸 -AuditRoot（没有 docs）的矩阵探针里抛异常，把整条验收流程打断（selftest 33/36、矩阵 2/16）。
     # 现在：取最后一行转 [string] 再 Trim，并对整个阶段加 try/catch —— 辅助脚本出错只能让本阶段 BLOCKED。
     try {
-        $out = & pwsh -NoProfile -File $sc -KitRoot $script:AuditRoot 2>&1 | Out-String
+        $out = & pwsh -NoProfile -File $sc -KitRoot $script:AuditRoot -Count 200 2>&1 | Out-String
         $code = $LASTEXITCODE
         $sumLines = @($out -split "`n" | Where-Object { $_ -match "=====" })
         $summary = if ($sumLines.Count -gt 0) { ([string]$sumLines[-1]).Replace("=", "").Trim() } else { "" }
@@ -615,6 +615,7 @@ if ($partial) { exit 2 }
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0
+
 
 
 

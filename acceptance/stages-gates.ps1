@@ -655,7 +655,9 @@ function Test-ReportHygiene {
     foreach ($r in (Get-ChildItem $dir -File -Filter '*.json' -ErrorAction SilentlyContinue)) {
         try {
             $j = Get-Content $r.FullName -Raw | ConvertFrom-Json
-            $blk = @($j.stages | Where-Object { $_.status -eq 'BLOCKED' }).Count
+            # 反例（2026-11-01）：把 report-hygiene / run-consistency 算进 blocked 会形成不可能满足的循环——
+            # 这两项是『集合级』阶段（一个看整批报告、一个要≥2次运行），单次运行天生 BLOCKED。判定『真实运行』时排除它们。
+            $blk = @($j.stages | Where-Object { $_.status -eq 'BLOCKED' -and ($_.stage -notin @('report-hygiene', 'run-consistency')) }).Count
             if ([string]$j.executor -eq 'unspecified' -and $blk -gt 0) { $junk += $r.Name }
             elseif (-not [string]::IsNullOrWhiteSpace([string]$j.executor) -and $blk -eq 0) { $real += $r.Name }
         } catch { $junk += "$($r.Name)（无法解析）" }

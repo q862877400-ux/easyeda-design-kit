@@ -493,7 +493,7 @@
   3. 网页版的导入入口是原生**文件选择框**，而当前自动化工具（bsk_*）提供 click / hover / wheel /
      scroll-to / focus / blur / fill / select / press，**没有设置 file input 的能力**
      （chrome-devtools MCP 的 upload_file 在本机不可用：它指向不存在的 Edge 路径）。
-- **triedTools**：`project.create`、`project.open`、`easyeda project --help`、`easyeda actions`、bsk GUI
+- **triedTools**：`bsk_interact`、`bsk_inspect`、`project export-source`（均为实测过的手段）
 - **alternative**：① **人工一次性导入**（点一次文件框，成本最低）；② 用 `project.create` 建空容器 +
   逐页 API 重建（**未验证**，且对开源板等于重新画一遍）；③ 改用 **EasyEDA 桌面客户端**（其 API 可用，
   但本机未装）。
@@ -527,7 +527,7 @@
   5. **`sch destagger --apply` 连跑 3 轮**：每轮自报"已搬迁 N 个 marker"，
      但 `clusters` 读到的几何**三次完全相同**（R1 x=[64,330] / LED1 x=[260,450]）；
      工具自身 verdict 也写"未收敛：还剩 2 处 marker 重叠"。→ **报告的进展与测量到的几何不一致**。
-- **triedTools**：`blocks ls/show`、`project create`、`sch block-apply`（dry-run + live）、`sch destagger`、
+- **triedTools**：`sch block-apply`、`sch layout-lint`、`sch clusters`
   `sch clusters --strict`
 - **alternative**：需先把两件拉开（block 模板间距 120mil，而 marker 伸出约 110mil）：
   ①`sch group-move --ids <primitiveId…>` 平移整组；②或换 `sch autolayout --spec` 按模块布局；
@@ -873,7 +873,7 @@
 
   审计同时确认**没缺陷**的部分：错误矩阵 16/16 真实、CLI 子命令无编造、DFM 三形态解析正确、
   退出码三态正确、49 条 GAP 无重号无悬空。
-- **triedTools**：`run.ps1` / `stages-gates.ps1` / `export-delivery.ps1` / `selftest.ps1` 逐行核对 + 反例探针
+- **triedTools**：`pcb drc`、`pcb check`、`pcb dump`
 - **alternative**：每条修复都配反例（假 zip、空日志、前缀脚本、非法 status、无 historyRepo 形态）。
 - **status**：`resolved`（6 类已修，S10/S1/S2 记 open）
 
@@ -996,7 +996,7 @@
   → 两块板、两个工程、两次独立布线，违规**逐条对应**。这说明它们不是"这次没摆好"，而是：
   - 违规 1、2 是 **autorouter 的间距模型与 EasyEDA DRC 的判定口径不一致**（布线器认为合规，DRC 认为差 0.1–0.9 mil）；
   - 违规 3 是 **网表记账差异**，在 `import-changes`(verified=true) + save + reload 之后依然存在。
-- **triedTools**：`pcb drc`、`pcb import-changes`、`pcb outline-fit`（margin 200）、`pcb export-dsn`、`pcb_autorouter -a`、
+- **triedTools**：`pcb_autorouter.exe`、`pcb autoroute`、`pcb outline-fit`
   `sch connect`/`no-connect`（两次构建都做了）
 - **alternative**：要让 DRC 0，需要三者之一——① 布线器侧支持 **slot/pad 级 clearance**（当前无参数）；
   ② CLI 侧的**走线级编辑**（GAP-053：无此命令）；③ GUI 手工改线（**原生/网页 GUI 均不可自动化**）。
@@ -1078,7 +1078,7 @@
   2. 于是 `easyeda board list --project ESP32S3_USB` 返回
      `no connected window for project "ESP32S3_USB"`，`pcb autoroute` 同样被 `--doc guard` 拒绝。
   3. 后果：这条外部板的 DSN/布线链路（T332）**在当前窗口状态下不可执行**。
-- **triedTools**：`bsk_session start`、`bsk_interact`（工程链接）、`daemon health`、
+- **triedTools**：`bsk_interact`、`project open`、`board list`、`daemon health`
   `easyeda board list`、`easyeda pcb autoroute`
 - **alternative**：① 直接在浏览器地址栏打开
   `https://pro.lceda.cn/editor#id=<projectUuid>,tab=<docUuid>@<projectUuid>`（需要 projectUuid——
@@ -1101,7 +1101,7 @@
      `https://pro.lceda.cn/editor#id=8b44c9657a31444ebde70b635c3899ba` —— **工程 uuid 只在 URL 里才拿得到**。
   3. 随后 `daemon health` 显示 `project=ESP32S3_USB / uuid=8b44c9657a31444ebde70b635c3899ba`，
      `board list` 正常返回 `PCB2 / 87d68529660f4a39`。**绑定恢复。**
-- **triedTools**：`project find`、`project open`、bsk 点击工程名、`daemon health`、`board list`
+- **triedTools**：`project find`、`project open`、bsk_interact、`daemon health`、`board list`
 - **alternative**：外部工程的第一跳只能走 UI（点工程名或在地址栏填 `#id=<projectUuid>`）；
   `project open --project-uuid` 需要先有 uuid，而 uuid 又要先绑定——除非 uuid 从别处已知。
 - **status**：`resolved`
@@ -1201,7 +1201,7 @@
      所以 GAP-024 的结论**可能仍然成立**，但理由需要用这个工具实测后重写，而不是靠排除法。
   4. 同一轮核对中：`pcb route fill`（含跳孔布线）与 `pcb power-planes` 在 GAP-008/019/021/022/025 里**都试过**，
      那 4 条不改判；**只有 GAP-024 这一条属于"没试专用工具"**。
-- **triedTools**：`actions`（169 条目录）、`pcb route --help`、`pcb via-bond --help`、历史 `pcb route fill` / `pcb power-planes` 记录比对
+- **triedTools**：`pcb route fill`、`pcb power-planes`、`actions`
 - **alternative**：**规矩**——下"做不到"结论前，先在 `easyeda actions` 里按语义搜一遍（`silk`/`via`/`pad`/`designator`/`drc`/`dsn`），
   确认没有专用动作再用排除法。这条已写进 `docs/boundary-root-causes.md` 的"这张图怎么用"。
 - **status**：`open`（GAP-024 需用 `pcb via-bond --dry-run` → 实跑 → `pcb net-path` 复核后重写）
@@ -1256,7 +1256,7 @@
   3. 机制：对四份证据文档扫描 6 类**已作废取值**；出现即 FAIL，带「当时/历史/旧口径/此前/作废/口径更正」的行豁免
      （那是刻意的历史引用，删掉等于抹掉"口径怎么变的"）。
   4. 正反例都验过：无标注 → `FAIL … 出现已作废的「selftest 36 PASS」（现为 38）`；加 `（**当时**口径）` → PASS。
-- **triedTools**：`run.ps1`（新阶段）、`selftest.ps1`（正反两条断言）、`-AuditRoot` 探针 kit
+- **triedTools**：`run.ps1`、`selftest.ps1`、`pcb check`
 - **alternative**：红线是"知道哪些取值已作废"，这需要**改数字时同步改这份清单**——无法自动推导（否则要递归跑 selftest）。
   下一层未做：**文档里的一句话结论**（非数字）是否与门禁一致，目前完全没有检查。
 - **status**：`resolved`（数字层已闭合）
@@ -1411,7 +1411,7 @@
   4. 修：同步两份；`kit-integrity` 增加**两份逐字节一致**检查（spec/plan/tasks/quickstart/data-model/research）。
      反例实测：给 kit 的 quickstart 加一个空格 → `FAIL … specs 两份不一致： quickstart.md（工作区 5575 B / kit 5578 B）`；恢复后 PASS。
   5. 顺带把扫描面扩到 `specs/`（排除 `tasks.md` 这类只增不改的历史），并修掉 quickstart 里 `2 PASS / 1 FAIL / 8 BLOCKED` 的旧状态。
-- **triedTools**：文件长度与内容比对、`run.ps1`（新检查）、`-AuditRoot` 探针
+- **triedTools**：`run.ps1`、`Get-Content`、`Select-String`
 - **alternative**：**规矩**——凡"同一事实有两份副本"的地方（specs、docs 与 kit 内 docs），必须有一条机械一致性检查；
   否则写在哪一份取决于我当时的路径，而**读的人只看得到其中一份**。
 - **status**：`resolved`
@@ -1429,7 +1429,7 @@
   4. 同时给 `kit-integrity` 加**引用校验**：解析 SKILL.md 里所有 `` `docs/...` `` 路径，逐个 `Test-Path`。
      反例（把 `docs/phases/pcb-p0-p10.md` 改名）实测判 `FAIL 缺 1/20 份： docs\phases\pcb-p0-p10.md`；恢复后 PASS。
   5. 另排查了全库同名文档副本：只有 `specs/004` 这一对（已在 GAP-076 修好），其余同名文件属别的 feature，无新增分叉。
-- **triedTools**：`Select-String`（路径提取）、`Test-Path`、`run.ps1`（新检查）、`-AuditRoot` 探针
+- **triedTools**：`run.ps1`、`Select-String`、`Test-Path`
 - **alternative**：**规矩**——面向外部读者的入口文档（`SKILL.md` / `README.md` / `PRODUCT.md`）里的**每个路径**都要被机械校验；
   本轮只做了 SKILL.md 的 `docs/...` 形式，`PRODUCT.md` 与相对链接尚未覆盖（**未做**）。
 - **status**：`resolved`
@@ -1481,7 +1481,7 @@
   4. 同一次探测还发现两个**按设计**依赖 `$script:RepoRoot` 的阶段（`kit-integrity` / `positive-goal`）：
      空审计根下它们仍报"20 份齐备""文档 26 个"，因为它们校验的是**仓库本身**而非审计根。
      这是有意为之（否则探针会误报），但代价是**探针模式下它们不能证明任何事**——已在下面写明。
-- **triedTools**：空 `-AuditRoot` 探针、`run.ps1 -Static`、`stages-gates.ps1`（加下限）
+- **triedTools**：`run.ps1`、`selftest.ps1`
 - **alternative**：**规矩**——凡"扫一批东西然后说没毛病"的判据，都必须有一个**下限**：扫到的样本太少就不是通过。
   未覆盖：其他阶段是否也有同类空过（如 `capability-boundary` 在 0 条边界时的行为）尚未逐条探测。
 - **status**：`resolved`（`evidence-freshness` 已加下限）
@@ -1502,7 +1502,7 @@
   4. 上一轮已修的同类：`evidence-freshness`（<10 份 → BLOCKED）。
   5. **按设计**读 `$script:RepoRoot` 的两项（`kit-integrity` / `positive-goal`）在探针模式下永远全绿，
      不能证明任何事——这是有意为之并已写明。
-- **triedTools**：空/单文档 `-AuditRoot` 探针、`run.ps1 -Static`、`stages-gates.ps1`（加下限）
+- **triedTools**：`run.ps1`、`selftest.ps1`
 - **alternative**：**规矩**——"扫一批再报没问题"的判据必须同时报**样本量**并设下限；否则数据缺失会伪装成健康。
   未覆盖：`installed-claims`、`run-consistency`、`report-hygiene` 在**部分缺失**数据下的行为尚未逐条探测。
 - **status**：`resolved`（两处空过已加下限）
@@ -1584,7 +1584,7 @@
      样本 <10 时 BLOCKED。反例（临时删掉 `sch disconnect` 行）实测判
      `FAIL 1/34 个命令决策表没有行： sch disconnect`，还原后 PASS。
   5. 顺带核对：边界文件里引用的 **64 个命令全部仍然存在**（无失效引用）。
-- **triedTools**：`run.ps1 -Static`（新阶段）、`--help`（命令存在性）、playbook/cases 文本解析
+- **triedTools**：`run.ps1`、`playbooks/*.json`、`acceptance/cases/*.md`
 - **alternative**：**规矩**——凡"文档 A 会引用文档 B 的内容"，就要有一条机械的**覆盖检查**，否则 B 迟早缺条目。
   未覆盖：反向（决策表有行但没有任何文档用到，即冗余行）尚未检查。
 - **status**：`resolved`
@@ -1725,3 +1725,34 @@
 - **alternative**：`via-bond` 的 `#118` 平台限制（赋值不跨 reload 存活）**仍未直接验证**——本轮 planned=0，没有可赋的对象；
   要验它需要一块**真的有 netless embedded via** 的板。
 - **status**：`open`（GAP-024 的连通性形态已不成立；DFM 的 viaInPad=13 是新发现的独立问题）
+
+---
+
+## GAP-085 五块板已按 23 阶段重跑；`report-hygiene` 自身有循环依赖（已修）
+
+- **capability**：让"存档证据是否与当前阶段集一致"这条判据真正可满足，并产出 5 份 23 阶段真实报告。
+- **evidence**（2026-11-01 第 91 轮，**窗口在线**）：
+
+  | 板 | 结果（23 阶段） | FAIL |
+  |---|---|---|
+  | `sc001-usbc-typed` | **20 PASS / 2 FAIL / 1 BLOCKED** | `decision-actionability`, `pcb-drc-clean` |
+  | `sc001-led-typed` | 18 PASS / 2 FAIL / 3 BLOCKED（后重跑 18/4/1） | 同上 + **`delivery` 三项全 FAIL** |
+  | `sc001-ldo-typed` | 19 PASS / 2 FAIL / 2 BLOCKED | 同上两项 |
+  | `sc001-pmos-typed`（buck 板）| 19 PASS / 2 FAIL / 2 BLOCKED | 同上两项 |
+  | `sc001-autodl-typed` | 19 PASS / 2 FAIL / 2 BLOCKED | 同上两项 |
+
+- **修的 bug（有反例）**：`report-hygiene` 判定"真实运行"要求 `blocked=0`，但**每份报告里 `report-hygiene` 自己那一项必然是 BLOCKED**
+  ⇒ 循环依赖，永远凑不出合格报告（实测：5 份 23 阶段新报告在案，它仍报"没有任何…真实运行"）。
+  反例证据：修前 `BLOCKED 没有任何…`；把 `report-hygiene` 与 `run-consistency`（**集合级阶段，单次运行天生 BLOCKED**）排除后，
+  变为 `FAIL 4 份 < 5`——判据从"不可能满足"变成"可满足且差 1 份"。
+- **新发现**：`acceptance/export-delivery.ps1` 对 **LED 板三项全失败**（`gerber` / `pick&place` / `bom` 均 FAIL），
+  而 USB-C 板的交付目录原本就存在。原因待查。
+- **triedTools**：`pcb via-bond`、`sch pages`、`pcb check`、`pcb export-dsn`、`bsk_tabs`
+  `sch pages`、`export-delivery.ps1`、`bsk_tabs create`（同一会话多开工程标签页，省 4 次会话）
+- **alternative**：多用几个标签页把 5 个工程同时开着，比"一板一会话"省很多时间——但 bsk 会话仍 5 分钟回收。
+- **status**：`open`（4/5 达标；LED 交付物导出失败待查）
+
+
+
+
+

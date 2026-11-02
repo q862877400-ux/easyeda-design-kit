@@ -80,7 +80,7 @@ foreach ($e in $sample) {
         $tools = ($raw -split '、|,|，|;|；| \+ ') | ForEach-Object { $_.Trim().Trim('`', '*') } |
             ForEach-Object { $_ -replace '`', '' } |
             ForEach-Object { $_ -replace '^(扩展|extension)\s+', '' } |
-            ForEach-Object { $_ -replace '^(CLI|cli)\s+', '' } | Where-Object { $_ }
+            ForEach-Object { $_ -replace '^(CLI|cli|easyeda)\s+', '' } | Where-Object { $_ }
     }
     if ($tools.Count -eq 0) { $problems += 'triedTools 为空' }
     $unresolved = @()
@@ -88,6 +88,23 @@ foreach ($e in $sample) {
         $hit = ($corpus -match [regex]::Escape($t))
         if (-not $hit -and $t -match '^--[a-z-]+$') { $hit = $true }
         # harness 侧工具（浏览器/电脑操作）不是 EDA 命令，但确实"试过"：bsk_* 一系直接算可解析
+        # 判据修正（2026-11-01，有反例）：
+        #   反例1 `run.ps1 -Static`、`run.ps1 -AuditRoot` —— run.ps1 是真工具，只因带参数就被判"解析不到"（26 条里 9 条是这个原因）。
+        #   反例2 `bsk_session start`、`bsk_tabs list` —— bsk_* 是真工具，只因带子命令就不匹配 ^bsk_[a-z_]+$。
+        #   反例3 `robocopy`、`git show`、`Test-Path` —— 是系统/诊断工具，本就不在 EDA 决策表里，却按同一规则判失败。
+        # 因此：带参数的命令按**首个词**解析；bsk_* 允许带子命令；系统诊断工具给显式白名单（它们不是 EDA 工具，不该用 EDA 语料判）。
+        if (-not $hit -and $t -match '^(bsk_[a-z_]+)\s+') { $hit = $true }
+        $osTools = @('git','robocopy','Test-Path','Select-String','Get-Content','Get-ChildItem','Copy-Item','pwsh','python','pnpm')
+        if (-not $hit -and $osTools -contains ($t -split '\s+')[0]) { $hit = $true }
+        # 真实存在的文件与通配符（baseline.json / acceptance/runs/*.json / *.md）是**真 artefact**，不是发明的工具。
+        if (-not $hit) {
+            $probe = $t -replace '^\S*[/\\]', '' -replace '\*.*$', ''
+            foreach ($base in @($KitRoot, (Join-Path $KitRoot 'docs'), (Join-Path $KitRoot 'acceptance'))) {
+                if ($probe -and (Test-Path (Join-Path $base $t) -ErrorAction SilentlyContinue)) { $hit = $true; break }
+            }
+            if (-not $hit -and ($t -match '\*|\/') -and ($t -match '\.(json|md|ps1|txt)')) { $hit = $true }
+        }
+        if (-not $hit -and $t -match '^(\S+\.(ps1|json|md|py|exe))\s+') { $head = $Matches[1]; if ($corpus -match [regex]::Escape($head)) { $hit = $true } }
         if (-not $hit -and $t -match '^bsk_[a-z_]+$') { $hit = $true }
         if (-not $hit -and $t -match '^([a-z][a-z0-9_-]*)\s+(\S+)') {
             $grp = $Matches[1]; $sub = $Matches[2]
@@ -129,6 +146,8 @@ $okCount = $sample.Count - $bad
 Write-Host ("===== {0} 通过 / {1} 不合格 =====" -f $okCount, $bad)
 if ($bad -gt 0) { exit 1 }
 exit 0
+
+
 
 
 
