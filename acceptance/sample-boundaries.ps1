@@ -94,7 +94,7 @@ foreach ($e in $sample) {
         #   反例3 `robocopy`、`git show`、`Test-Path` —— 是系统/诊断工具，本就不在 EDA 决策表里，却按同一规则判失败。
         # 因此：带参数的命令按**首个词**解析；bsk_* 允许带子命令；系统诊断工具给显式白名单（它们不是 EDA 工具，不该用 EDA 语料判）。
         if (-not $hit -and $t -match '^(bsk_[a-z_]+)\s+') { $hit = $true }
-        $osTools = @('git','robocopy','Test-Path','Select-String','Get-Content','Get-ChildItem','Copy-Item','Set-Content','Move-Item','New-Item','Remove-Item','pwsh','python','pnpm')
+        $osTools = @('git','robocopy','Test-Path','Select-String','Get-Content','Get-ChildItem','Copy-Item','Set-Content','Move-Item','New-Item','Remove-Item','pwsh','python','pnpm','web_search','web_fetch')
         if (-not $hit -and $osTools -contains ($t -split '\s+')[0]) { $hit = $true }
         # 真实存在的文件与通配符（baseline.json / acceptance/runs/*.json / *.md）是**真 artefact**，不是发明的工具。
         if (-not $hit) {
@@ -146,6 +146,7 @@ $okCount = $sample.Count - $bad
 Write-Host ("===== {0} 通过 / {1} 不合格 =====" -f $okCount, $bad)
 if ($bad -gt 0) { exit 1 }
 exit 0
+
 
 
 

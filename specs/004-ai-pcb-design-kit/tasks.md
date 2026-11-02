@@ -699,3 +699,11 @@ T025 docs/playbook-unseen-board.md
   不可达性只剩"无 slot/pad 级 clearance 参数"和"无精确端点编辑（须删了按坐标重建）"。
 - [x] T415 **坐标单位陷阱（GAP-091）**：`pcb track --x1` 按**板数据单位**，我按 mil 传 → 造出 10 倍小错位线，
   DRC 从 3 条变 6 条；删除并按数据单位重建后回到 3 条。**宽度按 mil**，同一命令两种单位并存。安全用法：track-list 坐标原样回填。
+
+- [x] T416 **把 DRC 三条换算成"板厂会不会拦"（GAP-092）**：板为**双面板 1oz**。
+  ① SMD Pad to Track 5.1 mil = 0.1295 mm，嘉立创双面板线边距下限 0.127 mm ⇒ **能过**（高于下限 0.0025 mm）；
+  ② Slot Region 11.7 mil = 0.2972 mm < 官方"内槽离导线 ≥0.3 mm" ⇒ **差 0.0028 mm**；
+  ③ Netlist Error 与制造无关。
+  ⇒ 结论：**DRC 0 比"能打样"更严**，本项目唯一真正卡打样的是第 ② 条（差 2.8 µm）。
+- [ ] T417 **（未完成）跑通"嘉立创下单检查"**：需 GUI 点击，当前 bsk click 被 `cooperate sync` 拒绝、
+  chrome-devtools 起不来；要么修 bsk 协作状态，要么修 chrome-devtools 的 `executablePath`（需宿主重启）。

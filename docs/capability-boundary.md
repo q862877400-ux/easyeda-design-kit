@@ -1912,3 +1912,25 @@
 - **alternative**：**规矩**——用 `track-list` 的坐标**原样回填**给 `pcb track`（不要做单位换算），宽度按 mil 传。
   已验证改动可逆：删错位段 + 按原数据单位重建即可完全复原。
 - **status**：`accepted`（陷阱已量化并给出安全用法）
+
+---
+
+## GAP-092 **DRC 0 ≠ 可制造**：三条违规里有 1 条在嘉立创工艺内、1 条差 2.8 µm
+
+- **capability**：把"DRC 报错"换算成"板厂会不会拦"，而不是把 DRC 0 当成下单前提。
+- **evidence**（2026-11-01 实测 + 官方工艺数据）：
+
+  | 违规 | 实测 | 规则要求 | 嘉立创工艺下限 | 判定 |
+  |---|---|---|---|---|
+  | SMD Pad to Track | **5.1 mil = 0.1295 mm** | 6 mil = 0.1524 mm | 双面板 1oz：线边到线边 **0.127 mm**；焊盘边到线边 **≥0.1 mm** | ✅ **能过**（超下限 0.0025 mm） |
+  | Slot Region to Track | **11.7 mil = 0.2972 mm** | 11.811 mil = 0.3000 mm | 官方：**内槽离焊盘/导线不得小于 0.3 mm** | ❌ **差 0.0028 mm** |
+  | Netlist Error | — | — | 与制造无关（数据一致性） | 不影响打样，影响"板=图"一致性 |
+
+  板参数：`pcb layers` 实测 **copperLayerCount = 2**（双面板 1oz）。
+  官方口径来源：[嘉立创 EDA 安全间距](https://wiki.lceda.cn/zh-hans/design-production/pcb-design/knowledge-point/safety-spacing.html)、
+  [嘉立创制造工艺要求](https://www.jlc.com/portal/q7i35541.html)、[最小线距](https://www.jlc.com/portal/q1i16804.html)。
+- **triedTools**：`pcb drc`、`pcb layers`、`web_search`
+- **alternative**：**未能跑成"嘉立创下单检查"**——它只能点 GUI，而 bsk 的 click/fill 在本次会话中被
+  `cooperate sync` 状态拒绝（`bsk_session start` / `observe` 可用，点击不可用）；chrome-devtools MCP 因
+  `executablePath` 缺空格仍无法启动。故本结论来自**官方公开工艺数据换算**，不是下单检查器的输出——已明确标注。
+- **status**：`open`（换算完成；下单检查器未跑成）
