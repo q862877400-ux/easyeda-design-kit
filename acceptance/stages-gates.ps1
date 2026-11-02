@@ -489,14 +489,23 @@ function Test-EvidenceFreshness {
     # 而真实值是 38 / 16.2% / 111 行——数字靠记性维护必然过期，且过期时没人报错。
     # 这里机械检查：**已被取代的取值**不得在正文里无标注出现；带「当时/历史/旧口径/此前/作废」的行豁免。
     # 2026-11-01 扩面：原来只扫 4 份，其余 20+ 份文档里的作废数字无人看。现在扫 docs 下全部 .md + 根 README。
+    # 2026-11-01 扩面 2：specs 下的 spec/plan/quickstart 等"照做"文档同样会过期（quickstart 曾长期写 8 PASS）；
     $docs = @('README.md') + @(Get-ChildItem (Join-Path $script:AuditRoot 'docs') -Recurse -File -Filter '*.md' -ErrorAction SilentlyContinue |
         ForEach-Object { $_.FullName.Substring($script:AuditRoot.Length).TrimStart('\') })
+    # tasks.md 与 progress-log 一样是只增不改的历史，豁免。
+    $specDir = Join-Path $script:AuditRoot 'specs'
+    if (Test-Path $specDir) {
+        $docs += @(Get-ChildItem $specDir -Recurse -File -Filter '*.md' -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -ne 'tasks.md' } |
+            ForEach-Object { $_.FullName.Substring($script:AuditRoot.Length).TrimStart('\') })
+    }
     $stale = @{
         'selftest 36 PASS' = '现为 38'
         '36 PASS / 0 FAIL' = '现为 38 PASS / 0 FAIL'
         '99.1%'            = '现为 16.2%（可执行率口径已收紧）'
         '106/107'          = '现为 110/111 计数 / 18 可执行'
         '107 行'           = '现为 111 行'
+        '2 PASS / 1 FAIL / 8 BLOCKED' = '现为 10 PASS / 1 FAIL / 1 BLOCKED'
         '16 PASS / 0 FAIL / 0 BLOCKED' = '现为 18 PASS / 1 FAIL / 0 BLOCKED（22 阶段）'
     }
     $exempt = '当时|历史|旧口径|此前|作废|口径更正'
@@ -632,6 +641,9 @@ function Test-ReportHygiene {
         Add-Result "report-hygiene" "BLOCKED" "没有任何与当前 $curStages 阶段一致的真实运行（$($stale.Count) 份都是旧阶段集）——需重跑板子，当前无窗口"
     }
 }
+
+
+
 
 
 

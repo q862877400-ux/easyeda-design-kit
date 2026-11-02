@@ -102,6 +102,20 @@ function Test-KitIntegrity {
     }
     if ($missing.Count -eq 0) {
         # 入口文档的链接必须全部有效（反例：改文件名后 docs/README.md 会留下死链，没人发现）
+        # 反例（2026-11-01）：`specs/` 有两份（工作区与 kit 内）。我几十轮把任务记录写在工作区那份，
+        # kit 内的 tasks.md 停在 239 行（工作区 489 行）——**宿主产物里根本没有这些任务记录**。
+        # 这里强制两份逐字节一致，任何一侧被改动而另一侧没跟，立即报出来。
+        $wsSpec = Join-Path (Split-Path -Parent $script:RepoRoot) 'specs\004-ai-pcb-design-kit'
+        $kitSpec = Join-Path $script:RepoRoot 'specs\004-ai-pcb-design-kit'
+        $diverged = @()
+        if ((Test-Path $wsSpec) -and (Test-Path $kitSpec)) {
+            foreach ($sf in @('spec.md', 'plan.md', 'tasks.md', 'quickstart.md', 'data-model.md', 'research.md')) {
+                $p1 = Join-Path $wsSpec $sf; $p2 = Join-Path $kitSpec $sf
+                if ((Test-Path $p1) -and (Test-Path $p2)) {
+                    if ((Get-Content $p1 -Raw) -ne (Get-Content $p2 -Raw)) { $diverged += "$sf（工作区 $((Get-Item $p1).Length) B / kit $((Get-Item $p2).Length) B）" }
+                }
+            }
+        }
         $idxPath = Join-Path $script:RepoRoot 'docs\README.md'
         $badLinks = @()
         if (Test-Path $idxPath) {
@@ -115,7 +129,11 @@ function Test-KitIntegrity {
         if ($badLinks.Count -gt 0) {
             Add-Result "kit-integrity" "FAIL" "$($required.Count) 份齐备，但 docs/README.md 有 $($badLinks.Count) 个死链： $(($badLinks | Select-Object -First 3) -join ', ')"
         } else {
-            Add-Result "kit-integrity" "PASS" "$($required.Count) 份必需文档齐备；docs/README.md 链接全部有效"
+            if ($diverged.Count -gt 0) {
+                Add-Result "kit-integrity" "FAIL" "$($required.Count) 份齐备、链接有效，但 specs 两份不一致： $(($diverged -join '; '))"
+            } else {
+                Add-Result "kit-integrity" "PASS" "$($required.Count) 份必需文档齐备；docs/README.md 链接全部有效；specs 两份一致"
+            }
         }
     } else {
         Add-Result "kit-integrity" "FAIL" "缺 $($missing.Count)/$($required.Count) 份： $($missing -join ', ')"

@@ -1397,3 +1397,21 @@
   未覆盖：`-Static` 与完整模式的**结论一致性**尚无门禁比对（两者本就不该一致，但"静态项在两种模式下同结论"值得查）。
 - **status**：`resolved`
 
+
+---
+
+## GAP-076 `specs/` 有两份，kit 内的 `tasks.md` 停在 239 行——**几十轮任务记录没进宿主产物**
+
+- **capability**：保证"宿主产物里的任务记录"与"我实际做的事"一致。
+- **evidence**（2026-11-01 实测）：
+  1. 仓库里 `specs/004-ai-pcb-design-kit/` 存在**两份**：工作区 `<ws>\specs\...` 与 kit 内 `<ws>\easyeda-design-kit\specs\...`。
+  2. 我几十轮一直在写**工作区**那份（489 行 / 49.5 KB）；kit 内那份停在 **239 行 / 15.5 KB**。
+     实测 `kit 内容是否为工作区前缀 = True`（所以同步不丢内容），但 `T360`/`T368` 等任务在 kit 里**根本不存在**。
+  3. 同理 `quickstart.md` 也已分叉：我在工作区把它改成 46 PASS，kit 里还是旧版（而门禁扫的是 kit）。
+  4. 修：同步两份；`kit-integrity` 增加**两份逐字节一致**检查（spec/plan/tasks/quickstart/data-model/research）。
+     反例实测：给 kit 的 quickstart 加一个空格 → `FAIL … specs 两份不一致： quickstart.md（工作区 5575 B / kit 5578 B）`；恢复后 PASS。
+  5. 顺带把扫描面扩到 `specs/`（排除 `tasks.md` 这类只增不改的历史），并修掉 quickstart 里 `2 PASS / 1 FAIL / 8 BLOCKED` 的旧状态。
+- **triedTools**：文件长度与内容比对、`run.ps1`（新检查）、`-AuditRoot` 探针
+- **alternative**：**规矩**——凡"同一事实有两份副本"的地方（specs、docs 与 kit 内 docs），必须有一条机械一致性检查；
+  否则写在哪一份取决于我当时的路径，而**读的人只看得到其中一份**。
+- **status**：`resolved`

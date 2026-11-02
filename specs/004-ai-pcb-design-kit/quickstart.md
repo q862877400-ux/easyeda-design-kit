@@ -75,8 +75,10 @@ pwsh -NoProfile -File acceptance/run.ps1 -Case esp32-4layer `
 | 2 | 有 BLOCKED | 补前置条件（工程/窗口/日志），不是通过 |
 | 3 | 用法错误 | 检查 `-Case` 指向的文件是否存在 |
 
-**当前状态（2026-10-31）**：`2 PASS / 1 FAIL / 8 BLOCKED`，卡在 4 份文档未写。
-这是**已知的当前状态**，不是 bug。
+**当前状态（2026-11-01）**：不带 `-Project` 的静态跑为 `10 PASS / 1 FAIL / 1 BLOCKED`
+（`-Static` 模式；唯一 FAIL 是 `decision-actionability` 18/111，已记为未达成）。
+带 `-Project` 的完整跑还需 EDA 窗口在线，否则 9 项板级检查报 BLOCKED——那**不是失败**。
+精确数字以 `pwsh -NoProfile -File acceptance/run.ps1 -Case sc001-usbc-typed -Static` 的实跑为准。
 
 ---
 
@@ -108,9 +110,6 @@ pwsh -NoProfile -File acceptance/run.ps1 -Case esp32-4layer `
 | "数字变好就是进步" | 不是。`positive-goal` 会问这轮有没有长出规范产物 |
 | "写个脚本先跑通再说" | 会被 N1 抓；要落成 playbook 或具名命令 |
 | "kit 里加点实现更方便" | 会被 P3 抓；实现属于独立仓库 |
-
----
-
 ## 7. 第二执行者复跑（SC-004）
 
 单次通过只证明"这次能做"，不证明"产品能做"。复跑步骤：
@@ -147,3 +146,5 @@ pwsh -NoProfile -File acceptance/compare-runs.ps1 -A runs\a.json -B runs\b.json 
 ```
 
 不得写成"已满足 SC-004"。
+
+
