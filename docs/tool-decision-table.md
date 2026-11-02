@@ -188,9 +188,9 @@
 | 导入 PCB 时件数明显偏多 | `pcb import-changes` | 它会把**所有页**的块都导进来（实测 9 页→30 器件）；导入前对试验页 `sch clear`（**不要 `sch page-delete`，无撤销**）； |
 | 导出 DSN 报「板是空的、没有网络」 | `pcb export-dsn` | 这句是**假错误**（实测 4 器件 4 网、layout-lint 96/100 时仍报）；先 `pcb save` → `doc reload` → 等 8–12s 再导出（GAP-048）； |
 | `sch destagger` 跑到一半出错 | `sch connect` | destagger 会打印「待手工恢复」的每只脚期望网，照单逐脚 `sch connect --pin <REF>:<n> --net <net>` 即可复原（GAP-049）； |
-| CLI 报 `no connected window` | `daemon health` | 看窗口数：0 表示"守护在但没窗口"——通常是浏览器没连或 bsk 会话被空闲回收（GAP-060/064）； |
+| CLI 报 `no connected window` | `daemon health` | 跑 `daemon health` 看 `found.raw.windows` 数组长度：0 = 守护在但无窗口（浏览器没连或 bsk 会话被回收，GAP-060/064） |
 | 动作报 `no easyeda-agent daemon found` | `daemon start` | 前台常驻命令（会自动转后台任务才继续）；启动后再 `daemon health` 确认 status=found； |
-| 要在网页版里点 GUI（导入/导出/菜单） | `daemon health` | 三前置缺一不可：① 浏览器+扩展 connected（`bsk_session start` 会直接报 no browser is currently connected）② 会话每 ≤4 分钟一次 bsk 调用保活 ③ daemon 在线； |
+| 要在网页版里点 GUI（导入/导出/菜单） | `daemon health` | 跑 `daemon health` 看 `found.raw.windows` 数组长度：0 = 守护在但无窗口（浏览器没连或 bsk 会话被回收，GAP-060/064） |
 | 焊盘内打过孔仍不连通 | `pcb via-bond` | 先 `--dry-run` 看计划、`--component U1` 限定器件；注意平台限制：赋值**不能跨 doc reload 存活**（#118），改完立刻 `pcb net-path` 复核； |
 
 ---
@@ -229,5 +229,5 @@
 | 按网名铺铜（GND/3V3） | `pcb pour-fit` | `--net GND`；落孔后必须 `pcb pour-rebuild` 再 `pcb drc` |
 | 约束放置（给关键器件留位） | `pcb place-constrained` | 先 `pcb layout-plan` 出方案，再落位；坐标单位是 mil |
 | 挪器件前要断开原连线 | `sch disconnect` | `--pin <位号:脚>`；断开后再 `sch modify` 挪位，最后 `sch connect` 重连（不先断会留悬空线） |
-| 查原理图布局是否过密/重叠 | `sch layout-lint` | 只读；看 marker 包络与出图框，块放置前先跑一次 |
+| 查原理图布局是否过密/重叠 | `sch layout-lint` | 跑 `sch layout-lint --strict`：只读，看 marker 包络与是否出图框；块放置前先跑一次 |
 | 板子与原理图不同步 | `board rebind` | 原理图改了器件/封装后把 PCB 重新绑定；绑定后仍需 `pcb import-changes` |
