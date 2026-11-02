@@ -25,7 +25,8 @@ param(
     [Parameter(Mandatory = $false)][string]$SourceRoot = "",
     [Parameter(Mandatory = $false)][string]$InstalledCli = "",
     [Parameter(Mandatory = $false)][string]$Executor = "",
-    [Parameter(Mandatory = $false)][switch]$Quiet
+[Parameter(Mandatory = $false)][switch]$Quiet,
+    [switch]$NoArchive
 )
 
 $ErrorActionPreference = "Stop"
@@ -450,7 +451,7 @@ function Test-NoOneOffScripts {
         Add-Result "no-oneoff-scripts" "BLOCKED" "运行日志实质内容不足（非注释行 $subst 条 < 3），无法审计"
         return
     }
-    if (-not [string]::IsNullOrWhiteSpace($Project)) {
+if (-not [string]::IsNullOrWhiteSpace($Project)) {
         $probeText = Get-Content $RunLog -Raw -ErrorAction SilentlyContinue
         if ($probeText -and ($probeText -notmatch [regex]::Escape($Project))) {
             Add-Result "no-oneoff-scripts" "BLOCKED" "运行日志与工程不匹配：日志里没有出现工程名 ""$Project""`（先核对 -RunLog 是否属于本次运行）"
@@ -548,7 +549,7 @@ $durable = [ordered]@{
     stages = @($script:Results | ForEach-Object { [ordered]@{ stage = $_.Stage; status = $_.Status; detail = $_.Detail } })
 }
 # 只有「带 -Project 的真实板子运行」才入库存档；静态跑不写（否则 acceptance/runs/ 会被静态运行淹没）
-if (-not [string]::IsNullOrWhiteSpace($Project)) {
+if (-not $NoArchive -and -not [string]::IsNullOrWhiteSpace($Project)) {
     $durable | ConvertTo-Json -Depth 6 | Set-Content $runFile -Encoding UTF8
     if (-not $Quiet) { Write-Host "报告已入库: $runFile" }
 }
@@ -557,6 +558,7 @@ if ($partial) { exit 2 }
 if ($fail -gt 0) { exit 1 }
 if ($blocked -gt 0) { exit 2 }
 exit 0
+
 
 
 

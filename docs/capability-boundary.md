@@ -1301,3 +1301,26 @@
 - **alternative**：仍**未覆盖**：① 地板只在**声明涉及的 6 项**上生效，其他指标（如 SC 状态、每板三态）没有地板；
   ② 自然语言结论（"五块板全绿"）不在任何机械核对范围——这层我判定**不该用正则硬凑**，应由人工评审。
 - **status**：`resolved`（6 项棘轮已闭合）
+
+---
+
+## GAP-072 自测自己的探针在 `acceptance/runs/` 里堆积了 **129 份垃圾报告**
+
+- **capability**：让"per-board 报告入库"只收**真实运行**，不被门禁自测淹没。
+- **evidence**（2026-11-01 实测）：
+  1. `acceptance/runs/` 里 140 份报告中，**129 份**是探针产物：`executor=unspecified`、`case=sc001-ldo-typed`、
+     `blocked≥5`（无窗口的静态跑），时间戳密集到同分钟数份。
+  2. 来源查明：`selftest.ps1` 的三条 `no-oneoff-scripts` 断言用
+     `-Case sc001-ldo-typed -Project sc001-ldo-blk` 调 `run.ps1`——**带 `-Project` 就会归档**，
+     于是每跑一次自测写 3 份；本会话跑了 40+ 次自测 ⇒ 129 份。
+  3. 这是同一个坑的第二次：上一次是"静态跑写报告"（已用 `-Project` 门槛挡住），
+     这次是"**带 `-Project` 的探针**"绕过了那道门槛。
+  4. 修法：`run.ps1` 加 `-NoArchive`，`selftest.ps1` 三处调用带上它。
+     实测：自测前 8 份 → 跑完自测 **8 份** → 跑完矩阵 **8 份** → 跑完静态 **8 份**（不再增长）。
+  5. 清理：按"`executor=unspecified` 且 `blocked>0`"判定，删 129 份，保留 **8 份真实运行**
+     （sc001-usbc ×4、led / ldo / pmos / autodl 各 1）。
+- **triedTools**：`run.ps1`（加开关）、`selftest.ps1`（改调用）、`acceptance/runs/*.json`（分类核对）
+- **alternative**：**规矩**——凡"带 `-Project` 就归档"的设计，必须同时提供 **`-NoArchive`**，
+  否则任何以真实工程名做对照的探针都会写盘。下一层未做：报告目录的**数量**没有地板也没有上限，
+  未来若再堆积不会被自动发现（只有人工看 `runs/` 才知道）。
+- **status**：`resolved`
