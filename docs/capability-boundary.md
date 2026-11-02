@@ -1973,3 +1973,19 @@
 - **alternative**：要真正定位差异，需要 GUI 里点 "Import Changes" 打开差异对话框（当前 bsk click 被 `cooperate sync` 拒绝），
   或授权跑 `pcb import-changes` 并接受"可能暴增器件"的后果（已有备份 `.work\usbc-drc-fixed.epro2`）。
 - **status**：`open`（成因未验证；只读手段已用尽）
+
+### GAP-093 结案：Netlist Error 是**结构性的**——原理图 43 个器件，PCB 只有 6 个
+
+- **capability**：用**离线解析 `.epru`** 判定"网表不一致"的真实成因，而不靠 GUI 或破坏性的 `import-changes`。
+- **evidence**（2026-11-01 实测，`.work\usbc-drc-fixed.epro2`，612.1 KB 数据体 / 2381 记录行）：
+  1. 按 `docType` 分段统计 `COMPONENT` 记录：**PCB = 6**、**SCH_PAGE = 43**。
+  2. PCB 侧 6 个器件与其 7 个网（`D13_N1/D13_N3/D13_N4/GND/USB_HOST_DM/USB_HOST_DP/+5V`）对应"六件 USB-C 块"。
+  3. 原理图工程共 **≥6 页**（page uuid：`2e0b06dcc255e3f6`、`ff27493d76e9463e`、`183eb58b0522bd3b`、`748345099fd9a62e`、`fe50ccb87c5e095b`、`8a3ed7bbcf194eed` …）。
+  4. ⇒ **PCB 只装了整份原理图里的一块（6/43）**，所以网表必然不一致。这不是绑定过期（rebind 成功仍在）、
+     不是原理图有错（`sch drc` 0 error）、不是断桥（`bridgeCheck` 0 bridge/0 orphan）。
+  5. 推论：**只要 PCB 是"部分实现"，这条 Netlist Error 就永远消不掉**；消除它要么把 PCB 扩到 43 个器件（改变这块板是什么），
+     要么接受它就是"子系统板"。GAP-058 说"两次重建都得到同样的 3 条违规"——其中 Netlist 那条**从一开始就是结构性的**。
+- **triedTools**：`System.IO.Compression.ZipFile`（离线解析 `.epru`）、`pcb nets`、`pcb.components.list`、`sch drc`、`schematic.bridgeCheck`、`board rebind`
+- **alternative**：`pcb import-changes` 会把 43 个器件全灌进 PCB（历史事故 6→30 的真相就是这个）——
+  **不是"修复"，是把板子变成另一种东西**。因此**不建议跑**。
+- **status**：`resolved`（成因已证；"不可达"重新表述为"结构性")

@@ -718,3 +718,8 @@ T025 docs/playbook-unseen-board.md
   `schematic.bridgeCheck` 0 bridge/0 orphan；两侧为 PCB **6 器件 / 7 网**（含自动生成网名 `D13_N1/N3/N4`）。
   ⇒ 只读手段只能证明"两侧规模与原理图自身都正常"，**差异明细只能点 GUI 的 Import Changes 或跑 `pcb import-changes`**。
   验收已更新：`pcb-drc-clean` 由"3 条"变为"**1 条：Netlist Error**"，整板 **21 PASS / 2 FAIL / 0 BLOCKED**。
+
+- [x] T421 **Netlist Error 成因结案（GAP-093）**：**离线解析 `.epru`** 统计 `COMPONENT` 记录 —— **PCB=6 / SCH_PAGE=43**。
+  PCB 是"六件 USB-C 块"（6 器件 / 7 网），而整份原理图有 43 个器件、≥6 页 ⇒ **网表不一致是结构性的**，
+  非绑定过期、非原理图错误、非断桥。**只要板是"部分实现"，这条就消不掉**；`import-changes` 不是修复而是把板变成全项目（历史 6→30 的真相）。
+  ⇒ 这块板的正确表述是"**子系统板（6/43）**，clearance 全清，网表差异属预期"。
