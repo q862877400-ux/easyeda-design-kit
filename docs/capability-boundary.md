@@ -1433,3 +1433,21 @@
 - **alternative**：**规矩**——面向外部读者的入口文档（`SKILL.md` / `README.md` / `PRODUCT.md`）里的**每个路径**都要被机械校验；
   本轮只做了 SKILL.md 的 `docs/...` 形式，`PRODUCT.md` 与相对链接尚未覆盖（**未做**）。
 - **status**：`resolved`
+
+---
+
+## GAP-078 否定断言会被"任何错误"满足：46 条里有 25 条只判 `Status=FAIL`
+
+- **capability**：让"反例应当失败"这类断言只在**理由正确**时算通过。
+- **evidence**（2026-11-01 实测）：
+  1. 自测里 25 条断言只检查 `Status -eq 'FAIL'`／`'BLOCKED'`，**不看失败理由**。
+  2. 造僵尸探针（一个只有空 docs/playbooks 的 `-AuditRoot` 目录，故意不建 HANDOVER.md）后，
+     `claims-match` 返回 `[FAIL] HANDOVER.md 不存在`——**与"边界数下降"毫无关系**，
+     但『claims-match → 边界数下降判 FAIL』这条断言照样通过。
+  3. 即：**任何导致该阶段报错的原因都能让否定断言变绿**（缺文件、语法坏、参数缺失……）。
+  4. 修：把断言改成 `Status=FAIL` **且** `Detail` 命中预期关键词。先改 2 条（棘轮 / 探针产物），
+     正常探针下仍 **46 PASS / 0 FAIL**；僵尸探针下明细不含「棘轮」⇒ 新断言判失败（正确）。
+- **triedTools**：`run.ps1 -AuditRoot`（僵尸探针）、`selftest.ps1`（断言加固）、`Select-String`（明细比对）
+- **alternative**：**剩余 23 条**否定断言仍是只看状态的写法（**未做**，T372）；另有一类同源风险：
+  正向断言（`Status -eq 'PASS'`）若阶段因数据为空而"空过"，也会被当成真通过——尚未检查。
+- **status**：`open`（2/25 已加固，其余待做）
