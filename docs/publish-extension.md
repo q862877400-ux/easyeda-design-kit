@@ -56,7 +56,7 @@ easyeda-design-kit.eext   (ZIP)
   "name": "easyeda-design-kit",
   "uuid": "0000000000000000000000000000a1b2",
   "displayName": "EasyEDA AI Design Kit",
-  "description": "按规范把电路板从需求画到可打样：情境→工具决策表、S0–S6 / P0–P10 阶段流程、能力边界清单与验收脚本。",
+  "description": "按规范把电路板落地并自证：情境→工具决策表、S0–S6 / P0–P10 阶段流程、能力边界清单与验收脚本。",
   "version": "1.0.0",
   "license": "MIT",
   "categories": ["PCB", "Schematic"],
@@ -110,3 +110,4 @@ pwsh -NoProfile -File acceptance/check-extension-package.ps1 -Package <path\to\x
 
 **结论**：打包**要求**已核实到官方文档级别；**执行链路**未实测。按铁律，前者可作为文档依据，
 后者必须在真正上传一次后才能标"已验证"。
+
