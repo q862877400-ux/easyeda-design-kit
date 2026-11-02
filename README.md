@@ -12,7 +12,7 @@
 ---
 
 
-> **不知道从哪读？** 见 [docs/README.md](docs/README.md) —— 按「5 分钟 / 半小时 / 要动手」三条路径组织。
+> **不知道从哪读？** 结论看 [docs/status.md](docs/status.md)，阅读路径见 [docs/README.md](docs/README.md) —— 按「5 分钟 / 半小时 / 要动手」三条路径组织。
 ## 1. 产品由三件套组成
 
 | 件 | 内容 | 目录 |
@@ -149,6 +149,7 @@ pwsh -NoProfile -File acceptance/mistake-matrix.ps1
 | 验证它真的能工作 | [specs/004-ai-pcb-design-kit/quickstart.md](specs/004-ai-pcb-design-kit/quickstart.md) |
 | 看还有哪些没做完 | [specs/004-ai-pcb-design-kit/tasks.md](specs/004-ai-pcb-design-kit/tasks.md) |
 | 理解为什么有这些门禁 | [docs/anti-drift.md](docs/anti-drift.md) · [docs/retro-audit.md](docs/retro-audit.md) |
+
 
 
 

@@ -93,6 +93,7 @@ function Test-KitIntegrity {
         "docs\boundary-index.md"
         "docs\boundary-root-causes.md"
         "docs\README.md"
+        "docs\status.md"
     )
     $missing = @()
     foreach ($rel in $required) {
