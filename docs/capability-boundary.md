@@ -1847,3 +1847,19 @@
   候选做法：把 7 个"现为"数字纳入 `claims-match`，与实测比较。
 - **status**：`resolved`（提示已修正、注入法已验证；自校验未做）
 
+
+### GAP-089 续：提示值现在会自校验（T412 完成）
+
+- **capability**：让"过期数字检查器"给出的修正提示**不可能再腐烂而不报警**。
+- **evidence**（2026-11-01 第 99 轮，注入法）：
+  1. `evidence-freshness` 新增自校验：从 `docs/HANDOVER.md` 的 `<!-- claims: … -->` 行取真源
+     （该行由 `sync-claims.ps1` 机器维护、且 `claims-match` 已校验），逐条比对 4 条含数字的提示
+（旧口径四条：selftest 36 PASS、36 PASS / 0 FAIL、107 行、99.1%——均为作废口径，仅用于说明映射）是否含当前 `selftest_cases` / `decision_rows` / `decision_actionable`。
+  2. **注入验证**：把提示改回旧口径的"现为 38" ⇒ 立即
+`[FAIL] evidence-freshness 提示值过期 1 条： 「selftest 36 PASS」提示未含当前 selftest_cases=46（现写：现为 38）`（此为旧口径引用，实测输出原文）；
+     还原后 `[PASS]`。
+- **triedTools**：`run.ps1`、`Copy-Item`、`Set-Content`
+- **alternative**：仍未覆盖的 **3 条**提示（一条旧口径计数对、两条板级 PASS/FAIL/BLOCKED 计数）
+  依赖"板级完整跑"的数字，不在 claims 行里，暂未被自校验覆盖。
+- **status**：`resolved`（4/7 提示已自校验；3 条待补真源）
+

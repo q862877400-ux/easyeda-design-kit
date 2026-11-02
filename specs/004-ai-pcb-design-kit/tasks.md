@@ -683,3 +683,9 @@ T025 docs/playbook-unseen-board.md
   实测应为 **46 / 61.4%（78/127）/ 127 行 / 12-1-0 / 21-2-0（23 阶段）**。照着旧提示改会写进另一个过期值。
   注入 `docs/_probe-freshness.md`（写 36 PASS、99.1%、107 行）⇒ **FAIL 并点名文件:行号**；删除后 **PASS（34 份文档、7 类模式）**。
 - [ ] T412 **（未做）**：把 7 个"现为"数字也纳入 `claims-match` 与实测比对，防止提示再次腐烂。
+
+- [x] T412 **提示值自校验（GAP-089 续）**：`evidence-freshness` 现在拿 `docs/HANDOVER.md` 的 claims 行当真源，
+  校验 4 条含数字的提示是否含当前 `selftest_cases` / `decision_rows` / `decision_actionable`。
+  注入"现为 38"⇒ 立即 FAIL 并点名；还原⇒ PASS。
+- [ ] T413 **（未做）**：另 3 条提示（`106/107`、`2 PASS / 1 FAIL / 8 BLOCKED`、`16 PASS / 0 FAIL / 0 BLOCKED`）依赖板级完整跑的数字，
+  不在 claims 行里——要么把"最近一次完整跑的 PASS/FAIL/BLOCKED"也纳入 claims，要么从提示里删掉这些数字。

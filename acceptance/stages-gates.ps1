@@ -553,6 +553,39 @@ function Test-EvidenceFreshness {
         '16 PASS / 0 FAIL / 0 BLOCKED' = '现为 21 PASS / 2 FAIL / 0 BLOCKED（23 阶段）'
     }
     $exempt = '当时|历史|旧口径|此前|作废|口径更正'
+    # 自校验（2026-11-01，T412）：上面这些"现为 X"提示**自己也会过期**——实测曾全部腐烂（写"现为 38"而实际 46）。
+    # 拿 HANDOVER 的 claims 行（已由 sync-claims 机器维护、claims-match 已校验）当真源，逐条比对数字。
+    $hintProblems = @()
+    $claimsPath = Join-Path $script:AuditRoot 'docs\HANDOVER.md'
+    if (Test-Path $claimsPath) {
+        $cm = [regex]::Match((Get-Content $claimsPath -Raw), '<!--\s*claims:\s*([^>]*?)-->')
+        if ($cm.Success) {
+            $claimMap = @{}
+            foreach ($kv in ($cm.Groups[1].Value -split ';')) {
+                $pair = $kv.Split([char]61, 2)
+                if ($pair.Count -eq 2) { $claimMap[$pair[0].Trim()] = $pair[1].Trim() }
+            }
+            $checks = @(
+                @{ key = 'selftest 36 PASS'; must = @('selftest_cases') },
+                @{ key = '36 PASS / 0 FAIL'; must = @('selftest_cases') },
+                @{ key = '107 行'; must = @('decision_rows') },
+                @{ key = '99.1%'; must = @('decision_actionable', 'decision_rows') }
+            )
+            foreach ($ck in $checks) {
+                $hint = [string]$stale[$ck.key]
+                foreach ($field in $ck.must) {
+                    $want = [string]$claimMap[$field]
+                    if ($want -and $hint -notmatch [regex]::Escape($want)) {
+                        $hintProblems += "「$($ck.key)」提示未含当前 $field=$want（现写：$hint）"
+                    }
+                }
+            }
+        }
+    }
+    if ($hintProblems.Count -gt 0) {
+        Add-Result "evidence-freshness" "FAIL" ("提示值过期 " + $hintProblems.Count + " 条： " + (($hintProblems | Select-Object -First 2) -join '; '))
+        return
+    }
     $hits = @()
     foreach ($rel in $docs) {
         if ($rel -match 'progress-log\.md$') { continue }   # 历史日志只增不改，整份豁免
