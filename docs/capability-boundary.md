@@ -1415,3 +1415,21 @@
 - **alternative**：**规矩**——凡"同一事实有两份副本"的地方（specs、docs 与 kit 内 docs），必须有一条机械一致性检查；
   否则写在哪一份取决于我当时的路径，而**读的人只看得到其中一份**。
 - **status**：`resolved`
+
+---
+
+## GAP-077 agent 的入口 `SKILL.md` 没有指向结论页，且它引用的文档无人校验
+
+- **capability**：让"agent 读到的第一份文档"包含结论与正确的阅读顺序，并保证它引用的路径都存在。
+- **evidence**（2026-11-01 实测）：
+  1. `SKILL.md` 是 agent 的入口（frontmatter 的 description 决定何时加载），但它的「阅读顺序」里**没有** `docs/status.md`
+     （一页纸结论）也没有 `docs/README.md`（分层阅读路径）——这两份是本轮才加的，SKILL 没跟上。
+  2. 结果：agent 会直接扎进 `tool-decision-table.md` 与 `phases/`，**读不到"这套东西现在能做什么、不能做什么"**。
+  3. 修：SKILL.md 新增「0.5 先看结论（30 秒）」并把它作为阅读顺序的第 0 步。
+  4. 同时给 `kit-integrity` 加**引用校验**：解析 SKILL.md 里所有 `` `docs/...` `` 路径，逐个 `Test-Path`。
+     反例（把 `docs/phases/pcb-p0-p10.md` 改名）实测判 `FAIL 缺 1/20 份： docs\phases\pcb-p0-p10.md`；恢复后 PASS。
+  5. 另排查了全库同名文档副本：只有 `specs/004` 这一对（已在 GAP-076 修好），其余同名文件属别的 feature，无新增分叉。
+- **triedTools**：`Select-String`（路径提取）、`Test-Path`、`run.ps1`（新检查）、`-AuditRoot` 探针
+- **alternative**：**规矩**——面向外部读者的入口文档（`SKILL.md` / `README.md` / `PRODUCT.md`）里的**每个路径**都要被机械校验；
+  本轮只做了 SKILL.md 的 `docs/...` 形式，`PRODUCT.md` 与相对链接尚未覆盖（**未做**）。
+- **status**：`resolved`

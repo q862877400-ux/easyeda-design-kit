@@ -492,3 +492,8 @@ T025 docs/playbook-unseen-board.md
   `T360`/`T368` 等任务记录**在宿主产物里不存在**；`quickstart.md` 同样分叉（kit 内仍是 `2 PASS / 1 FAIL / 8 BLOCKED` 的旧状态）。
   修：同步两份 + `kit-integrity` 增加**两份逐字节一致**检查（6 份 spec 文件），反例（加一空格）实测判 FAIL、恢复后 PASS。
   同时把 `evidence-freshness` 扫描面扩到 `specs/`（`tasks.md` 作为历史豁免）。
+
+- [x] T371 **修 agent 入口 `SKILL.md`（GAP-077）**：它的阅读顺序里**缺** `docs/status.md`（一页纸结论）与 `docs/README.md`（分层路径）
+  ⇒ agent 会直接扎进细节文档，读不到"能做什么/不能做什么"。已加「0.5 先看结论（30 秒）」并作为第 0 步。
+  同时 `kit-integrity` 增加 **SKILL.md 引用校验**（解析 `` `docs/...` `` 逐个 Test-Path），反例（改名 `pcb-p0-p10.md`）实测判 FAIL。
+  另排查全库同名副本：仅 `specs/004` 一对（GAP-076 已修），无新增分叉。

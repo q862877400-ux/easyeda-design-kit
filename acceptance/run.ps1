@@ -129,10 +129,21 @@ function Test-KitIntegrity {
         if ($badLinks.Count -gt 0) {
             Add-Result "kit-integrity" "FAIL" "$($required.Count) 份齐备，但 docs/README.md 有 $($badLinks.Count) 个死链： $(($badLinks | Select-Object -First 3) -join ', ')"
         } else {
+            # 反例（2026-11-01）：SKILL.md 是 agent 的入口；它引用的文档若被删/改名，agent 会照着读空。
+            $skillBad = @()
+            $skillPath = Join-Path $script:RepoRoot 'SKILL.md'
+            if (Test-Path $skillPath) {
+                $st = Get-Content $skillPath -Raw
+                foreach ($sm in [regex]::Matches($st, '`(docs/[A-Za-z0-9_\-/\.]+)`')) {
+                    $rel = $sm.Groups[1].Value -replace '/', '\'
+                    if (-not (Test-Path (Join-Path $script:RepoRoot $rel))) { $skillBad += $sm.Groups[1].Value }
+                }
+            }
             if ($diverged.Count -gt 0) {
-                Add-Result "kit-integrity" "FAIL" "$($required.Count) 份齐备、链接有效，但 specs 两份不一致： $(($diverged -join '; '))"
+                Add-Result "kit-integrity" "FAIL" "$($required.Count) 份齐备，但 specs 不一致 $(($diverged -join ', '))；SKILL.md 引用缺失 $(($skillBad -join ', '))"
             } else {
-                Add-Result "kit-integrity" "PASS" "$($required.Count) 份必需文档齐备；docs/README.md 链接全部有效；specs 两份一致"
+                if ($skillBad.Count -gt 0) { Add-Result "kit-integrity" "FAIL" "SKILL.md 引用了不存在的文档： $(($skillBad -join ', '))" }
+                else { Add-Result "kit-integrity" "PASS" "$($required.Count) 份必需文档齐备；docs/README.md 链接有效；specs 两份一致；SKILL.md 引用全部存在" }
             }
         }
     } else {
