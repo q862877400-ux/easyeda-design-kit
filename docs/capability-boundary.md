@@ -1020,7 +1020,7 @@
      Pin_Config / PSRAM）+ **1 块 PCB2**（`87d68529660f4a39`）。
   5. 自动化程度：`···` 打开的原生框可用 SendKeys/UIA 驱动（我做到了定位与填名），
      但**最终两次「导入」按钮点击**需要人确认（本次由业主点了一次，第二次我点 `@e63` 完成）。
-- **triedTools**：bsk 会话点击「导入专业版」、`SetForegroundWindow`+`SendKeys`、UI Automation 枚举、
+- **triedTools**：`bsk_interact`（点「导入专业版」）、`bsk_page`（打开工程 URL）、`bsk_inspect`（读页面模态）、`daemon health`、`sch pages`
   `easyeda sch pages --project ESP32S3_USB`、`easyeda board list --project ESP32S3_USB`
 - **alternative**：要全自动，需要给 bsk 加 `upload_file`/`setInputFiles` 能力（chrome-devtools MCP 有
   `upload_file`，但本机 MCP 的 `--executablePath=C:\Program Files(x86)\...` 少一个空格，浏览器起不来；
@@ -1181,7 +1181,7 @@
      → GAP-035「传位号会 ok:false」的绕法：先用它或 `pcb.components.list` 拿到 primitiveId，再传给 `--ids`。
   4. **`easyeda call <action> --payload {...}` 通道有效**：未知动作返回 `code=UNKNOWN_ACTION`（负例验证过），
      真实动作在无窗口时报 `--doc guard: no connected window`（即"通道通、窗口缺"）。
-- **triedTools**：`actions`（169 条目录）、`pcb.silk.list`、`pcb.components.list`、`pcb.no.such.action`（负例）、`daemon health`
+- **triedTools**：`actions`（169 条目录）、`pcb.silk.list`、`pcb.components.list`、`daemon health`
 - **alternative**：**以后判断"工具能不能做某事"时，先查 `easyeda actions` 的 169 条动作，再查 `--help` 子命令**——
   两者不是一回事；把 `call` 当通用入口用。仍**未验证**的是：这些动作在真实板子上返回的数据是否够用于诊断。
 - **status**：`resolved`
