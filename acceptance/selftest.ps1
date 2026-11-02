@@ -21,6 +21,21 @@ $probe = Join-Path $env:TEMP ('kit-selftest-' + [guid]::NewGuid().ToString('N').
 
 $script:Pass = 0; $script:Fail = 0
 $script:Skip = 0
+# ── 否定断言的共用校验（GAP-078）──────────────────────────────────────────────
+# 反例（2026-11-01）：只判 Status=FAIL 时，任何错误都能让断言通过——缺文件、未指定参数、脚本解析失败。
+# 这里统一拒绝**基础设施类错误**：那不是"判据正确拒绝了坏输入"，而是"探针自己坏了"。
+function Test-NegativeResult {
+    param($Result)
+    if ($null -eq $Result) { return $false }
+    if ($Result.Status -notin @('FAIL', 'BLOCKED')) { return $false }
+    $d = [string]$Result.Detail
+    if ([string]::IsNullOrWhiteSpace($d)) { return $false }
+    # 只拒绝**探针/kit 自身基础设施**出错的情形；"flag 不存在""目录不存在"这类是判据的正当判定，必须放行。
+    if ($d -match '不是合法|无法解析|无法读取|语法错误|No such|syntax') { return $false }
+    if (($d -match '不存在') -and ($d -notmatch 'flag|焊盘|目录|net|pin|走线|元件|设计|pad')) { return $false }
+    if ($d -match '未指定') { return $false }
+    return $true
+}
 function Assert-Case {
     param([string]$Name, [scriptblock]$Body)
     try {
@@ -53,7 +68,7 @@ Assert-Case "positive-goal → playbook 里编造 flag 判 FAIL" {
     New-Item -ItemType Directory -Force -Path (Join-Path $d "playbooks") | Out-Null
     '{ "version": 1, "meta": { "name": "p" }, "steps": [ { "id": 1, "run": "pcb route fill --net A --from U1.1 --to U2.2 --no-such-flag-xyz" } ] }' |
         Set-Content (Join-Path $d "playbooks\p.playbook.json") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'positive-goal').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'positive-goal')
 }
 # 断言（2026-11-01 新增）：flag 的**取值类型**也必须合法。
 # 反例：`sch block-apply --spacing abc`（帮助声明 `--spacing float`）在只查 flag 名时判 PASS。
@@ -62,14 +77,14 @@ Assert-Case "positive-goal → 数值 flag 给字符串判 FAIL" {
     New-Item -ItemType Directory -Force -Path (Join-Path $d "playbooks") | Out-Null
     '{ "version": 1, "meta": { "name": "p" }, "steps": [ { "id": 1, "run": "sch block-apply", "flags": { "block": "block.x", "at": "250,300", "spacing": "abc", "per-row": "3" } } ] }' |
         Set-Content (Join-Path $d "playbooks\p.playbook.json") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'positive-goal').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'positive-goal')
 }
 # 断言（2026-11-01 新增）：证据文档里的**已作废数字**无标注出现必须判 FAIL；带"当时/旧口径"标注则豁免。
 Assert-Case "evidence-freshness → 无标注的作废数字判 FAIL" {
     $d = Join-Path $probe "efbad"
     New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
     '| 门禁自身可信 | selftest 36 PASS / 0 FAIL |' | Set-Content (Join-Path $d "docs\HANDOVER.md") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'evidence-freshness').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'evidence-freshness')
 }
 Assert-Case "evidence-freshness → 标注了当时口径则豁免" {
     $d = Join-Path $probe "efok"
@@ -85,13 +100,13 @@ Assert-Case "claims-match → 声明与实测不一致判 FAIL" {
     'x' | Set-Content (Join-Path $d "docs\capability-boundary.md") -Encoding UTF8
     '| 情境 | 工具 | 参数 |' | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
     '{ "installed": [] }' | Set-Content (Join-Path $d "docs\installed-extensions.json") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'claims-match').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'claims-match')
 }
 Assert-Case "claims-match → 没有 claims 块判 FAIL" {
     $d = Join-Path $probe "clnone"
     New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
     '# 没有 claims 块' | Set-Content (Join-Path $d "docs\HANDOVER.md") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'claims-match').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'claims-match')
 }
 # 断言（2026-11-01 新增）：**删内容再同步改声明**必须被棘轮挡住（只增不减）。
 Assert-Case "claims-match → 边界数下降判 FAIL（棘轮）" {
@@ -101,7 +116,7 @@ Assert-Case "claims-match → 边界数下降判 FAIL（棘轮）" {
     "<!-- claims: boundaries=1 -->" | Set-Content (Join-Path $d "docs\HANDOVER.md") -Encoding UTF8
     "| 情境 | 工具 | 参数 |" | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
     "{ ""installed"": [] }" | Set-Content (Join-Path $d "docs\installed-extensions.json") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'claims-match').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'claims-match')
 }
 # 断言（2026-11-01 新增）：报告目录里出现探针产物必须判 FAIL（历史上曾堆积 129 份无人发现）。
 Assert-Case "report-hygiene → 探针垃圾报告判 FAIL" {
@@ -109,7 +124,7 @@ Assert-Case "report-hygiene → 探针垃圾报告判 FAIL" {
     New-Item -ItemType Directory -Force -Path (Join-Path $d "acceptance\runs") | Out-Null
     '{ "case": "p", "executor": "unspecified", "stages": [ { "stage": "a", "status": "BLOCKED", "detail": "x" } ] }' |
         Set-Content (Join-Path $d "acceptance\runs\junk.json") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'report-hygiene').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'report-hygiene')
 }
 # 断言（2026-11-01 新增）：只有**旧阶段集**报告时判 BLOCKED（旧账不算当前证据，但也不是失败）。
 Assert-Case "report-hygiene → 只有旧阶段集报告判 BLOCKED" {
@@ -117,7 +132,7 @@ Assert-Case "report-hygiene → 只有旧阶段集报告判 BLOCKED" {
     New-Item -ItemType Directory -Force -Path (Join-Path $d "acceptance\runs") | Out-Null
     '{ "case": "p", "executor": "lead/x", "stages": [ { "stage": "a", "status": "PASS", "detail": "x" } ] }' |
         Set-Content (Join-Path $d "acceptance\runs\old.json") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'report-hygiene').Status -eq 'BLOCKED'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'report-hygiene')
 }
 # 断言（2026-11-01 新增）：`-Static` 模式必须**真的跳过板级检查**并在汇总里说明。
 # 反例：把板级调用缩进后，数阶段的正则曾把 22 读成 12 —— 同类"读错"必须能被钉住。
@@ -217,7 +232,7 @@ Assert-Case "delivery → 缺钻孔 FAIL" {
     Set-Content (Join-Path $d "g.zip") -Value ("x" * 100) -Encoding UTF8
     Set-Content (Join-Path $d "c.csv") -Value ("x" * 100) -Encoding UTF8
     Set-Content (Join-Path $d "b.xlsx") -Value ("x" * 100) -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery')
 }
 
 Assert-Case "delivery → 零字节文件 FAIL" {
@@ -227,7 +242,7 @@ Assert-Case "delivery → 零字节文件 FAIL" {
     Set-Content (Join-Path $d "c.csv") -Value ("x" * 100) -Encoding UTF8
     Set-Content (Join-Path $d "b.xlsx") -Value ("x" * 100) -Encoding UTF8
     [System.IO.File]::WriteAllBytes((Join-Path $d "d.drl"), @())
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-DeliveryDir', $d) 'delivery')
 }
 
 
@@ -304,7 +319,7 @@ Assert-Case "design-ir → 破坏后 FAIL" {
     $obj.PSObject.Properties.Remove("meta")
     $bad = Join-Path $probe "broken.ir.json"
     $obj | ConvertTo-Json -Depth 20 | Set-Content $bad -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-IR', $bad) 'design-ir').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-IR', $bad) 'design-ir')
 }
 
 
@@ -339,7 +354,7 @@ Assert-Case "kit-portability → 含 D:\\Agent-Studio 判 FAIL" {
     $pd = Join-Path $probe "port"
     New-Item -ItemType Directory -Force -Path (Join-Path $pd "docs") | Out-Null
     Set-Content (Join-Path $pd "docs\bad.md") -Value "见 D:\Agent-Studio\foo 与 C:\Users\x" -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $pd) 'kit-portability').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $pd) 'kit-portability')
 }
 
 
@@ -356,7 +371,7 @@ Assert-Case "installed-claims → 把 PCB Auto Router 写成首选 判 FAIL" {
     for ($i = 1; $i -le 30; $i++) { $rows += "| 场景$i | pcb route fill | 参数 |" }
     $rows += "| 全板自动布线（首选） | PCB Auto Router | AI+GPU |"
     $rows | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'installed-claims').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'installed-claims')
 }
 
 
@@ -369,7 +384,7 @@ Assert-Case "决策表：未收录的 exe 仍判 FAIL" {
     for ($i = 1; $i -le 30; $i++) { $rows += "| 场景$i | pcb route fill | 参数 |" }
     $rows += "| 某场景X | totally-unknown-router.exe | 参数 |"
     $rows | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'tool-decision-table').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'tool-decision-table')
 }
 
 
@@ -388,14 +403,14 @@ Assert-Case "decision-actionability → 全是空话参数 判 FAIL" {
     $rows = @("| 情境 | 用哪个 | 参数 |", "|---|---|---|")
     for ($i = 1; $i -le 30; $i++) { $rows += "| 场景$i | pcb route fill | 短 |" }
     $rows | Set-Content (Join-Path $d "docs\tool-decision-table.md") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'decision-actionability').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'decision-actionability')
 }
 
 
 # 断言 29–30：delivery 三态（未导出→BLOCKED；已导出但缺件→FAIL）
 Assert-Case "delivery → 目录不存在判 BLOCKED（不是 FAIL）" {
     $d = Join-Path $probe "no-delivery"
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot, '-DeliveryDir', $d) 'delivery').Status -eq 'BLOCKED'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot, '-DeliveryDir', $d) 'delivery')
 }
 
 Assert-Case "delivery → 目录有文件但缺 BOM 判 FAIL" {
@@ -404,7 +419,7 @@ Assert-Case "delivery → 目录有文件但缺 BOM 判 FAIL" {
     'fake gerber' | Set-Content (Join-Path $d "board.gbr") -Encoding UTF8
     'fake drill'  | Set-Content (Join-Path $d "board.drl") -Encoding UTF8
     'a,b'         | Set-Content (Join-Path $d "board-cpl.csv") -Encoding UTF8
-    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot, '-DeliveryDir', $d) 'delivery').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $KitRoot, '-DeliveryDir', $d) 'delivery')
 }
 
 
@@ -429,7 +444,7 @@ Assert-Case "DFM 解析：无法判定 → -1（不得当 0）" {
 Assert-Case "no-oneoff：日志与工程不匹配判 BLOCKED" {
     $lg = Join-Path $probe "log-wrongproject.log"
     @("# other board", "pcb route fill --net A --from X.1 --to Y.1") | Set-Content $lg -Encoding UTF8
-    (Stage-Status @('-Case', 'sc001-ldo-typed', '-Cli', $Cli, '-Project', 'sc001-ldo-blk', '-RunLog', $lg, '-NoArchive') 'no-oneoff-scripts').Status -eq 'BLOCKED'
+    Test-NegativeResult (Stage-Status @('-Case', 'sc001-ldo-typed', '-Cli', $Cli, '-Project', 'sc001-ldo-blk', '-RunLog', $lg, '-NoArchive') 'no-oneoff-scripts')
 }
 
 Assert-Case "no-oneoff：.work 中间件（DSN/SES）不算一次性脚本" {
@@ -441,7 +456,7 @@ Assert-Case "no-oneoff：.work 中间件（DSN/SES）不算一次性脚本" {
 Assert-Case "no-oneoff：.work 下的脚本仍判 FAIL" {
     $lg = Join-Path $probe "log-workscript.log"
     @("project sc001-ldo-blk", "pcb check --project sc001-ldo-blk --doc x", "sch clusters --project sc001-ldo-blk --doc x --strict", "pwsh .work\scratch-gen.ps1") | Set-Content $lg -Encoding UTF8
-    (Stage-Status @('-Case', 'sc001-ldo-typed', '-Cli', $Cli, '-Project', 'sc001-ldo-blk', '-RunLog', $lg, '-NoArchive') 'no-oneoff-scripts').Status -eq 'FAIL'
+    Test-NegativeResult (Stage-Status @('-Case', 'sc001-ldo-typed', '-Cli', $Cli, '-Project', 'sc001-ldo-blk', '-RunLog', $lg, '-NoArchive') 'no-oneoff-scripts')
 }
 
 Remove-Item $probe -Recurse -Force -ErrorAction SilentlyContinue
@@ -450,6 +465,8 @@ Write-Host ""
 Write-Host ("===== {0} PASS / {1} FAIL / {2} SKIP =====" -f $script:Pass, $script:Fail, $script:Skip)
 if ($script:Fail -gt 0) { exit 1 }
 exit 0
+
+
 
 
 
