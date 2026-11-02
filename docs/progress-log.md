@@ -168,3 +168,4 @@
 | 132 | Netlist Error 只读排查用尽（GAP-093）：rebind 成功但错误在、sch drc 0 error、bridgeCheck 0 bridge、PCB 6 器件/7 网（含自动网名）；验收更新为 **21/2/0**，DRC 报"1 条：Netlist Error" | 差异明细需 GUI 或 import-changes | 本轮 |
 | 133 | **Netlist Error 成因结案**（GAP-093）：离线解析 `.epru` 得 **PCB=6 器件 / SCH_PAGE=43 器件**（≥6 页）⇒ 网表不一致是**结构性**的（子系统板 6/43），非绑定/原理图/断桥问题；`import-changes` 会变成全项目而非修复 | 结论可离线复现 | 本轮 |
 | 134 | 从报告抽取五块板 DRC 分项：**每块都只剩 1 条 Netlist Error，clearance 全 0**；结论页补「DRC 分项」说明；**不改判据**（改会抹掉"板≠图"）| 结论可离线复核 | 本轮 |
+| 135 | **证否 DSN 假设**：三方对照（外部板 45/74 DSN失败、练习板 31/82 DSN成功、usbc 6/43 DSN成功）⇒ "PCB 只是部分实现"不能解释 DSN 失败；候选收窄到"未绑定封装器件"等 | 离线可复核 | 本轮 |

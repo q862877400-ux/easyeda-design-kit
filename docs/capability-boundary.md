@@ -2008,3 +2008,24 @@
 - **alternative**：**不建议**把 `pcb-drc-clean` 改成"忽略 Netlist Error"来让门禁变绿——
   那会把"板与图不一致"从判据里抹掉。正确做法是**在结论页把两件事分开写**：clearance 0 条（可制造）、Netlist 1 条（设计范围所限）。
 - **status**：`resolved`
+
+### GAP-084 续 3：**"PCB 只是原理图的一部分"不是 DSN 导不出的原因**（假设已证否）
+
+- **capability**：用一个可离线复现的三方对照，排除一个人人会觉得合理的解释。
+- **evidence**（2026-11-01 离线解析三份 `.epru`，统计 `COMPONENT` 记录）：
+
+  | 归档 | PCB 器件 | SCH_PAGE 器件 | `pcb export-dsn` 实测 |
+  |---|---|---|---|
+  | `osb-export.epro2`（外部板 `ESP32S3_USB`）| **45** | **74** | ❌ 失败（`no file … may be empty or have no nets`）|
+  | `esp32s3-board31-r23`（练习板）| **31** | **82** | ✅ 成功（153.6 KB）|
+  | `usbc-drc-fixed.epro2`（自造 usbc）| **6** | **43** | ✅ 成功（早期 6.2 KB）|
+
+  ⇒ **三块板都是"PCB ⊂ 原理图"，其中两块 DSN 导得出来**。
+  故「网表不一致 / PCB 只实现一部分」**不能解释**外部板的 DSN 失败，该假设**证否**。
+- **triedTools**：`System.IO.Compression.ZipFile`（离线统计）、`pcb export-dsn`（历史实测记录）
+- **alternative**：仍成立的候选（**均未验证**）：
+  ① 外部板是否 4 层/2 层与练习板不同（实测外部板 **2 层**、练习板 4 层）→ 层数不是充分条件；
+  ② 外部板 45 器件里是否有**未绑定封装的器件**；
+  ③ 是否为**导入工程**特有（`client`/`editVersion` 差异，外部板来自不同的编辑器实例）。
+  下一步应查 ②（`pcb.components.list --includePads` 找无封装/无焊盘器件）。
+- **status**：`open`（假设已证否；候选已收窄）
