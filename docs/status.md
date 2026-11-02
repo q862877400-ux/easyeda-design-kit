@@ -1,7 +1,7 @@
 # 这套 kit 现在能做什么
 
 > 这一页是**结论**，不是介绍。数字来自门禁实测（`acceptance/run.ps1 -Static` 与 `selftest.ps1`）。
-> 最后更新：2026-11-01（第 70 轮）。边界 82 条，其中 open 29 条（resolved 40 / accepted 13）。
+> 最后更新：2026-11-01（第 70 轮）。边界 82 条，其中 open 28 条（resolved 41 / accepted 13）。
 
 ## 能做
 
@@ -25,7 +25,7 @@
 | **全自动 GUI** | 三条前置缺一不可：浏览器+扩展 connected、会话每 ≤4 分钟保活、daemon 在线。其中"打开浏览器"是**人的动作**（GAP-064） |
 | **换模型验证** | SC-004 的模型维度**未验证**——需要第二个模型入口（业主提供） |
 
-## 29 条 open 边界 → 7 个根因
+## 28 条 open 边界 → 7 个根因
 
 `docs/boundary-root-causes.md` 有完整表。一句话版：
 
@@ -58,6 +58,7 @@ pwsh -NoProfile -File acceptance/mistake-matrix.ps1  # 期望：16/16
 ```
 
 唯一的 FAIL 是 `decision-actionability`（决策表可执行率 18/111 = 16.2%），已如实记为**未达成**，出路见上表。
+
 
 
 

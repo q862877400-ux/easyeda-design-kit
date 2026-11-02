@@ -538,3 +538,8 @@ T025 docs/playbook-unseen-board.md
   `GAP-032`/`GAP-061` 的原始段（各自已有"结案"/"续：解法"段）状态仍是 `open` ⇒ 改为 `resolved`。
   实测分布：**open 29 / resolved 40 / accepted 13（共 82）**；`status.md` 与 `boundary-root-causes.md` 的 open 数字同步为 29。
 - [ ] T381 **（未做）**：加一条机械检查——标题含「已更正 / 结案 / 解法」而 status 仍为 `open` 的条目应判 FAIL（本轮先改数据，未加判据）。
+
+- [x] T381 **状态与标题一致性检查（上轮留档项）**：`capability-boundary` 新增——标题含 `已更正/结案/解法/已解决` 而 `status=open` ⇒ FAIL。
+  **上线即抓到 GAP-035**（标题已更正、状态仍 open）；连同上轮人工修的 3 条，共修 **4 条矛盾**。
+  分布更正为 **open 28 / resolved 41 / accepted 13**（此前报 34，虚高 6 条）。
+- [ ] T382 **（未做）**：反向矛盾（标题写"待验证/未解决"而 status=resolved）未检查；关键词表未覆盖全部措辞。

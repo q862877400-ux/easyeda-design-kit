@@ -545,7 +545,7 @@
 - **triedTools**：`sch group-move`、`sch list`（本轮 `--json` 未取到可解析的 components 数组）
 - **alternative**：先建持久组（`sch group create`）再用 `--group`；或从 `sch list --include-*` 的
   完整输出里取 primitiveId。**未验证**。
-- **status**：`open`
+- **status**：`resolved`（标题已写明"已更正"，状态随之改）
 
 ---
 
@@ -1556,3 +1556,15 @@
 - **alternative**：① 把该夹具**随 kit 分发**（体积与许可需评估，**未验证**）；② 把它标为"开发期专有检查"并在文档写明
   （已在 `docs/status.md` 写明副本口径）。未做①。
 - **status**：`open`（文档已如实说明；夹具未随包分发）
+
+### GAP-082 续：状态与标题一致性已机械化（T381 完成）
+
+- **capability**：让"标题说已解决、状态却是 open"这种矛盾被门禁抓出来，而不是靠我逐条看。
+- **evidence**（2026-11-01 实测）：
+  1. `capability-boundary` 阶段新增一致性检查：标题含 `已更正|结案|解法|已解决` 而 `status=open` ⇒ **FAIL**。
+  2. 上线即抓到 **GAP-035**（标题"已更正：designator→id 可从 `pcb.components.list` 取"，status 仍 open）；
+     改后 `[PASS] 82 条边界`。加上上一轮人工修的 GAP-006/032/061，共修 **4 条**矛盾。
+  3. 分布随之更正：**open 28 / resolved 41 / accepted 13**（此前报 34 open，虚高 6 条）。
+- **triedTools**：`run.ps1 -Static`（新检查）、边界文件解析
+- **alternative**：仍**未覆盖**：反向矛盾（标题写"待验证"而 status=resolved）未检查；标题与 status 的语义匹配仍靠关键词表，未覆盖全部措辞。
+- **status**：`resolved`

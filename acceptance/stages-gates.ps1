@@ -332,6 +332,22 @@ function Test-CapabilityBoundary {
     if ($bad.Count -gt 0) {
         Add-Result "capability-boundary" "FAIL" "$($bad.Count)/$($entries.Count) 条结构不全 — $($bad -join '; ')"
     } else {
+    # 反例（2026-11-01）：GAP-006 标题写着「已更正：能力以类型化动作存在」、GAP-032/GAP-061 各自已有「结案/续：解法」段，
+    # 但原始段的 status 仍是 open —— 语义上已解决却计入待办，导致"还剩多少条"虚高。
+    $inconsistent = @()
+    foreach ($e in $entries) {
+        $titleLine = ($e.text | Where-Object { $_ -match '^##\s+' } | Select-Object -First 1)
+        $stVal = ([regex]::Match(($e.text -join "`n"), '(?m)^- \*\*status\*\*[：:]\s*`?([a-z]+)`?').Groups[1].Value)
+        # 标题里的"已完成"标记也可能写在 id 之后第一行；这里用整段标题行判断
+        $hdr = (Get-Content $path | Where-Object { $_ -match "^##\s+$($e.id)\s" } | Select-Object -First 1)
+        if ($hdr -match '已更正|结案|解法|已解决' -and $stVal -eq 'open') {
+            $inconsistent += "$($e.id)（标题称已解决，status 仍 open）"
+        }
+    }
+    if ($inconsistent.Count -gt 0) {
+        Add-Result "capability-boundary" "FAIL" "$($inconsistent.Count) 条状态与标题矛盾： $(($inconsistent -join '; '))"
+        return
+    }
         Add-Result "capability-boundary" "PASS" "$($entries.Count) 条边界，字段齐全且 status 合法"
     }
 }
