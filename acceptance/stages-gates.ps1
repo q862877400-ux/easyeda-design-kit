@@ -591,3 +591,30 @@ function Test-ClaimsMatch {
 
 
 
+
+# ── 阶段：报告目录卫生（探针产物必须为 0，真实运行份数不得低于板数）─────────
+function Test-ReportHygiene {
+    # 反例（2026-11-01）：`acceptance/runs/` 曾被自测探针塞进 129 份垃圾报告，**没有任何阶段报警**——
+    # 我是靠"主动去数"才发现的。这里把它机械化：探针产物（executor=unspecified 且 blocked>0）必须为 0；
+    # 真实运行（具名 executor 且 blocked=0）份数不得低于板数 5。
+    $dir = Join-Path $script:AuditRoot 'acceptance\runs'
+    if (-not (Test-Path $dir)) { Add-Result "report-hygiene" "BLOCKED" "acceptance/runs 不存在（尚无运行报告）"; return }
+    $junk = @(); $real = @()
+    foreach ($r in (Get-ChildItem $dir -File -Filter '*.json' -ErrorAction SilentlyContinue)) {
+        try {
+            $j = Get-Content $r.FullName -Raw | ConvertFrom-Json
+            $blk = @($j.stages | Where-Object { $_.status -eq 'BLOCKED' }).Count
+            if ([string]$j.executor -eq 'unspecified' -and $blk -gt 0) { $junk += $r.Name }
+            elseif (-not [string]::IsNullOrWhiteSpace([string]$j.executor) -and $blk -eq 0) { $real += $r.Name }
+        } catch { $junk += "$($r.Name)（无法解析）" }
+    }
+    $fail = @()
+    if ($junk.Count -gt 0) { $fail += "探针产物 $($junk.Count) 份： $(($junk | Select-Object -First 3) -join ', ')" }
+    if ($real.Count -lt 5) { $fail += "真实运行仅 $($real.Count) 份 < 板数 5" }
+    if ($fail.Count -eq 0) {
+        Add-Result "report-hygiene" "PASS" "探针产物 0 份；真实运行 $($real.Count) 份（≥ 板数 5）"
+    } else {
+        Add-Result "report-hygiene" "FAIL" ($fail -join '; ')
+    }
+}
+

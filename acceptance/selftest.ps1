@@ -102,6 +102,14 @@ Assert-Case "claims-match → 边界数下降判 FAIL（棘轮）" {
     "{ ""installed"": [] }" | Set-Content (Join-Path $d "docs\installed-extensions.json") -Encoding UTF8
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'claims-match').Status -eq 'FAIL'
 }
+# 断言（2026-11-01 新增）：报告目录里出现探针产物必须判 FAIL（历史上曾堆积 129 份无人发现）。
+Assert-Case "report-hygiene → 探针垃圾报告判 FAIL" {
+    $d = Join-Path $probe "runsjunk"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "acceptance\runs") | Out-Null
+    '{ "case": "p", "executor": "unspecified", "stages": [ { "stage": "a", "status": "BLOCKED", "detail": "x" } ] }' |
+        Set-Content (Join-Path $d "acceptance\runs\junk.json") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'report-hygiene').Status -eq 'FAIL'
+}
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-RunLog', $clean) 'positive-goal').Status -eq 'PASS'
 }
 Assert-Case "kit 自身 → negative-drift PASS" {

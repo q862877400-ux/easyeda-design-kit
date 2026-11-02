@@ -503,6 +503,7 @@ Test-Delivery
 Test-NoOneOffScripts
 Test-RunConsistency
 Test-EvidenceFreshness
+Test-ReportHygiene
 Test-ClaimsMatch
 Test-PositiveGoal
 Test-NegativeDrift

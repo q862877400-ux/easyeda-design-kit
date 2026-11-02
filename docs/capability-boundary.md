@@ -1324,3 +1324,22 @@
   否则任何以真实工程名做对照的探针都会写盘。下一层未做：报告目录的**数量**没有地板也没有上限，
   未来若再堆积不会被自动发现（只有人工看 `runs/` 才知道）。
 - **status**：`resolved`
+
+---
+
+## GAP-073 报告目录的卫生没有门禁：堆了 129 份也无人报警
+
+- **capability**：让"报告目录被探针污染"或"真实运行份数不足"能当场被发现，而不是靠我想起来去数。
+- **evidence**（2026-11-01 实测）：
+  1. 反例：往 `acceptance/runs/` 放一份 `executor=unspecified` + 有 BLOCKED 的报告，修前跑验收 →
+     **11 项里没有任何一项提到它**（与没放时完全相同的结论）。
+  2. 新增第 22 阶段 `report-hygiene`：探针产物（`executor=unspecified` 且 `blocked>0`）必须为 **0**；
+     真实运行（具名 executor 且 `blocked=0`）份数不得低于**板数 5**。
+  3. 反例现在报 `FAIL 探针产物 1 份： zzz-probe-junk.json`；真 kit 报
+     `PASS 探针产物 0 份；真实运行 7 份（≥ 板数 5）`。
+  4. 修这个阶段时自己踩了一次：目录一开始取 `$script:RepoRoot`，于是**探针里读的是真 kit**、断言永远 PASS；
+     改取 `$script:AuditRoot` 才可测。自测断言加上后 **44 PASS / 0 FAIL**。
+- **triedTools**：`run.ps1`（新阶段 + 反例探针）、`selftest.ps1`、`acceptance/runs/*.json`
+- **alternative**：仍**未覆盖**：① 真实运行**上限**（同一块板反复跑会产生大量报告，目前不限）；
+  ② 报告内容是否与当前阶段集一致（旧报告含 17/18 阶段，不判它们"过期"）。
+- **status**：`resolved`

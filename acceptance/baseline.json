@@ -4,9 +4,9 @@
   "acceptance": 27,
   "spec_files": 9,
   "decision_rows": 111,
-  "stages": 21,
-  "boundaries": 72,
+  "stages": 22,
+  "boundaries": 73,
   "playbook_steps": 37,
-  "selftest_cases": 43,
+  "selftest_cases": 44,
   "decision_actionable": 18
 }
