@@ -1242,3 +1242,21 @@
 - **alternative**：仍**未验证**的两层——① **枚举/区间域**（`--layers 1,2` 若域是 `1-2` 仍会过；`--margin` 的合理范围未校验）；
   ② **跨 flag 约束**（如 `--per-row` 与 `--spacing` 的联动、`--at` 与图纸边界）。
 - **status**：`resolved`（类型层已闭合；域与联动层留待后续）
+
+---
+
+## GAP-069 证据文档里的过期数字**无人看守**：`selftest 36 PASS` 写了两周没人发现
+
+- **capability**：让"证据新鲜"成为机械检查，而不是靠我记性。
+- **evidence**（2026-11-01 实测）：
+  1. 三份文档同时残留已作废的数字：`executor-crosscheck.md`（16 PASS×6、36 PASS、107 行）、
+     `HANDOVER.md`（16 PASS×2、36 PASS×2）、`README.md`（36 PASS）。真实值已是 38 PASS / 111 行 / 16.2%。
+  2. 新阶段 `evidence-freshness` 上线后**立刻又抓到 2 处**我上一轮漏改的：
+     `executor-crosscheck.md:135` 的「107 行」、`sc-evidence.md:11` 的「99.1%」。
+  3. 机制：对四份证据文档扫描 6 类**已作废取值**；出现即 FAIL，带「当时/历史/旧口径/此前/作废/口径更正」的行豁免
+     （那是刻意的历史引用，删掉等于抹掉"口径怎么变的"）。
+  4. 正反例都验过：无标注 → `FAIL … 出现已作废的「selftest 36 PASS」（现为 38）`；加 `（**当时**口径）` → PASS。
+- **triedTools**：`run.ps1`（新阶段）、`selftest.ps1`（正反两条断言）、`-AuditRoot` 探针 kit
+- **alternative**：红线是"知道哪些取值已作废"，这需要**改数字时同步改这份清单**——无法自动推导（否则要递归跑 selftest）。
+  下一层未做：**文档里的一句话结论**（非数字）是否与门禁一致，目前完全没有检查。
+- **status**：`resolved`（数字层已闭合）

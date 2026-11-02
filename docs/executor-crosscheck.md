@@ -2,7 +2,10 @@
 
 > **口径更正（2026-10-31，外部审计后）。** 本文件里 2026-10-31 之前出现的「16 PASS / 0 FAIL / 0 BLOCKED」
 > 是**旧 16 阶段口径**的结果——那套判据只验 `Connection Error`，不验 DRC 其他分类。
-> 加入第 17 阶段 `pcb-drc-clean` 后，**五块板实测均为 16 PASS / 1 FAIL**（DRC 非 0）。
+> 加入第 17 阶段 `pcb-drc-clean` 后，五块板实测均为 16 PASS / 1 FAIL；**现为 19 阶段 → 18 PASS / 1 FAIL**。
+> **当前口径快照（2026-11-01，第 49 轮）**：门禁 **19 阶段**；完整运行一块板 **18 PASS / 1 FAIL / 0 BLOCKED**（FAIL = `pcb-drc-clean`）；
+> `selftest` **38 PASS / 0 FAIL**；`mistake-matrix` **16/16**；静态 acceptance **8 PASS / 1 FAIL / 10 BLOCKED**（FAIL = `decision-actionability` 18/111）；
+> 边界 **66 条**（open 28 → 7 根因）；决策表 **111 行**（可执行 18 行，其余为未装扩展目录）；必需文档 **18 份**。
 > 历史记录保留原样（它们在当时的口径下是真的），当前真相见 `docs/sc-evidence.md` 的「状态更正」一节
 > 与 `acceptance/runs/` 下入库的 per-board 报告。
 
@@ -36,7 +39,7 @@
 |---|---|
 | selftest | 30 PASS / 0 FAIL |
 | mistake-matrix | 16/16 |
-| acceptance | **16 PASS / 0 FAIL / 0 BLOCKED**，退出码 0 |
+| acceptance | **16 PASS / 0 FAIL / 0 BLOCKED**（**当时 16 阶段口径**，非现状），退出码 0 |
 
 ### 运行 B：全新会话 #1（**参数不同**：漏 `-IR`、交付目录未预建）
 
@@ -54,7 +57,7 @@
 |---|---|
 | selftest | **30 PASS / 0 FAIL** |
 | mistake-matrix | **16/16** |
-| acceptance | **16 PASS / 0 FAIL / 0 BLOCKED**，退出码 0 |
+| acceptance | **16 PASS / 0 FAIL / 0 BLOCKED**（**当时 16 阶段口径**，非现状），退出码 0 |
 | BLOCKED | 无 |
 | 前置 | `ensure_eda_window.py` 成功（窗口活跃） |
 
@@ -117,9 +120,9 @@ pwsh -NoProfile -File easyeda-design-kit\acceptance\run.ps1 `
 
 | 项 | 结果 |
 |---|---|
-| acceptance | **16 PASS / 0 FAIL / 0 BLOCKED**，退出码 0 |
+| acceptance | **16 PASS / 0 FAIL / 0 BLOCKED**（**当时 16 阶段口径**，非现状），退出码 0 |
 | BLOCKED | 无 |
-| 与 Lead 比对 | 16 阶段**逐项一致** |
+| 与 Lead 比对 | 16 阶段**逐项一致**（当时口径）|
 | 它额外指出的问题 | 我给它的 `-RunLog` 属于**旧工程**，审计等于审别人的日志 → 据此新增 GAP-039 守卫 |
 
 **判读**：这块板的结论不依赖"我知道它是怎么造出来的"。它同时证明了一件事：
@@ -129,18 +132,20 @@ pwsh -NoProfile -File easyeda-design-kit\acceptance\run.ps1 `
 
 ## 运行 E：改过门禁脚本后的五板复验（2026-10-31，第 21 轮）
 
-**背景**：上一轮修了 `mistake-matrix` 的 M12（原硬编码 `DecisionBaseline = 99`，表长到 107 行后假通过）。
+**背景**：上一轮修了 `mistake-matrix` 的 M12（原硬编码 `DecisionBaseline = 99`，表**当时**长到 107 行后假通过；**现为 111 行**）。
 改的是**门禁脚本本身**，所以必须复验"改动没有连带影响"。
 
 | 项 | 结果 |
 |---|---|
-| `selftest.ps1` | **36 PASS / 0 FAIL** |
+| `selftest.ps1` | **38 PASS / 0 FAIL**（当时 36；后加 flag 缺失/取值类型两条断言）|
 | `mistake-matrix.ps1` | **16/16 抓到，0 漏网**（M12 重新被抓到） |
 | 静态 acceptance | **8 PASS / 0 FAIL / 10 BLOCKED**（BLOCKED = 需在线板子的阶段） |
-| 五块板（同一次顺序运行） | 每块 **16 PASS / 0 FAIL / 0 BLOCKED** |
+| 五块板（同一次顺序运行，**当时 16 阶段口径**） | 每块 **16 PASS / 0 FAIL / 0 BLOCKED** |
 | 反例验证 | 把 `baseline.json` 的 `decision_rows` 临时改成 200 → `negative-drift` 报 `N8 决策表行数从 200 降到 107`（门禁确实会抓缩水，不是被改绿）|
 
 **判读**：门禁脚本的改动不会影响板子验收——这是**测出来的**，不是推断的。以后每次动 `acceptance/` 下的判据，
 都应照这条跑一遍：三件套 + 五板复验 + 一条反例。
+
+
 
 

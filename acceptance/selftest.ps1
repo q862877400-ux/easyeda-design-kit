@@ -63,6 +63,19 @@ Assert-Case "positive-goal → 数值 flag 给字符串判 FAIL" {
         Set-Content (Join-Path $d "playbooks\p.playbook.json") -Encoding UTF8
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'positive-goal').Status -eq 'FAIL'
 }
+# 断言（2026-11-01 新增）：证据文档里的**已作废数字**无标注出现必须判 FAIL；带"当时/旧口径"标注则豁免。
+Assert-Case "evidence-freshness → 无标注的作废数字判 FAIL" {
+    $d = Join-Path $probe "efbad"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
+    '| 门禁自身可信 | selftest 36 PASS / 0 FAIL |' | Set-Content (Join-Path $d "docs\HANDOVER.md") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'evidence-freshness').Status -eq 'FAIL'
+}
+Assert-Case "evidence-freshness → 标注了当时口径则豁免" {
+    $d = Join-Path $probe "efok"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
+    '| 门禁自身可信 | selftest 36 PASS / 0 FAIL（**当时**口径）|' | Set-Content (Join-Path $d "docs\HANDOVER.md") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'evidence-freshness').Status -eq 'PASS'
+}
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-RunLog', $clean) 'positive-goal').Status -eq 'PASS'
 }
 Assert-Case "kit 自身 → negative-drift PASS" {

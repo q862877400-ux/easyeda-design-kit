@@ -482,3 +482,39 @@ function Test-DecisionActionability {
 
 
 
+
+# ── 阶段：证据新鲜度（已知作废的数字不得无标注出现）────────────────────────
+function Test-EvidenceFreshness {
+    # 反例（2026-11-01）：HANDOVER 与 executor-crosscheck 长期写「selftest 36 PASS」「99.1%」「107 行」，
+    # 而真实值是 38 / 16.2% / 111 行——数字靠记性维护必然过期，且过期时没人报错。
+    # 这里机械检查：**已被取代的取值**不得在正文里无标注出现；带「当时/历史/旧口径/此前/作废」的行豁免。
+    $docs = @('docs\HANDOVER.md', 'docs\executor-crosscheck.md', 'README.md', 'docs\sc-evidence.md')
+    $stale = @{
+        'selftest 36 PASS' = '现为 38'
+        '36 PASS / 0 FAIL' = '现为 38 PASS / 0 FAIL'
+        '99.1%'            = '现为 16.2%（可执行率口径已收紧）'
+        '106/107'          = '现为 110/111 计数 / 18 可执行'
+        '107 行'           = '现为 111 行'
+        '16 PASS / 0 FAIL / 0 BLOCKED' = '现为 18 PASS / 1 FAIL / 0 BLOCKED（19 阶段）'
+    }
+    $exempt = '当时|历史|旧口径|此前|作废|口径更正'
+    $hits = @()
+    foreach ($rel in $docs) {
+        $p = Join-Path $script:AuditRoot $rel
+        if (-not (Test-Path $p)) { continue }
+        $ln = 0
+        foreach ($line in (Get-Content $p)) {
+            $ln++
+            if ($line -match $exempt) { continue }
+            foreach ($k in $stale.Keys) {
+                if ($line.Contains($k)) { $hits += "${rel}:${ln} 出现已作废的「$k」（$($stale[$k])）" }
+            }
+        }
+    }
+    if ($hits.Count -eq 0) {
+        Add-Result "evidence-freshness" "PASS" "四份证据文档未出现未标注的作废数字（检查 $(($stale.Keys).Count) 类模式）"
+    } else {
+        Add-Result "evidence-freshness" "FAIL" "$($hits.Count) 处过期数字： $(($hits | Select-Object -First 3) -join '; ')"
+    }
+}
+

@@ -108,3 +108,4 @@
 | 76 | 逐行核验 18 行可执行：7 行 CLI✓ flag 全对（含 `pcb route fill --net/--from/--to/--layers`）；3 行按真名更正（`sch drc`、`pcb.export.gerber`、外部布线器标注）；核验脚本自身 bug 已修正 | 18/111 不变但内容准确；静态 8/1/10；自测 36/36、矩阵 16/16 | 本轮 |
 | 77 | playbook 门禁只查命令名不查 flag：造反例（`--no-such-flag-xyz` 判 PASS）→ 补 flag 校验（按完整命令路径取帮助）| 真 kit **37 步 / 27 flag 全部存在**；自测 36→**37**；反例只报假 flag | 本轮 |
 | 78 | 补 playbook 的 flag **取值类型**校验（GAP-068）：反例 `--spacing abc` 原判 PASS → 现精确报错；真 kit 37 步/27 flag/37 步类型校验 | 自测 36→**38**；静态 8/1/10 | 本轮 |
+| 79 | 新增第 **20** 阶段 `evidence-freshness`（GAP-069）：扫四份证据文档的 6 类作废取值，无标注即 FAIL；上线即抓到 2 处上轮漏改 | 自测 38→**40**；静态 9 PASS / 1 FAIL / 10 BLOCKED | 本轮 |
