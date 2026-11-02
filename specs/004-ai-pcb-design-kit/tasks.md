@@ -621,3 +621,10 @@ T025 docs/playbook-unseen-board.md
   且离线审计证明其导出源完整、**0 畸形焊盘**。原因进一步收窄到板数据本身。
 - [ ] T399 **（下一步，需窗口）外部板逐项排查**：`pcb outline-get`（板框）、`pcb layers`/`pcb stackup`（层栈）、
   `pcb nets`（有无焊盘的网）。线索：44 网络仅 8 个已铺铜、8 页原理图导入，怀疑**跨页/未实例化的网**。
+
+- [x] T399 **外部板逐项排查（GAP-084 续 2）**：`board-info` linked=true、`outline-get` 板框在（715×1388mil）、
+  `layers` **2 层**（更正用例里"4 层"的说法）、`nets` 33 个且名称正常、离线统计 PAD_NET 364（焊盘确有网）。
+  **唯一异常线索**：该板 `pcb drc` 基线那条 `Netlist Error`（PCB↔原理图网表不一致），与 DSN 报错里
+  "run pcb.import_changes first" 指向同一件事。
+  **未执行 `import-changes`**：它无 `--dry-run`，对导入板可能破坏性（历史：一次导入 9 页块，器件 6→30）；
+  已有备份 `.work\osb-export.epro2`（306.2 KB）在手。

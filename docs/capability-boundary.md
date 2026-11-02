@@ -1690,3 +1690,20 @@
   `pcb nets`（是否有无焊盘的网）、`pcb stackup`。已有线索：该板 44 网络但只有 8 个已铺铜，且是 8 页原理图导入，
   可能存在**跨页/未实例化的网**。
 - **status**：`open`（已排除 CLI/版本；原因定位到板数据，具体项待查）
+
+### GAP-084 续 2：外部板逐项排查——数据都正常，只剩"网表不一致"这条线索
+
+- **capability**：在"板数据看起来完全正常"时，判断 DSN 导出器到底卡在哪一步。
+- **evidence**（2026-11-01 第 89 轮，窗口在线，`documentType=pcb` 已激活）：
+  1. `pcb board-info` → `linked: true`（原理图↔PCB 关联正常）、`schematicUuid=adb569ab9e783276`。
+  2. `pcb outline-get` → **板框存在**（bbox 715.24 × 1387.95 mil，arcs=0）。
+  3. `pcb layers` → **`copperLayerCount: 2`** ⇒ **这块板是 2 层，不是用例文件里写的 4 层**（已更正）。
+  4. `pcb nets` → **33 个网**，名称正常（GND / SPICS1 / VDD_SPI …），其中 2 个未布线（`U0TXD`/`U0RXD` length=0）。
+  5. 离线统计焊盘网络：外部板 **PAD 103 / PAD_NET 364**；练习板 PAD 113 / PAD_NET 2192
+     ⇒ **焊盘确实赋了网**，不是"网未关联"。
+  6. 剩下唯一异常线索：该板 `pcb drc` 基线里那条 **`Netlist Error`**（PCB 与原理图网表不一致）。
+     DSN 报错里那句"run `pcb.import_changes` first"指向同一件事——导出器读的是**网表快照**，不看实时数据。
+- **triedTools**：`pcb board-info`、`pcb outline-get`、`pcb layers`、`pcb nets`、`pcb drc`（基线）、离线 PAD_NET 统计
+- **alternative**：**没有执行 `pcb import-changes`**——它没有 `--dry-run`，且对导入板是**破坏性可能**（历史事故：一次导入 9 页的块，
+  器件从 6 变 30）。要跑它必须先备份（`project export-source` 已证明可用，306.2 KB 存于 `.work\osb-export.epro2`）。
+- **status**：`open`（线索收窄到"网表不一致"；修复手段未执行）

@@ -1,6 +1,6 @@
 # 验收用例：open-source-esp32s3-usb（未见板，来自开源工程）
 
-> **状态：已导入、已有基线、未验收（2026-11-01）。** 导入路径已跑通（工程 `ESP32S3_USB`，8 页原理图 + PCB2，
+> **状态：已导入、已有基线、未验收（2026-11-01）。** 导入路径已跑通（工程 `ESP32S3_USB`，8 页原理图 + PCB2（**实测 2 层**，`pcb layers` 报 copperLayerCount=2），
 > 见 GAP-032）。基线见文末「P4 基线」一节。**验收尚未跑**；本板当前**未布线**（ratsnest 9816 mil / 60 crossings），
 > 因此 `pcb-connectivity` 与 `pcb-drc-clean` 会如实判 FAIL —— 那是这块板真实状态，不是 kit 失败。
 > SC-001 的 5/5 仍全部来自五块自造板；本板用于**外部板**这条输入线。
@@ -106,3 +106,4 @@ Invoke-WebRequest -Uri $url -OutFile esp32s3-usb.epro2 -Headers @{ 'User-Agent' 
 
 DSN → 外部布线器（`pcb_autorouter`）→ SES → `pcb import-autoroute`，看 45 器件 / 29 网能否跑通；
 布线后复跑 `pcb drc` / `pcb check` / 验收，记录真实数字。
+

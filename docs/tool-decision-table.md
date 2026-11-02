@@ -232,3 +232,9 @@
 | 查原理图布局是否过密/重叠 | `sch layout-lint` | 跑 `sch layout-lint --strict`：只读，看 marker 包络与是否出图框；块放置前先跑一次 |
 | 板子与原理图不同步 | `board rebind` | 原理图改了器件/封装后把 PCB 重新绑定；绑定后仍需 `pcb import-changes` |
 | 删掉某条走线（重布/改线） | `pcb track-delete` | 按 id 或 `--net <网名>` 批量删；删完要 `pcb pour-rebuild` 再 `pcb drc` |
+
+| 查板子是几层 / 有哪些层 | `pcb layers` | 看 `copperLayerCount`；`currentLayer` 可能为 null（未选层时）|
+| 查原理图↔PCB 是否还关联 | `pcb board-info` | 看 `linked`；导入工程常需要确认这一项 |
+| 查板框是否存在/尺寸 | `pcb outline-get` | 返回 bbox 与 arcs；`arcs=0` 表示纯矩形 |
+| 列出全部网络与布线长度 | `pcb nets` | 字段是 `color/length/net`（**没有 pads 字段**，别按 pads 解析）|
+| 查叠层（层厚/材质） | `pcb stackup` | 4 层板做阻抗/电源平面时必看 |
