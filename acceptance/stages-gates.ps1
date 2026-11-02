@@ -691,3 +691,41 @@ function Test-ReportHygiene {
 
 
 
+
+# ── 阶段：文档覆盖（playbook / cases 用到的命令，决策表必须有对应行）────────────
+function Test-DocCoverage {
+    # 反例（2026-11-01）：playbook 的 37 步里 10 步、cases 里 3 个命令，决策表**根本没有**对应行——
+    # 读者查"情境→工具"表会查不到，只能去读别的文档。两份文档各自演进，必须机械核对。
+    $tblPath = Join-Path $script:AuditRoot 'docs\tool-decision-table.md'
+    if (-not (Test-Path $tblPath)) { Add-Result "doc-coverage" "BLOCKED" "决策表不存在"; return }
+    $tbl = Get-Content $tblPath -Raw
+    $cited = @()
+    $pbDir = Join-Path $script:AuditRoot 'playbooks'
+    if (Test-Path $pbDir) {
+        foreach ($pf in (Get-ChildItem $pbDir -File -Filter '*.playbook.json' -ErrorAction SilentlyContinue)) {
+            try {
+                $pj = Get-Content $pf.FullName -Raw | ConvertFrom-Json
+                foreach ($st in @($pj.steps)) {
+                    $tk = @(([string]$st.run).Trim() -split '\s+')
+                    if ($tk.Count -ge 2) { $cited += "$($tk[0]) $($tk[1])" }
+                }
+            } catch { }
+        }
+    }
+    $caseDir = Join-Path $script:AuditRoot 'acceptance\cases'
+    if (Test-Path $caseDir) {
+        foreach ($cf in (Get-ChildItem $caseDir -File -Filter '*.md' -ErrorAction SilentlyContinue)) {
+            foreach ($m in [regex]::Matches((Get-Content $cf.FullName -Raw), '`((?:pcb|sch|project|daemon|doc|library|board)\s+[a-z][a-z0-9-]+)[^`]*`')) {
+                $cited += $m.Groups[1].Value
+            }
+        }
+    }
+    $cited = @($cited | Select-Object -Unique)
+    if ($cited.Count -lt 10) { Add-Result "doc-coverage" "BLOCKED" "只解析到 $($cited.Count) 个被引用命令（<10），无法核对"; return }
+    $missing = @($cited | Where-Object { $tbl -notmatch [regex]::Escape($_) })
+    if ($missing.Count -eq 0) {
+        Add-Result "doc-coverage" "PASS" "playbook/cases 引用的 $($cited.Count) 个命令，决策表全部有对应行"
+    } else {
+        Add-Result "doc-coverage" "FAIL" "$($missing.Count)/$($cited.Count) 个命令决策表没有行： $(($missing | Select-Object -First 3) -join ', ')"
+    }
+}

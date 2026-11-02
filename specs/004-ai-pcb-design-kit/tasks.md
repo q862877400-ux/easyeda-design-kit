@@ -573,3 +573,8 @@ T025 docs/playbook-unseen-board.md
   （`project create` / `sch pages` / `sch titleblock` / `pcb outline-fit` / `pcb rip-up` / `pcb pour-fit` / `pcb place-constrained`），
   读者查表会漏掉。已补 7 行（每行带真实参数），决策表 **111 → 118 行**，可执行 **62 → 69/118 = 58.5%**。
   这类"playbook 用了、表里没有"的缺口之前无人检查——它是"两份文档各自演进"的又一次表现。
+
+- [x] T389 **新增第 23 阶段 `doc-coverage`（GAP-083）**：查 playbook 与 cases 引用的命令是否都在决策表里有行。
+  两次独立发现缺口：playbook 侧 10 步（7 个命令）、cases 侧 3 个命令（含反复使用的 `sch disconnect`）。
+  补入后决策表 **111 → 121 行**、可执行 **62 → 71/121 = 58.7%**。反例（删 `sch disconnect` 行）判
+  `FAIL 1/34 个命令决策表没有行`。另核对边界引用的 64 个命令**全部仍存在**。

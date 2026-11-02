@@ -3,10 +3,10 @@
   "playbooks": 5,
   "acceptance": 27,
   "spec_files": 9,
-  "decision_rows": 118,
-  "stages": 22,
-  "boundaries": 82,
+  "decision_rows": 121,
+  "stages": 23,
+  "boundaries": 83,
   "playbook_steps": 37,
   "selftest_cases": 46,
-  "decision_actionable": 69
+  "decision_actionable": 71
 }

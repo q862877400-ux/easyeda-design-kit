@@ -556,6 +556,7 @@ if (-not $Static) {
 Test-RunConsistency
 Test-EvidenceFreshness
 Test-ReportHygiene
+Test-DocCoverage
 Test-ClaimsMatch
 Test-PositiveGoal
 if (-not $Static) {

@@ -228,3 +228,6 @@
 | 重布前先拆旧铜 | `pcb rip-up` | `--net <网名>` 只拆该网，省略=全拆；板框与锁定图元安全 |
 | 按网名铺铜（GND/3V3） | `pcb pour-fit` | `--net GND`；落孔后必须 `pcb pour-rebuild` 再 `pcb drc` |
 | 约束放置（给关键器件留位） | `pcb place-constrained` | 先 `pcb layout-plan` 出方案，再落位；坐标单位是 mil |
+| 挪器件前要断开原连线 | `sch disconnect` | `--pin <位号:脚>`；断开后再 `sch modify` 挪位，最后 `sch connect` 重连（不先断会留悬空线） |
+| 查原理图布局是否过密/重叠 | `sch layout-lint` | 只读；看 marker 包络与出图框，块放置前先跑一次 |
+| 板子与原理图不同步 | `board rebind` | 原理图改了器件/封装后把 PCB 重新绑定；绑定后仍需 `pcb import-changes` |

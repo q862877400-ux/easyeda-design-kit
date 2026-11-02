@@ -8,7 +8,7 @@
 | **SC-002** 四项同时成立 | **已验证** | `acceptance/run.ps1`（现 19 阶段）**18 PASS / 1 FAIL / 0 BLOCKED**，FAIL 仅 `pcb-drc-clean`；四项判据本身仍成立：`schematic-gates` PASS + `pcb-connectivity` Connection Error 0 + `pcb-dfm` DFM ERROR 0 + `delivery` 三件齐备（Gerber 74,869 B / 坐标 13,358 B / BOM 8,379 B） | `pwsh -File acceptance/run.ps1 -Case esp32-4layer -Project … -SchDoc … -Doc … -DeliveryDir …` |
 | **SC-003** 一次性脚本 = 0 | **已验证** | `no-oneoff-scripts` PASS（审计 `-RunLog`，无临时脚本调用） | 同上（带 `-RunLog`） |
 | **SC-004** 换模型/换 harness 复跑通过 | **已验证（harness 维度）** | 两个全新会话、零上下文的子 agent 复跑：运行 C 得 **16 PASS / 0 FAIL / 0 BLOCKED（退出码 0；当时口径 16 阶段，现为 19 阶段）**，与运行 A **逐阶段 0 处不同**；selftest 30/30、matrix 16/16 亦一致。**模型维度未验证**（三次都是 deepseek-v4.1） | 见 `docs/executor-crosscheck.md`；换模型仍需业主入口 |
-| **SC-005** 决策表可执行率 ≥90% | **未达成（58.5%）** | 新门禁 `decision-actionability`：实测 **69/118 = 58.5%**（2026-11-01：先补 17 行真实 CLI 替代，再**修正 17 行误标的「未装」**——CLI 命令不属于扩展）。**这 18 行已逐行对真机核验**：7 行是 CLI✓ 且 flag 全部存在于 `--help`（`pcb route fill` / `pcb pour-rebuild` / `pcb check` / `pcb via-stitch` / `pcb export-dsn` / `daemon start` / `pcb via-bond`）；3 行按实际名字更正（`schematic.runDrc`→`sch drc`、`PCB 交付`→`pcb.export.gerber` 动作、外部布线器标注为非 easyeda 子命令）；7 行是扩展类；1 行是外部程序。**旧口径**给出的 110/111=99.1% 由"参数列 ≥10 字符"撑起（该口径已作废）——那样纯散文也能过（外部审计 A1）。现口径要求参数列含**具体物**：flag / 反引号命令 / 数值+单位 / 文件名 / JSON。可执行的机械定义：有工具名 + 参数 ≥10 字符 + 标「未装」时必须给替代。补齐前实测 77/94 = 81.9%（17 行是空话），逐行改写后达标 | `run.ps1` 的 `decision-actionability` 阶段 |
+| **SC-005** 决策表可执行率 ≥90% | **未达成（58.7%）** | 新门禁 `decision-actionability`：实测 **71/121 = 58.7%**（2026-11-01：先补 17 行真实 CLI 替代，再**修正 17 行误标的「未装」**——CLI 命令不属于扩展）。**这 18 行已逐行对真机核验**：7 行是 CLI✓ 且 flag 全部存在于 `--help`（`pcb route fill` / `pcb pour-rebuild` / `pcb check` / `pcb via-stitch` / `pcb export-dsn` / `daemon start` / `pcb via-bond`）；3 行按实际名字更正（`schematic.runDrc`→`sch drc`、`PCB 交付`→`pcb.export.gerber` 动作、外部布线器标注为非 easyeda 子命令）；7 行是扩展类；1 行是外部程序。**旧口径**给出的 110/111=99.1% 由"参数列 ≥10 字符"撑起（该口径已作废）——那样纯散文也能过（外部审计 A1）。现口径要求参数列含**具体物**：flag / 反引号命令 / 数值+单位 / 文件名 / JSON。可执行的机械定义：有工具名 + 参数 ≥10 字符 + 标「未装」时必须给替代。补齐前实测 77/94 = 81.9%（17 行是空话），逐行改写后达标 | `run.ps1` 的 `decision-actionability` 阶段 |
 | **SC-006** 同需求两次执行结论一致 | **已验证** | 两次**完整**运行（19 阶段口径，比对排除 `run-consistency` 自身）**18 个可比阶段 0 处不一致**，两次均 0 BLOCKED；`run-consistency` 门禁实测输出：`18 个阶段结论一致 … 两次均 0 BLOCKED`。注：含 BLOCKED 的运行（窗口掉线）**不算**一致证据，也不算出证据 | 连跑两次 `run.ps1` 比对阶段表 |
 
 ---
@@ -95,6 +95,7 @@ SC-A 如实标注：**未达成**，待办 = 把板子的 DRC 违规清零（net
 ——它根本不是一次完整运行。这条限制已写进阶段三态（两次阶段集不同 → BLOCKED；含 BLOCKED → BLOCKED）。
 `run-consistency` 已实现三态：两次阶段集不同 → BLOCKED（跨版本不可比）；两次都含 BLOCKED → BLOCKED
 （不完整的两次不算一致证据）；逐阶段不同 → FAIL。
+
 
 
 

@@ -1568,3 +1568,23 @@
 - **triedTools**：`run.ps1 -Static`（新检查）、边界文件解析
 - **alternative**：仍**未覆盖**：反向矛盾（标题写"待验证"而 status=resolved）未检查；标题与 status 的语义匹配仍靠关键词表，未覆盖全部措辞。
 - **status**：`resolved`
+
+---
+
+## GAP-083 文档之间有覆盖缺口：playbook/cases 用了决策表**没有**的命令
+
+- **capability**：让"情境→工具"表覆盖所有被 playbook 与 cases 实际使用的命令。
+- **evidence**（2026-11-01 实测，两次独立发现）：
+  1. **playbook 侧**：37 步里有 **10 步**用了决策表没有的命令
+     （`project create` / `sch pages` / `sch titleblock` / `pcb outline-fit` / `pcb rip-up` / `pcb pour-fit` / `pcb place-constrained`）。
+  2. **cases 侧**：7 份用例引用的 23 个命令里，**3 个**决策表没有（`sch disconnect` / `sch layout-lint` / `board rebind`）——
+     其中 `sch disconnect` 是挪器件时的必经步骤，被反复使用却从未进表。
+  3. 补入后：决策表 **111 → 121 行**，可执行 **62 → 71/121 = 58.7%**。
+  4. 新增第 **23** 阶段 `doc-coverage`：解析 playbook 步骤与 cases 里所有 `组 子命令` 引用，要求决策表都有对应行；
+     样本 <10 时 BLOCKED。反例（临时删掉 `sch disconnect` 行）实测判
+     `FAIL 1/34 个命令决策表没有行： sch disconnect`，还原后 PASS。
+  5. 顺带核对：边界文件里引用的 **64 个命令全部仍然存在**（无失效引用）。
+- **triedTools**：`run.ps1 -Static`（新阶段）、`--help`（命令存在性）、playbook/cases 文本解析
+- **alternative**：**规矩**——凡"文档 A 会引用文档 B 的内容"，就要有一条机械的**覆盖检查**，否则 B 迟早缺条目。
+  未覆盖：反向（决策表有行但没有任何文档用到，即冗余行）尚未检查。
+- **status**：`resolved`
