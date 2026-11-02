@@ -1525,3 +1525,18 @@
 - **alternative**：仍**未覆盖**：允许清单目前只有 1 项，未来若出现第二个"已知未达成"，必须**显式加进清单并写理由**，
   否则会被静默当成"可接受的红"。另：该工具依赖我在提交时用它（没有装成 git hook），**绕过仍然可能**。
 - **status**：`resolved`（纪律已机械化，但不是强制钩子）
+
+### GAP-081 续：已装成真正的 git hook，绕过不再可能
+
+- **capability**：让"提交前必须过三件套"从"我主动调用的脚本"变成**git 自己执行的门**。
+- **evidence**（2026-11-01 实测）：
+  1. 新增 `.githooks/pre-commit`（`pwsh -File acceptance/pre-commit.ps1 -Check`），并 `git config core.hooksPath .githooks`。
+  2. **反例**：往边界塞一条缺字段的 `GAP-998` 后**直接 `git commit`** → hook 拦下，输出
+     `=== 拦截：不许提交 ===` + 两条未预期 FAIL，**退出码 1，且没有产生提交**（HEAD 仍是上一条）。
+  3. 还原后正常提交可以通过（本轮即用它提交）。
+  4. `pre-commit.ps1` 增加 `-Check`（只校验不提交）与 `-DryRun`；`-Message` 改为可选。
+- **triedTools**：`.githooks/pre-commit`、`git config core.hooksPath`、`pre-commit.ps1 -Check`
+- **alternative**：仍**未覆盖**：`core.hooksPath` 是**每个克隆各自配置**，没有随仓库分发——新克隆需要自己跑一次
+  `git config core.hooksPath .githooks`（已在 `.githooks/pre-commit` 头部写明装法）。要真正随仓库生效需要
+  文档提示或安装脚本，**未做**。
+- **status**：`resolved`（本仓库已强制；新克隆需一次性配置）

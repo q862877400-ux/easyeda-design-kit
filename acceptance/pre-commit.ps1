@@ -15,8 +15,9 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][string]$Message,
-    [switch]$DryRun
+    [string]$Message = '',
+    [switch]$DryRun,
+    [switch]$Check
 )
 
 $ErrorActionPreference = "Continue"
@@ -64,7 +65,7 @@ if ($problems.Count -gt 0) {
 
 Write-Host ""
 Write-Host "=== 三件套通过（无未预期 FAIL）===" -ForegroundColor Green
-if ($DryRun) { Write-Host "  -DryRun：不提交"; exit 0 }
+if ($DryRun -or $Check) { Write-Host "  -Check/-DryRun：不提交"; exit 0 }
 
 Push-Location $KitRoot
 try {
@@ -79,3 +80,4 @@ try {
     Pop-Location
 }
 exit 0
+

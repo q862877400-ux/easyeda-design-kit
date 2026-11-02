@@ -524,3 +524,7 @@ T025 docs/playbook-unseen-board.md
   不执行 commit。允许清单只有 `decision-actionability`（SC-005 已知未达成）且每次打印。
   反例（塞 `GAP-999` 缺字段）实测被拦并点名两条未预期 FAIL；还原后放行。**本会话两次带红灯提交（`3a016e7`/`614d45d`）的成因已机械化拦截。**
 - [ ] T377 **（未做）**：把 `pre-commit.ps1` 装成 git hook（`.git/hooks/pre-commit`）才能真正防绕过；当前依赖"我主动用它"。
+
+- [x] T377 **把 pre-commit 装成真正的 git hook（GAP-081 收尾）**：`.githooks/pre-commit` + `git config core.hooksPath .githooks`；
+  `pre-commit.ps1` 加 `-Check`（只校验）。**反例实测**：塞 `GAP-998` 缺字段后直接 `git commit` → hook 拦下、退出码 1、
+  **未产生提交**；正常提交可通过（本轮即用它提交）。未覆盖：`core.hooksPath` 不随仓库分发，新克隆需一次性配置（已写明）。

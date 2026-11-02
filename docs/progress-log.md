@@ -132,3 +132,4 @@
 | 97 | 零样本普查（GAP-080）：4 项阶段本就有下限；`kit-portability` 空过（1 文档→PASS）已加下限（<10 文件→BLOCKED）；实测探针 BLOCKED、真 kit PASS | 自测 46/46；静态 **10/1/1** | 本轮 |
 | 97b | 修：GAP-032/GAP-065 的 triedTools 写法（界面路径、call 前缀、负例动作）→ 改为真实工具名；**我又一次带红灯提交**（3a016e7），已在下一个提交修正 | 抽样 5/5、自测 46/46、矩阵 16/16、静态 10/1/1 | 本轮 |
 | 98 | 新增 `acceptance/pre-commit.ps1`（GAP-081）：提交前强制三件套，未预期 FAIL 即拦截；反例（GAP-999 缺字段）实测 exit 1 并点名问题 | 本会话两次带红灯提交的成因机械化 | 本轮 |
+| 99 | pre-commit 装成 git hook（`.githooks/pre-commit` + `core.hooksPath`）；反例：塞缺字段条目后直接 `git commit` 被拦、未产生提交 | 绕过不再可能（本仓库）| 本轮 |
