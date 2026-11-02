@@ -674,3 +674,7 @@ T025 docs/playbook-unseen-board.md
   支持 `-Keep N` 与 `-DryRun`）。实测 `runs/` **32 → 15**、`archive/` 17；
   `report-hygiene` 从"8 新 + 8 旧"变为 **14 份 23 阶段、旧阶段集 0 份**，`run-consistency` 不再误报版本差异。
 - [ ] T409 **（未做）**：是否把 `prune-runs.ps1` 挂进常规流程（它移动文件，属改写，不宜放 `pre-commit` 的检查位）；目前需手动执行。
+
+- [x] T410 **反向验证 `report-hygiene` 的"旧阶段集"计数（GAP-088 续）**：三态实测——
+  放回一份 17 阶段报告 ⇒ 报"旧阶段集 **1** 份"；移走 ⇒ "**0** 份"；归档前 32 份混杂时曾报"**8** 份"。
+  计数在 0/1/8 间真实变化，不是恒 0。`docs/status.md` 自验命令已加入 `acceptance/prune-runs.ps1`。

@@ -1812,3 +1812,16 @@
 - **alternative**：**仍未自动化**——脚本要手动跑。若长期不跑，目录会重新膨胀；建议每次大批重跑后执行一次
   （`pwsh -NoProfile -File acceptance/prune-runs.ps1`）。是否挂进 `pre-commit` 未决定（它会移动文件，属改写而非检查）。
 - **status**：`resolved`（脚本可用；未自动执行）
+
+### GAP-088 续：反向验证——"旧阶段集 N 份"的计数是真的（不是恒 0）
+
+- **capability**：证明 `report-hygiene` 的"旧阶段集"计数**会随实际文件变化**，而不是永远打印 0（"只见过它报 0"就不能算验过）。
+- **evidence**（2026-11-01 第 97 轮，实测三态）：
+  1. 从 `runs/archive/` 取一份 **17 阶段**旧报告放回 `runs/` ⇒ `report-hygiene` 报
+     **"与当前 23 阶段一致的真实运行 14 份（旧阶段集 1 份，仅作历史）"**。
+  2. 移走该文件 ⇒ 立即变 **"旧阶段集 0 份"**。
+  3. 归档前（32 份混杂）曾报 **"旧阶段集 8 份"**。
+  ⇒ 计数在 0 / 1 / 8 三个真实状态间变化，判据确实在数文件。
+- **triedTools**：`run.ps1`、`Copy-Item`、`Remove-Item`、`prune-runs.ps1`
+- **alternative**：`prune-runs.ps1` **仍需手动执行**（T409 未决）；`docs/status.md` 的自验命令已加入这一行，拿到 kit 的人能看到。
+- **status**：`resolved`
