@@ -560,6 +560,7 @@ Test-RunConsistency
 Test-EvidenceFreshness
 Test-ReportHygiene
 Test-DocCoverage
+$script:SnapshotProblems = Get-SnapshotClaimsProblems
 Test-ClaimsMatch
 Test-PositiveGoal
 if (-not $Static) {

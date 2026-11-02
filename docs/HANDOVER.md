@@ -5,7 +5,7 @@
 > 加入第 17 阶段 `pcb-drc-clean` 后，五块板实测均为 16 PASS / 1 FAIL；**现为 19 阶段 → 18 PASS / 1 FAIL**。
 > **当前口径快照（2026-11-02，第 107 轮）**：门禁 **23 阶段**；完整运行一块板 **21 PASS / 2 FAIL / 0 BLOCKED**（FAIL = decision-actionability + pcb-drc-clean）；
 > selftest **46 PASS / 0 FAIL**；mistake-matrix **16/16**；静态 acceptance **12 PASS / 1 FAIL / 0 BLOCKED**；
-> 边界 **92 条**；决策表 **127 行**（可执行 78 行）；必需文档 **27 份**；报告 **15 份**（23 阶段，旧阶段集已归档）。
+> 边界 **93 条**；决策表 **127 行**（可执行 78 行）；必需文档 **27 份**；报告 **15 份**（23 阶段，旧阶段集已归档）。
 > **DRC 分项**：五块自造板 clearance/间距违规 **0 条**；每块剩余 1 条 Netlist Error 属结构性（PCB 只实现整份原理图的一部分）。
 
 <!-- claims: stages=23; boundaries=93; decision_rows=127; decision_actionable=78; playbook_steps=37; selftest_cases=46 -->
@@ -123,6 +123,11 @@ pwsh -NoProfile -File $env:TEMP\kit-copy\acceptance\run.ps1 -Case esp32-4layer
 3. **改完必须 `pour-rebuild` → `save` → `doc reload` → 再测**，否则读中间态。
 4. **`pcb drc --json` 坐标是 mil，嵌套输出是 mm** —— 混用会把孔打到空地（实测 19→22）。
 5. **判据不能为了让状态变绿而改**；判据有缺陷时，先写出反例证明它会误判，再改。
+
+
+
+
+
 
 
 

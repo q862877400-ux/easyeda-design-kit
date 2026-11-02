@@ -739,3 +739,7 @@ T025 docs/playbook-unseen-board.md
   并加入 DRC 分项（clearance 0 / 结构性 netlist）。扫描 45 份文档发现此问题，**现有门禁只认 7 类固定模式，抓不到这类散文**。
 - [ ] T425 **（未做）把"快照块 ↔ claims 行"做成机械检查**。两版尝试都失败：①只查数字出现太弱（块里别处的 `23` 会误满足）；
   ②按行号替换改坏了 `stages-gates.ps1`（花括号配对），已回滚。**下次应作为独立新阶段实现并单独验证**，不要内联塞进 `Test-ClaimsMatch`。
+
+- [x] T425 **快照块 ↔ claims 行 检查落地（GAP-094）**：新增 `Get-SnapshotClaimsProblems`（带上下文模式），由 `run.ps1` 放进
+  `$script:SnapshotProblems` 交 `claims-match` 合并。**不新增阶段**（加第 24 阶段会让 15 份归档报告失效、`report-hygiene` 变 BLOCKED，实测后已退回）。
+  反例：快照写 21 阶段 ⇒ FAIL 并点名；还原 ⇒ PASS。

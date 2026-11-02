@@ -643,6 +643,7 @@ function Test-EvidenceFreshness {
 
 # ── 阶段：能力声明与实测一致（HANDOVER 的 claims 块）────────────────────────
 function Test-ClaimsMatch {
+    # 快照块问题由 run.ps1 在调用前放进 $script:SnapshotProblems（不新增阶段，避免归档报告失效）
     # 反例（2026-11-01）：HANDOVER 写「三块板全绿」「19 阶段」这类**文字承诺**，没有任何门禁核对，
     # 于是它随我每轮改动慢慢变歪（数字层已被 evidence-freshness 看住，文字层没人看）。
     # 做法：HANDOVER 里放一行 `<!-- claims: stages=N; boundaries=N; ... -->`，本阶段用**同一轮的数据**核对。
@@ -693,6 +694,7 @@ function Test-ClaimsMatch {
         if ([string]$claims[$k] -ne [string]$live[$k]) { $mismatch += "$k 声明 $($claims[$k]) ≠ 实测 $($live[$k])" }
     }
     if ($floorFail.Count -gt 0) { $mismatch += ("棘轮： " + ($floorFail -join " / ")) }
+    if ($script:SnapshotProblems) { $mismatch += $script:SnapshotProblems }
     if ($mismatch.Count -eq 0) {
         Add-Result "claims-match" "PASS" ("HANDOVER 的 $($claims.Count) 项能力声明与实测一致：" + (($claims.Keys | Sort-Object | ForEach-Object { "$_=$($live[$_])" }) -join ', '))
     } else {
@@ -792,6 +794,51 @@ function Test-DocCoverage {
     } else {
         Add-Result "doc-coverage" "FAIL" "$($missing.Count)/$($cited.Count) 个命令决策表没有行： $(($missing | Select-Object -First 3) -join ', ')"
     }
+}
+
+
+
+
+
+# ── 阶段：快照块 ↔ claims 行 一致性（2026-11-02）──────────────────────────────
+# 反例：HANDOVER.md / executor-crosscheck.md 的「当前口径快照」块写「19 阶段 / 18 PASS / 1 FAIL / 38 自测」，
+# 而**同一文件**下面的 claims 行写 23 阶段 / 46 自测 —— 同一份文档自相矛盾，且没有任何门禁比较这两处。
+# 注意（踩过的坑）：只查"块里出现过这个数字"太弱——块里别处也有 23（"23 阶段，旧阶段集已归档"），
+# 把「门禁 23 阶段」改成 21 仍然 PASS。必须用带上下文的模式。
+function Get-SnapshotClaimsProblems {
+    $hp = Join-Path $script:AuditRoot 'docs\HANDOVER.md'
+    if (-not (Test-Path $hp)) { return @() }
+    $text = Get-Content $hp -Raw
+    $cm = [regex]::Match($text, '<!--\s*claims:(.*?)-->')
+    if (-not $cm.Success) { return @() }
+    $claims = @{}
+    foreach ($kv in ($cm.Groups[1].Value -split ';')) {
+        $pair = $kv.Split([char]61, 2)
+        if ($pair.Count -eq 2) { $claims[$pair[0].Trim()] = $pair[1].Trim() }
+    }
+    $pats = @(
+        @{ f = 'stages';              re = '门禁\s*\*\*' + [string]$claims['stages'] + '\s*阶段' },
+        @{ f = 'selftest_cases';      re = 'selftest\s*\*\*' + [string]$claims['selftest_cases'] + ' PASS' },
+        @{ f = 'decision_rows';       re = [string]$claims['decision_rows'] + '\s*行' },
+        @{ f = 'decision_actionable'; re = '可执行\s*' + [string]$claims['decision_actionable'] },
+        @{ f = 'boundaries';          re = '边界\s*\*\*' + [string]$claims['boundaries'] + '\s*条' }
+    )
+    $bad = @()
+    $checked = 0
+    foreach ($docRel in @('docs\HANDOVER.md', 'docs\executor-crosscheck.md')) {
+        $dp = Join-Path $script:AuditRoot $docRel
+        if (-not (Test-Path $dp)) { continue }
+        $dtxt = Get-Content $dp -Raw
+        $bm = [regex]::Match($dtxt, '(?ms)当前口径快照[^\n]*\n(?:>[^\n]*\n)*')
+        if (-not $bm.Success) { continue }
+        $block = $bm.Value
+        $checked++
+        foreach ($pt in $pats) {
+            if ($block -notmatch $pt.re) { $bad += "$docRel 快照块不符合「$($pt.f)=$($claims[$($pt.f)])」" }
+        }
+    }
+    if ($checked -eq 0) { return @() }
+    return $bad
 }
 
 

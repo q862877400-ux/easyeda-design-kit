@@ -2046,4 +2046,19 @@
 - **alternative**：**检查未落地**。尝试在 `claims-match` 内加"快照块必须含 claims 各字段"的校验，
   第一版只查数字出现（块里别处的 `23` 会误满足），第二版改用上下文模式时**改坏了文件**（按行号替换时把花括号配对弄错），
   已 `git checkout` 回滚。**改为记成 T425 待做**，不在本轮强行加阶段。
-- **status**：`open`（文档已更正；机械检查待做）
+- **status**：`resolved`（文档已更正；检查已并入 `claims-match`）
+
+
+### GAP-094 续：检查已落地（并入 `claims-match`，不新增阶段）
+
+- **evidence**（2026-11-02 第 108 轮）：
+  1. 新增 `Get-SnapshotClaimsProblems`：读两份文档的「当前口径快照」块，要求含 claims 的 5 个字段，**且必须带上下文模式**
+     （`门禁 **N 阶段**`、`selftest **N PASS**`、`可执行 N`、`边界 **N 条**`）——只查"块里出现过这个数字"太弱（块里别处的 `23` 会误满足）。
+  2. 由 `run.ps1` 在调用前放入 `$script:SnapshotProblems`，由 `claims-match` 合并进 `$mismatch`。**刻意不新增阶段**：
+     加第 24 阶段会让 15 份归档报告全部失效、`report-hygiene` 变 BLOCKED（本轮实测发生过一次，已退回）。
+  3. 反例：把快照改成 21 阶段 ⇒ `[FAIL] claims-match 1 项不一致： … 快照块不符合「stages=23」`；还原 ⇒ PASS。
+  4. 当前 **12 PASS / 1 FAIL / 0 BLOCKED**；`report-hygiene` 15 份 23 阶段真实运行。
+- **triedTools**：`run.ps1`、`Set-Content`、`Copy-Item`、`Select-String`
+- **alternative**：两个坑：①按行号 RemoveRange 改 `Test-ClaimsMatch` 会把花括号配对弄错（已 `git checkout` 回滚一次）；
+  ②把 `Test-ClaimsMatch` 写成带参数调用会让阶段计数正则抓不到它（阶段数 23→22）。
+- **status**：`resolved`
