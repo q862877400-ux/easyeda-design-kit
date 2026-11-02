@@ -1953,3 +1953,23 @@
 - **alternative**：**Netlist Error 未处理**——DRC 只说"PCB 与原理图网表不一致，点 Import Changes 看差异"，没有给出差异明细；
   唯一已知的查看/修复途径是 `pcb import-changes`，而这块板正是**历史上跑它导致器件 6→30** 的那块。故**停下来等授权**。
 - **status**：`open`（clearance 已清；Netlist Error 待授权处理）
+
+### GAP-093 Netlist Error 的可查范围：夹板只能看到"不一致"，看不到"差在哪"
+
+- **capability**：界定"网表不一致"这条违规**能用只读手段查到什么程度**，避免盲跑破坏性操作。
+- **evidence**（2026-11-01 实测，板 `sc001-usbc-blk`）：
+  1. `pcb drc` 对该违规只给一句
+     `PCB and schematic netlist does not match. You can click on the rule name "Import Changes" to view the difference.`
+     —— **没有差异明细**（`param: {}`），且 DRC 自带提示"常是 Board 绑定过期"。
+  2. `board rebind --schematic ae4b31afff3dad9b --pcb 1e9a9a588d9158fb` **成功（ok:true）**，但 Netlist Error **依然存在**
+     ⇒ 不是绑定过期这一种成因。
+  3. 原理图侧 `sch drc` **通过**：`0 fatal / 0 error / 1 warn`（native DRC passed）⇒ 不是原理图自身有错。
+  4. `schematic.bridgeCheck` **通过**：`bridges=0 / orphans=0 / wireTrees=28` ⇒ 不是断桥/孤网。
+  5. 两侧规模对比：PCA **6 器件**（D13/D14/D15/J5/R9/R10）、**7 网**
+     （`D13_N1, D13_N3, D13_N4, GND, USB_HOST_DM, USB_HOST_DP, +5V`）。
+     其中 `D13_N1/N3/N4` 是**自动生成网名**——**未验证**的怀疑：ESD 二极管那几只在原理图侧的网名与 PCB 侧不同（或为未命名脚），导致两侧网表对不上。
+  6. 唯一已知的"看差异 + 修复"途径仍是 `pcb import-changes`，而**这块板历史上跑它会把 9 页原理图的块全导进来（器件 6→30）**。
+- **triedTools**：`pcb drc`、`board rebind`、`sch drc`、`schematic.bridgeCheck`、`pcb nets`、`pcb.components.list`
+- **alternative**：要真正定位差异，需要 GUI 里点 "Import Changes" 打开差异对话框（当前 bsk click 被 `cooperate sync` 拒绝），
+  或授权跑 `pcb import-changes` 并接受"可能暴增器件"的后果（已有备份 `.work\usbc-drc-fixed.epro2`）。
+- **status**：`open`（成因未验证；只读手段已用尽）

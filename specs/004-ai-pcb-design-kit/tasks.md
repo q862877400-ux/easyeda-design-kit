@@ -713,3 +713,8 @@ T025 docs/playbook-unseen-board.md
   坐标一律从 `track-list` 原样回填（避开 GAP-091 单位坑）；已保存并导出 `.work\usbc-drc-fixed.epro2`。
 - [ ] T419 **（需授权）Netlist Error**：DRC 无差异明细，唯一途径是 `pcb import-changes`；
   该板历史上跑它会 6→30 器件。**等业主授权或指定可回滚方案**。
+
+- [x] T420 **Netlist Error 的只读排查用尽（GAP-093）**：`board rebind`（正确 uuid）成功但错误仍在；`sch drc` 0 error；
+  `schematic.bridgeCheck` 0 bridge/0 orphan；两侧为 PCB **6 器件 / 7 网**（含自动生成网名 `D13_N1/N3/N4`）。
+  ⇒ 只读手段只能证明"两侧规模与原理图自身都正常"，**差异明细只能点 GUI 的 Import Changes 或跑 `pcb import-changes`**。
+  验收已更新：`pcb-drc-clean` 由"3 条"变为"**1 条：Netlist Error**"，整板 **21 PASS / 2 FAIL / 0 BLOCKED**。

@@ -165,3 +165,4 @@
 | 129 | **更正 GAP-058 前提**：`pcb track`/`track-delete`/`track-list` 三者可做走线级编辑与精确定位（"无走线级编辑"是错的）；**踩到坐标单位陷阱**（track 按数据单位、width 按 mil），一次改坏从 3 条变 6 条，已干净回滚到 3 条 | 发现 APi 单位不一致 | 本轮 |
 | 130 | **DRC 三条换算成可制造性**（GAP-092）：双面板 1oz 下，5.1 mil(0.1295mm) 在嘉立创 0.127mm 下限内**能过**；11.7 mil(0.2972mm) 差官方 0.3mm 要求 **2.8µm**；Netlist 与制造无关 ⇒ **DRC 0 ≠ 可制造** | 下单检查器未能跑（bsk 点击被拒）| 本轮 |
 | 131 | **DRC 3 → 1**：收窄式改线两条（`D13_N4` 消 Slot Region、贴 J5_A6 段消 5.1mil），只剩 Netlist Error；坐标原样回填避开单位坑；已保存+导出备份 | Netlist Error 需授权 import-changes | 本轮 |
+| 132 | Netlist Error 只读排查用尽（GAP-093）：rebind 成功但错误在、sch drc 0 error、bridgeCheck 0 bridge、PCB 6 器件/7 网（含自动网名）；验收更新为 **21/2/0**，DRC 报"1 条：Netlist Error" | 差异明细需 GUI 或 import-changes | 本轮 |
