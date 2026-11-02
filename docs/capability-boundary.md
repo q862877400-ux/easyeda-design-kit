@@ -1280,3 +1280,24 @@
   ② claims 只增不减的棘轮尚未加（当前只判"相等"，不判"不少于"）。
 - **status**：`resolved`（结构化声明层已闭合）
 
+
+---
+
+## GAP-071 claims 只判"相等"：删内容再同步改声明就能换绿
+
+- **capability**：让"能力只增不减"对**阶段数 / 边界数 / 决策表行数 / playbook 步数 / 自测断言数 / 可执行行数**成立。
+- **evidence**（2026-11-01 实测）：
+  1. 上一轮 `claims-match` 只比对"声明 vs 实测"是否**相等**，于是存在一个换绿通道：
+     **删掉内容 + 把 claims 一起改小** → 声明自洽 → PASS。
+  2. 造反例：把 `capability-boundary.md` 删到只剩 1 条 `## GAP-001`，claims 也改成 `boundaries=1`。
+     修前 → `PASS … boundaries=1`（**假绿**）。
+  3. 修后：`acceptance/baseline.json` 增加 6 项**地板**（`stages`/`boundaries`/`decision_rows`/`playbook_steps`/`selftest_cases`/`decision_actionable`），
+     `claims-match` 同时查"声明=实测"与"实测≥地板"。反例改判
+     `FAIL 1 项不一致： 棘轮： boundaries 从 70 降到 1`；真 kit 仍 PASS。
+  4. 踩到的两个坑（都记下来）：① 地板文件必须读**仓库**的 `acceptance/baseline.json`，读 `-AuditRoot` 会在探针里找不到而静默跳过；
+     ② 我连续两次"改了脚本但没生效"——一次是 PowerShell 解析报错整批没执行、一次是基线字段没写进去，**都是靠反例仍 PASS 才发现的**。
+  5. 自测加断言「边界数下降判 FAIL」，**43 PASS / 0 FAIL**；claims 与地板同步为 43。
+- **triedTools**：`run.ps1 -AuditRoot`（探针）、`selftest.ps1`、`baseline.json`（地板）
+- **alternative**：仍**未覆盖**：① 地板只在**声明涉及的 6 项**上生效，其他指标（如 SC 状态、每板三态）没有地板；
+  ② 自然语言结论（"五块板全绿"）不在任何机械核对范围——这层我判定**不该用正则硬凑**，应由人工评审。
+- **status**：`resolved`（6 项棘轮已闭合）

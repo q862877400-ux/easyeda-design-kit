@@ -111,3 +111,4 @@
 | 79 | 新增第 **20** 阶段 `evidence-freshness`（GAP-069）：扫四份证据文档的 6 类作废取值，无标注即 FAIL；上线即抓到 2 处上轮漏改 | 自测 38→**40**；静态 9 PASS / 1 FAIL / 10 BLOCKED | 本轮 |
 | 80 | 新增第 **21** 阶段 `claims-match`（GAP-070）：HANDOVER 的 claims 块与同轮实测比对（阶段/边界/行数/步数/断言数），不递归 | 反例 19≠21 判 FAIL；真文档 5 项一致；自测 40→**42**；静态 **10/1/10** | 本轮 |
 | 80b | 修：claims 边界数 69→70 同步；GAP-029 triedTools 改写为真实工具名（`pcb autoroute`/`daemon health`/`bsk_inspect`）| 抽样 5/5、claims 5 项一致、静态 **10/1/10** | 本轮 |
+| 81 | claims 加**只增不减棘轮**（GAP-071）：修前"删内容+改声明"可换绿（反例：边界 70→1 判 PASS）→ 修后判 `棘轮： boundaries 从 70 降到 1` | 自测 42→**43**；静态 10/1/10；6 项地板入 baseline | 本轮 |

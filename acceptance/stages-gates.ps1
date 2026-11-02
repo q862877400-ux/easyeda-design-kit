@@ -563,16 +563,31 @@ function Test-ClaimsMatch {
     # selftest 项数：静态数 `Assert-Case`，不递归执行 selftest
     $stPath = Join-Path $script:RepoRoot 'acceptance\selftest.ps1'
     $live['selftest_cases'] = @(Get-Content $stPath | Where-Object { $_ -match '^\s*Assert-Case\s' }).Count
+    # 棘轮（2026-11-01）：上面的 claims 只判"相等"，删掉内容再同步改声明仍能换绿；这里加**只增不减**的地板。
+    # 反例：把边界从 70 删到 1、claims 也改成 1 —— 声明自洽但能力缩水，必须 FAIL。
+    $floorPath = Join-Path $script:RepoRoot 'acceptance\baseline.json'
+    $floorFail = @()
+    if (Test-Path $floorPath) {
+        $floor = Get-Content $floorPath -Raw | ConvertFrom-Json
+        foreach ($fk in @('stages', 'boundaries', 'decision_rows', 'playbook_steps', 'selftest_cases', 'decision_actionable')) {
+            if ($null -ne $floor.$fk -and $live.ContainsKey($fk)) {
+                if ([int]$live[$fk] -lt [int]$floor.$fk) { $floorFail += "$fk 从 $($floor.$fk) 降到 $($live[$fk])" }
+            }
+        }
+    }
     $mismatch = @()
     foreach ($k in $claims.Keys) {
         if (-not $live.ContainsKey($k)) { $mismatch += "$k 是未知字段"; continue }
         if ([string]$claims[$k] -ne [string]$live[$k]) { $mismatch += "$k 声明 $($claims[$k]) ≠ 实测 $($live[$k])" }
     }
+    if ($floorFail.Count -gt 0) { $mismatch += ("棘轮： " + ($floorFail -join " / ")) }
     if ($mismatch.Count -eq 0) {
         Add-Result "claims-match" "PASS" ("HANDOVER 的 $($claims.Count) 项能力声明与实测一致：" + (($claims.Keys | Sort-Object | ForEach-Object { "$_=$($live[$_])" }) -join ', '))
     } else {
         Add-Result "claims-match" "FAIL" ("$($mismatch.Count) 项不一致： " + (($mismatch | Select-Object -First 3) -join '; '))
     }
 }
+
+
 
 
