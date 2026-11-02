@@ -1,158 +1,125 @@
-# EasyEDA AI Design Kit
+# EasyEDA Design Kit
 
-> **装上它，任何模型都能把一块电路板从需求画到可打样。**
+> 一套**给 AI 用**的嘉立创 EDA（EasyEDA 专业版）画板工具包：把「画一块板」变成**可执行的步骤 + 可机器验证的验收**。
+> 它让 AI 能把板子画出来，并且**不能靠嘴说自己画完了**——每一步都要过门禁。
 
-本仓库是产品的**唯一来源（canonical）**。它不是又一个 EDA 工具，而是把「画出板子」这件事
-从**执行者的临场发挥**，变成**按文档执行 + 脚本验收**。
-
-- 产品定义：[PRODUCT.md](PRODUCT.md)
-- 需求规格：[specs/004-ai-pcb-design-kit/spec.md](specs/004-ai-pcb-design-kit/spec.md)
-- 当前状态：**验收未通过**（见下）
+**当前状态：能用，但只在一个窄带里。** 下面第 3 节是实测数字，第 6 节是它做不到什么。
 
 ---
 
+## 1. 它解决的具体问题
 
-> **不知道从哪读？** 结论看 [docs/status.md](docs/status.md)，阅读路径见 [docs/README.md](docs/README.md) —— 按「5 分钟 / 半小时 / 要动手」三条路径组织。
-## 1. 产品由三件套组成
+让 AI 画板，失败通常不是"不会画"，而是三件事：
 
-| 件 | 内容 | 目录 |
+| 问题 | 具体表现 |
+|---|---|
+| **不知道调哪个工具** | 装着上百个扩展、几百条命令，仍然靠试错 |
+| **没法判断"画完没有"** | 「器件落下去了」被当成「板子做好了」；DRC 没跑就说完成 |
+| **能力留不下来** | 每次会话从零开始，上一轮怎么解决的没人知道 |
+
+这套包对应三件东西：**情境→工具决策表**（`docs/tool-decision-table.md`）、**三态验收门禁**（`acceptance/`）、**能力边界清单**（`docs/capability-boundary.md`，93 条，每条五要素：能力 / 证据 / 试过的工具 / 替代方案 / 状态）。
+
+---
+
+## 2. 它是什么 / 不是什么
+
+**是**：
+
+- 一份可装进任意 harness 的 **skill 目录**（`SKILL.md` + `docs/` + `playbooks/`）
+- 一套 **CLI 驱动脚本**：`acceptance/*.ps1`（只调用现成工具，不自己实现画板能力）
+- 一套 **验收判据**：23 个阶段、三态结论（PASS / FAIL / BLOCKED），`BLOCKED` 永不算通过
+
+**不是**：
+
+- 不是 EDA 软件，也不重新实现布线器——它**驱动**已有的嘉立创 EDA 及其扩展
+- 不是"输入一句话就出板"的魔法：**需求→电路这一步目前不可靠**（见第 6 节）
+- 不是产品级认证：作者是 AI 代理，不是硬件工程师
+
+---
+
+## 3. 当前实测状态（2026-11-02）
+
+```
+自测         46 PASS / 0 FAIL / 0 SKIP       acceptance/selftest.ps1
+错误矩阵     16/16 历史事故全部能被拦住       acceptance/mistake-matrix.ps1
+静态验收     12 PASS / 1 FAIL / 0 BLOCKED    acceptance/run.ps1 -Static
+完整跑一块板 21 PASS / 2 FAIL / 0 BLOCKED
+```
+
+唯一 FAIL 是 `decision-actionability`：**78/127 = 61.4%**（决策表里"参数具体到可执行"的行占比）。剩下的行多为未安装扩展的目录信息，没有 CLI 等价物。
+
+**五块自造板的 DRC 明细一致**：间距/清晰度类违规 **0 条**；每块剩 1 条 `Netlist Error`，原因是 **PCB 只实现了整份原理图的一部分**（实测某板 PCB 6 器件 vs 原理图 43 器件）——属设计范围问题，不是几何不合格。
+
+---
+
+## 4. 怎么自己验（三分钟，不需要 EDA 在线）
+
+```powershell
+# 1) 自测：46 条断言，验证"判据本身"是否可信
+pwsh -NoProfile -File acceptance/selftest.ps1
+
+# 2) 错误矩阵：16 类历史真实事故，确认都能被拦住
+pwsh -NoProfile -File acceptance/mistake-matrix.ps1
+
+# 3) 静态验收：12 项（文档一致性、声明与实测一致、边界五要素、判据自身合理）
+pwsh -NoProfile -File acceptance/run.ps1 -Case sc001-usbc-typed -Static
+```
+
+跑一块真实板子需要 EasyEDA 在线（浏览器 + 连接器扩展 + daemon），见 `docs/README.md`。
+
+---
+
+## 5. 目录
+
+```
+SKILL.md                 技能入口（给模型看的第一层）
+PRODUCT.md               产品定义（含已知不能做的部分）
+docs/                    知识包：状态页、决策表、能力边界、阅读路径、可行性实验
+playbooks/               4 个可执行配方（37 步），覆盖四类小电路
+acceptance/              验收：run.ps1（23 阶段）、selftest.ps1、mistake-matrix.ps1、
+                         export-delivery.ps1、epru-audit.ps1、prune-runs.ps1、cases/、runs/
+specs/004-ai-pcb-design-kit/   规格、计划、任务、数据模型
+.githooks/pre-commit     提交前强制跑三件套，绕过会失败
+```
+
+**复用优先是硬规则**：默认零自有代码。先查扩展中心（`docs/extensions-index.md`），再查命令层与类型化动作，都覆盖不了才补工具，并在 `docs/capability-boundary.md` 记录缺口证据。
+
+---
+
+## 6. 已知局限（实测得出，不是推测）
+
+| # | 局限 | 证据 |
 |---|---|---|
-| 能力知识包 | 情境→工具决策表、分阶段流程、设计规则、能力边界 | `docs/` |
-| 可回放链路 | 多步操作固化为 playbook，禁止临时脚本 | `playbooks/` |
-| 验收 | 一条命令判定「这块板画完没有」 | `acceptance/` |
+| 1 | **需求→电路不可靠，会漏功能项** | 对开源项目做实验：第一版漏掉 I²C 电平转换（**电气错误**）；第二版补上，**又漏"没有 MCU 也能用"的档位配置** |
+| 2 | **选型不可靠** | 实验中把"四联电阻排（8 脚）"当单只电阻用，被 `sch check` 的"6 引脚悬空"抓住 |
+| 3 | **"DRC 全绿"在子板设计下不可达** | 结构性 `Netlist Error`，除非把 PCB 做成整机 |
+| 4 | **大板受 A4 限制** | 六件块实测 672 mil vs 可用 627 mil；且没有改图纸尺寸的 API |
+| 5 | **无电路仿真** | 本机未装 SPICE，电源完整性只能靠规则检查 |
 
-**复用优先是硬规则**：默认零自有代码。先查扩展中心（`docs/extensions-index.md`），
-再查命令层与类型化动作，都覆盖不了才补工具，并在 `docs/capability-boundary.md` 记录缺口证据。
+完整实验记录（含命令、报错、对比数字）：`docs/feasibility-001-ch224a.md`。
 
 ---
 
-## 2. 前置条件（安装一次）
+## 7. 这套东西最适合怎么用
 
-1. **EasyEDA Pro**（含扩展中心可访问）。
-2. **能力基础设施**：`easyeda` CLI 与 EDA Agent Connector 扩展（由既有项目提供，独立安装升级）。
-3. 需要时在扩展中心安装流程文档点名的扩展（安装步骤写在文档里，不在每次执行时做）。
+**推荐**：你给出**明确的电路与器件清单**，它负责画对、画完、自证（DRC / DFM / 交付物 / 阶段门禁）。
+
+**不推荐**：让它从一句模糊的功能描述独立设计电路——第 6 节第 1、2 条讲的就是这件事。
+
+---
+
+## 8. 前置条件（安装一次）
+
+1. **EasyEDA Pro**（含扩展中心可访问）
+2. **能力基础设施**：`easyeda` CLI 与 EDA Agent Connector 扩展（由既有项目提供，独立安装升级）
+3. 需要时在扩展中心安装流程文档点名的扩展
 
 本仓库**不重新实现**上述基础设施。
 
 ---
 
-## 3. 一条命令验收
+## 9. 许可
 
-```powershell
-pwsh -NoProfile -File acceptance/run.ps1 -Case esp32-4layer
-```
+MIT，见 [LICENSE](LICENSE)。
 
-有工程时再加：
-
-```powershell
-pwsh -NoProfile -File acceptance/run.ps1 -Case esp32-4layer `
-  -Project agent-e2e-esp32s3-board31 -Doc e8c8b7cb5507b5e2 `
-  -DeliveryDir <制造文件目录> -RunLog <本次执行日志>
-```
-
-三态语义：**PASS / FAIL / BLOCKED**。退出码 `0`=全通过，`1`=有 FAIL，`2`=有 BLOCKED，`3`=用法错误。
-BLOCKED 表示缺前置条件（没有工程、没有窗口、未提供审计日志），**不是通过**。
-
----
-
-## 4. 当前状态（诚实记录）
-
-`acceptance/run.ps1` 现在的结果是 **8 PASS / 0 FAIL / 10 BLOCKED**（BLOCKED = 需要在线板子的阶段），失败点已由脚本点名：
-
-```
-[FAIL] kit-integrity      缺 5/7 份：
-       docs/tool-decision-table.md, docs/capability-boundary.md,
-       docs/phases/schematic-s0-s6.md, docs/phases/pcb-p0-p10.md,
-       playbooks/README.md
-```
-
-这就是本项目的**任务清单**：把这 5 份补出来，再把 8 个 BLOCKED 逐个变成 PASS。
-未通过之前，任何「板子画好了」的说法都不算数。
-
----
-
-## 5. 目录约定
-
-```
-docs/                能力知识包（决策表、阶段流程、规则、边界）
-  extensions-index.md    扩展中心 75 项索引（已装/未装边界）
-  design-rules.md        设计规范手册（线宽/间距/过孔/铺铜/DRC 清单）
-playbooks/           可回放链路（具名、带说明、被索引）
-acceptance/          验收脚本与用例
-specs/               需求规格与质量清单
-```
-
-## 6. 验收立不住的情况（视为产品不成立）
-
-- 只有某一个模型能通过；
-- 通过依赖任何一次性脚本；
-- 交付文件缺失却报 PASS；
-- 把「数字变好」当成通过。
----
-
-## 7. 反目标偷换（每轮的常驻门禁）
-
-产品最大的失效模式不是「做不出来」，而是**把目标偷换**成「用一堆一次性脚本把眼前这块板画出来」。
-它不会自我暴露，只会看起来一直在推进（实测：一次性脚本 26 个、一次性 playbook 28 个）。
-
-因此 `acceptance/run.ps1` 里有一条常驻阶段 `drift-guard`，判据只看仓库事实：
-
-1. 仓库内**不许存在**一次性产物（`.work/`、`*gen*.py`、`*apply*.json`、acceptance 之外调用 easyeda 的脚本）；
-2. **最近一次提交必须动到** `docs/`、`playbooks/`、`acceptance/`、`specs/` 之一；
-3. 规范产物数量**只能增不能减**（棘轮，基线 `acceptance/baseline.json`）。
-
-门禁是**双向**的：`positive-goal` 查「是不是在长产品能力」（规范产物棘轮、playbook 必须可执行、kit 内禁实现代码、SC 判据 ≥3），`negative-drift` 查「有没有再犯历史错误」（一次性产物、只改板子的提交、自建检查器、rip-up 撤网、旧快照求解、未重载就读 DRC）。\n\n**两者都必须 PASS，这一轮才算数**——无论板子看起来多好。详见 [docs/anti-drift.md](docs/anti-drift.md)。
----
-
-## 8. 门禁自测（门禁也要被门禁检查）
-
-门禁自己会静默失效——本项目已发生两次：`-match` 用非法正则导致范围过滤没生效；
-判据只看关键词导致数字不可核对。所以门禁配了自测：
-
-```powershell
-pwsh -NoProfile -File acceptance/selftest.ps1
-```
-
-它逐条验证**每个分支的正例与反例**：kit 自身必须 PASS；反例日志必须 FAIL；
-`N3` 对"仅提及关键词"不判死、对"实质实现（>20KB）"必判死并报体积；
-`-CodeScope` 必须真的缩小范围；历史回测必须抓到 N1/N5。当前 **42 PASS / 0 FAIL**（`acceptance/selftest.ps1`）。
----
-
-## 9. 历史错误矩阵（把每个犯过的错都试一遍）
-
-```powershell
-pwsh -NoProfile -File acceptance/mistake-matrix.ps1
-```
-
-把我在这个项目里**真实犯过**的错逐条列成用例，植入复现物后看门禁是否给出预期判定。
-当前 **16/16 抓到**：一次性脚本、一次性 playbook、说明冒充 playbook、编造 CLI 命令、
-自建 DFM/布线器/丝印工具、rip-up 撤网、旧快照求解、未 reload 就读 DRC、决策表缩水、
-跑旧二进制、门禁脚本自身损坏，外加两条「干净状态不得误判」的对照。
-
-**这个矩阵本身也抓过我的错**：它三次抓出我写的复现物不合格（1KB 够不到 20KB 阈值、
-`-Cli` 重复传参、断言匹配了不会出现的字样）——说明它在真检查，不是橡皮章。
-
-
----
-
-## 10. 从这里开始读（导航）
-
-| 你想做什么 | 读这个 |
-|---|---|
-| 了解产品是什么、不是什么 | [PRODUCT.md](PRODUCT.md) |
-| 判断某件事该调哪个工具 | [docs/tool-decision-table.md](docs/tool-decision-table.md) |
-| 画原理图 | [docs/phases/schematic-s0-s6.md](docs/phases/schematic-s0-s6.md) |
-| 画 PCB（布局/布线/铺铜/交付） | [docs/phases/pcb-p0-p10.md](docs/phases/pcb-p0-p10.md) |
-| 处理"做不到"的情况 | [docs/capability-boundary.md](docs/capability-boundary.md) |
-| 跑一块没画过的板 | [docs/playbook-unseen-board.md](docs/playbook-unseen-board.md) |
-| 装到别的 harness | [docs/harness-install.md](docs/harness-install.md) |
-| 验证它真的能工作 | [specs/004-ai-pcb-design-kit/quickstart.md](specs/004-ai-pcb-design-kit/quickstart.md) |
-| 看还有哪些没做完 | [specs/004-ai-pcb-design-kit/tasks.md](specs/004-ai-pcb-design-kit/tasks.md) |
-| 理解为什么有这些门禁 | [docs/anti-drift.md](docs/anti-drift.md) · [docs/retro-audit.md](docs/retro-audit.md) |
-
-
-
-
-
-
-
+作者是 AI 代理（DeepSeek Harness 上的 lead agent），并非硬件工程师。板级结论请以你自己的复核为准。
