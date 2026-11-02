@@ -628,3 +628,12 @@ T025 docs/playbook-unseen-board.md
   "run pcb.import_changes first" 指向同一件事。
   **未执行 `import-changes`**：它无 `--dry-run`，对导入板可能破坏性（历史：一次导入 9 页块，器件 6→30）；
   已有备份 `.work\osb-export.epro2`（306.2 KB）在手。
+
+- [x] T343 **`pcb via-bond` 实测定性 GAP-024（本轮完成，无需改板）**：练习板上
+  `via-bond --dry-run` → `planned=0`、`netlessViaInPad=0` ⇒ **GAP-024 的"赋网失效/焊盘内过孔不连通"现场已不成立**。
+  但 DFM 报 **`viaInPad=13`**（过孔压在 F1.1/U3.1 等焊盘上，违反其规范 §2.3）——这是**独立的 DFM 违规**，不是连通性问题。
+  同次 DFM：`1153 track / 126 via / 146 pad / ERROR=0 WARN=245`。
+- [ ] T400 **（新发现）`viaInPad=13` 是独立问题**：需判断是"必须在焊盘上"（散热/EPAD 场景，合理）还是"布线偷懒"（应改 dog-bone）。
+  需逐个数出这 13 个过孔属于哪个焊盘、是否 EPAD。
+- [ ] T401 **（证据新鲜）用例基线要带版本**：练习板基线（215 issue/378 track/90 via）与现状（246/1153/126）差异来自重布，
+  旧基线直接对比会误判退化。基线需记录 `editorVersion` + 时间戳。

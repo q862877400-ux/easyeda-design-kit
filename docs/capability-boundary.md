@@ -1707,3 +1707,21 @@
 - **alternative**：**没有执行 `pcb import-changes`**——它没有 `--dry-run`，且对导入板是**破坏性可能**（历史事故：一次导入 9 页的块，
   器件从 6 变 30）。要跑它必须先备份（`project export-source` 已证明可用，306.2 KB 存于 `.work\osb-export.epro2`）。
 - **status**：`open`（线索收窄到"网表不一致"；修复手段未执行）
+
+### GAP-024 续：实测该条件**已不成立**——`netlessViaInPad=0`、`via-bond planned=0`，但另有 13 个"过孔打在焊盘上"
+
+- **capability**：把"焊盘内过孔"的两个不同问题分开——**赋网失效（连通性）** 与 **过孔位置违规（DFM）**。
+- **evidence**（2026-11-01 第 90 轮，练习板 `agent-e2e-esp32s3-board31` / PCB1 `e8c8b7cb5507b5e2`，窗口在线）：
+  1. `pcb via-bond --dry-run` → `ok:true, planned: **0**, assignments:null`
+     ⇒ **当前没有需要补网的内嵌过孔**，GAP-024 描述的"赋网失效"现场不存在。
+  2. `pcb check`（DFM）→ `netlessViaInPad= **0**`、`singleLayerVia=1`、**`viaInPad= 13`**
+     ⇒ 真正存在的是 **13 个"过孔正好压在焊盘上"**（工具自己引用的规范 `§2.3 禁止过孔打在焊盘上`，
+     例：`F1.1 (5V_IN)`、`U3.1 (GND)`）。这是 **DFM 规则违规**，不是连通性失败。
+  3. 同次 DFM 全量：`1153 track / 126 via / 146 pad`、`ERROR=0 WARN=245`
+     （`acute=86 nonOrtho=85 dupSegment=19 coupling=14 silkOverPad=12 decapTooFar=6 widthUnderSpec=4 powerNotPoured=3 dangling=2 fiducialMissing=1`）。
+  4. **口径提醒**：这组数字与用例基线（`215 issue / 378 track / 90 via`）不同，因为板子在 r23/before-autoroute 之间被重布过——
+     用旧基线对比会误判"变差了"。基线必须带**时间与版本**。
+- **triedTools**：`pcb via-bond --dry-run`、`pcb check`、`daemon health`、`board list`
+- **alternative**：`via-bond` 的 `#118` 平台限制（赋值不跨 reload 存活）**仍未直接验证**——本轮 planned=0，没有可赋的对象；
+  要验它需要一块**真的有 netless embedded via** 的板。
+- **status**：`open`（GAP-024 的连通性形态已不成立；DFM 的 viaInPad=13 是新发现的独立问题）
