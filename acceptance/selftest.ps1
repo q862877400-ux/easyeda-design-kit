@@ -54,6 +54,15 @@ Assert-Case "positive-goal → playbook 里编造 flag 判 FAIL" {
         Set-Content (Join-Path $d "playbooks\p.playbook.json") -Encoding UTF8
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'positive-goal').Status -eq 'FAIL'
 }
+# 断言（2026-11-01 新增）：flag 的**取值类型**也必须合法。
+# 反例：`sch block-apply --spacing abc`（帮助声明 `--spacing float`）在只查 flag 名时判 PASS。
+Assert-Case "positive-goal → 数值 flag 给字符串判 FAIL" {
+    $d = Join-Path $probe "pbfval"
+    New-Item -ItemType Directory -Force -Path (Join-Path $d "playbooks") | Out-Null
+    '{ "version": 1, "meta": { "name": "p" }, "steps": [ { "id": 1, "run": "sch block-apply", "flags": { "block": "block.x", "at": "250,300", "spacing": "abc", "per-row": "3" } } ] }' |
+        Set-Content (Join-Path $d "playbooks\p.playbook.json") -Encoding UTF8
+    (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'positive-goal').Status -eq 'FAIL'
+}
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-RunLog', $clean) 'positive-goal').Status -eq 'PASS'
 }
 Assert-Case "kit 自身 → negative-drift PASS" {

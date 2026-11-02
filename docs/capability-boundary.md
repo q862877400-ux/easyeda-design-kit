@@ -1224,3 +1224,21 @@
 - **alternative**：**规矩**——"命令存在"只是第一层；凡引用工具的地方（playbook / 决策表 / 边界），
   都要能对上 flag。下一次同类风险：参数**取值**（如 `--layers 1,2` 的合法域）仍未校验，**未验证**。
 - **status**：`resolved`
+
+---
+
+## GAP-068 playbook 的 flag **取值类型**也没校验：`--spacing abc` 判 PASS
+
+- **capability**：保证 playbook 里给的参数**取值合法**（不只是 flag 名存在）。
+- **evidence**（2026-11-01 实测）：
+  1. 帮助里写明 `--spacing float`、`--per-row int`、`--at string`、`--margin`/`--max-len` 等类型。
+  2. 造反例：`{"run":"sch block-apply","flags":{"block":"block.x","at":"250,300","spacing":"abc","per-row":"3"}}`
+     —— 旧门禁（只查 flag 名）输出 `playbook 1 步全部命中现有命令；4 个 flag 全部存在` → **PASS（误判）**。
+  3. 修后：从 `--help` 解析 `--flag <type>`，对 `int`/`float` 型 flag 校验取值必须匹配 `^-?\d+(\.\d+)?$`。
+     反例现在报 `步骤 flag --spacing 在帮助里声明为 float，取值 'abc' 不是数字`；
+     真 kit 报 `37 步 / 27 个 flag 全部存在；**37 步做过取值类型校验**`。
+  4. 自测加断言「数值 flag 给字符串判 FAIL」，自测 **38/38**。
+- **triedTools**：`sch block-apply --help`（取类型声明）、`run.ps1 -AuditRoot`（探针 kit）、`selftest.ps1`
+- **alternative**：仍**未验证**的两层——① **枚举/区间域**（`--layers 1,2` 若域是 `1-2` 仍会过；`--margin` 的合理范围未校验）；
+  ② **跨 flag 约束**（如 `--per-row` 与 `--spacing` 的联动、`--at` 与图纸边界）。
+- **status**：`resolved`（类型层已闭合；域与联动层留待后续）

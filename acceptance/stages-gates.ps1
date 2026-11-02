@@ -76,6 +76,7 @@ function Test-PositiveGoal {
     $helpCache = @{}
         $stepChecked = 0
         $flagChecked = 0
+        $valChecked = 0
     if (Test-Path $pbDir2) {
         foreach ($pf in Get-ChildItem $pbDir2 -File -Filter '*.playbook.json') {
             try { $pj = Get-Content $pf.FullName -Raw | ConvertFrom-Json } catch { continue }
@@ -102,10 +103,25 @@ function Test-PositiveGoal {
                 $missFlags = @($stepFlags | Where-Object { $helpCache[$helpKey] -notmatch [regex]::Escape($_) })
                 if ($missFlags.Count -gt 0) { $fail += "$($pf.Name): 步骤 run='$run' 的 flag 不存在： $($missFlags -join ',')" }
                 $flagChecked += @($stepFlags).Count
+                # 反例（2026-11-01）：`sch block-apply --spacing abc` 在只查 flag 名时判 PASS，但帮助里写明 `--spacing float`。
+                # 因此按帮助声明的类型校验取值：数值型 flag 给了值就必须能解析成数字。
+                $typeMap = @{}
+                foreach ($tm in [regex]::Matches($helpCache[$helpKey], '(?m)^\s+--([a-zA-Z][a-zA-Z0-9-]*)\s+(int|float|string|strings|stringArray|bool)\b')) {
+                    $typeMap[$tm.Groups[1].Value] = $tm.Groups[2].Value
+                }
+                if ($st.flags) {
+                    foreach ($fp in $st.flags.PSObject.Properties) {
+                        $fn = $fp.Name; $fv = [string]$fp.Value
+                        if ($typeMap.ContainsKey($fn) -and (@('int', 'float') -contains $typeMap[$fn]) -and $fv -ne '') {
+                            if ($fv -notmatch '^-?\d+(\.\d+)?$') { $fail += "$($pf.Name): 步骤 flag --$fn 在帮助里声明为 $($typeMap[$fn])，取值 '$fv' 不是数字" }
+                        }
+                    }
+                }
+                $valChecked += 1
                 $stepChecked++
             }
         }
-if ($fail.Count -eq 0) { $note += "playbook $stepChecked 步全部命中现有命令；$flagChecked 个 flag 全部存在" }
+if ($fail.Count -eq 0) { $note += "playbook $stepChecked 步全部命中现有命令；$flagChecked 个 flag 全部存在；$valChecked 步做过取值类型校验" }
     }
     # P7 门禁脚本自身必须可解析（事故：改了门禁但脚本已坏，门禁静默失效）
     $badScript = @()
