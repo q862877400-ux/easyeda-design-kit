@@ -508,3 +508,9 @@ T025 docs/playbook-unseen-board.md
   机械替换 **19 处**；另 5 处本就在校验明细关键词。**6 样例单元验证全对**：缺 HANDOVER ⇒ 拒、假 flag/目录/棘轮 ⇒ 放行、
   未指定参数 ⇒ 拒、JSON 损坏 ⇒ 拒。踩坑：初版把"不存在"一律拒，误杀 2 条正当断言（44/2），收窄后恢复 **46/46**。
 - [ ] T373 **（剩余风险）**：正向断言 `Status -eq 'PASS'` 可能被"数据为空"空过——例如某阶段在空表上判 PASS。需逐条检查。
+
+- [x] T373 **查正向断言的"空数据空过"（GAP-079）**：空 `-AuditRoot` 实测 → `evidence-freshness` 只扫到 **1 份**文档就判 PASS。
+  修为"文档数 <10 ⇒ BLOCKED（无法证明新鲜）"；空目录实测 BLOCKED、真 kit PASS（33 份）。
+  同探针还确认 `kit-integrity`/`positive-goal` **按设计**读 `$script:RepoRoot`，在探针里不能证明任何事（已写明）。
+- [ ] T374 **（未做）**：逐条探测其他阶段在"零样本"下的行为（如 `capability-boundary` 在 0 条边界时、`capability-sample` 在 0 条可抽时），
+  凡"扫到 0 个却说没问题"的都要加下限。

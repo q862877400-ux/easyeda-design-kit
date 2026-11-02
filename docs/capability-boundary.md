@@ -1466,3 +1466,22 @@
 - **triedTools**：`selftest.ps1`（helper + 19 处替换）、临时单元脚本（6 样例，跑完即删）
 - **alternative**：仍**未覆盖**：正向断言（`Status -eq 'PASS'`）可能被"空数据"空过，尚未检查（T372 剩余项）。
 - **status**：`resolved`（否定断言层）
+
+---
+
+## GAP-079 正向断言会被"空数据"空过：`evidence-freshness` 只扫到 1 份文档也判 PASS
+
+- **capability**：让"没发现问题"不被当成"没有问题"。
+- **evidence**（2026-11-01 实测）：
+  1. 拿一个**空目录**当 `-AuditRoot` 跑静态模式，`evidence-freshness` 报
+     `[PASS] 全部文档（**1 份**，含 docs 子树…）未出现未标注的作废数字` —— 只扫到 1 份（根 README）就判通过。
+  2. 即：把审计根指错、或文档被删光，这个判据会**变绿而不是报警**。
+  3. 修：文档数 <10 时改判 **BLOCKED**（"审计根下只有 N 份文档，无法证明证据新鲜"）——缺前置证据不是通过。
+     实测：空目录 → `[BLOCKED] 只有 1 份`；真 kit → `[PASS] 33 份`。
+  4. 同一次探测还发现两个**按设计**依赖 `$script:RepoRoot` 的阶段（`kit-integrity` / `positive-goal`）：
+     空审计根下它们仍报"20 份齐备""文档 26 个"，因为它们校验的是**仓库本身**而非审计根。
+     这是有意为之（否则探针会误报），但代价是**探针模式下它们不能证明任何事**——已在下面写明。
+- **triedTools**：空 `-AuditRoot` 探针、`run.ps1 -Static`、`stages-gates.ps1`（加下限）
+- **alternative**：**规矩**——凡"扫一批东西然后说没毛病"的判据，都必须有一个**下限**：扫到的样本太少就不是通过。
+  未覆盖：其他阶段是否也有同类空过（如 `capability-boundary` 在 0 条边界时的行为）尚未逐条探测。
+- **status**：`resolved`（`evidence-freshness` 已加下限）

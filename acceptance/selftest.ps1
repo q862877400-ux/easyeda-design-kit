@@ -84,12 +84,14 @@ Assert-Case "evidence-freshness → 无标注的作废数字判 FAIL" {
     $d = Join-Path $probe "efbad"
     New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
     '| 门禁自身可信 | selftest 36 PASS / 0 FAIL |' | Set-Content (Join-Path $d "docs\HANDOVER.md") -Encoding UTF8
+    1..9 | ForEach-Object { "占位 $_" | Set-Content (Join-Path $d "docs\pad$_.md") -Encoding UTF8 }   # GAP-079：该阶段要求 ≥10 份文档
     Test-NegativeResult (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'evidence-freshness')
 }
 Assert-Case "evidence-freshness → 标注了当时口径则豁免" {
     $d = Join-Path $probe "efok"
     New-Item -ItemType Directory -Force -Path (Join-Path $d "docs") | Out-Null
     '| 门禁自身可信 | selftest 36 PASS / 0 FAIL（**当时**口径）|' | Set-Content (Join-Path $d "docs\HANDOVER.md") -Encoding UTF8
+    1..9 | ForEach-Object { "占位 $_" | Set-Content (Join-Path $d "docs\pad$_.md") -Encoding UTF8 }   # GAP-079：该阶段要求 ≥10 份文档
     (Stage-Status @('-Case', 'esp32-4layer', '-Cli', $Cli, '-AuditRoot', $d) 'evidence-freshness').Status -eq 'PASS'
 }
 # 断言（2026-11-01 新增）：HANDOVER 的 claims 块与实测不一致必须判 FAIL（这是"文字承诺"的看守）。

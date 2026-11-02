@@ -5,7 +5,7 @@
   "spec_files": 9,
   "decision_rows": 111,
   "stages": 22,
-  "boundaries": 78,
+  "boundaries": 79,
   "playbook_steps": 37,
   "selftest_cases": 46,
   "decision_actionable": 18

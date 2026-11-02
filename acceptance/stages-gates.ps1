@@ -524,6 +524,12 @@ function Test-EvidenceFreshness {
         }
     }
     if ($hits.Count -eq 0) {
+    # 反例（2026-11-01）：空审计根下只扫到 **1 份**文档却判 PASS —— "没发现问题"被当成"没有问题"。
+    # 文档数太少时无法证明新鲜，按 BLOCKED 处理（缺前置证据，不是通过）。
+    if ($docs.Count -lt 10) {
+        Add-Result "evidence-freshness" "BLOCKED" "审计根下只有 $($docs.Count) 份文档（<10），无法证明证据新鲜"
+        return
+    }
         Add-Result "evidence-freshness" "PASS" "全部文档（$($docs.Count) 份，含 docs 子树；历史日志整份豁免）未出现未标注的作废数字（检查 $(($stale.Keys).Count) 类模式）"
     } else {
         Add-Result "evidence-freshness" "FAIL" "$($hits.Count) 处过期数字： $(($hits | Select-Object -First 3) -join '; ')"
